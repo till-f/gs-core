@@ -27,12 +27,8 @@ import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.graphstream.stream.time.ISODateComponent.AliasComponent;
-import org.graphstream.stream.time.ISODateComponent.AMPMHandler;
-import org.graphstream.stream.time.ISODateComponent.EpochHandler;
-import org.graphstream.stream.time.ISODateComponent.IntegerFieldHandler;
+
 import org.graphstream.stream.time.ISODateComponent.TextComponent;
-import org.graphstream.stream.time.ISODateComponent.UTFOffsetHandler;
 
 /**
  * Scanner for date in ISO/IEC 9899:1999 format. The scanner takes a format and
@@ -129,63 +125,33 @@ import org.graphstream.stream.time.ISODateComponent.UTFOffsetHandler;
 public class ISODateScanner {
 
 	private static final ISODateComponent[] KNOWN_COMPONENTS = {
-			new ISODateComponent("%a", "\\w+[.]", null),
-			new ISODateComponent("%A", "\\w+", null),
-			new ISODateComponent("%b", "\\w+[.]", null),
-			new ISODateComponent("%B", "\\w+", null),
-			new ISODateComponent("%c", null, null),
-			new ISODateComponent("%C", "\\d\\d", new IntegerFieldHandler(
-					Calendar.YEAR)),
-			new ISODateComponent("%d", "[012]\\d|3[01]",
-					new IntegerFieldHandler(Calendar.DAY_OF_MONTH)),
-			new AliasComponent("%D", "%m/%d/%y"),
-			new ISODateComponent("%e", "\\d|[12]\\d|3[01]",
-					new IntegerFieldHandler(Calendar.DAY_OF_MONTH)),
-			new AliasComponent("%F", "%Y-%m-%d"),
-			new ISODateComponent("%g", "\\d\\d", new IntegerFieldHandler(
-					Calendar.YEAR)),
-			new ISODateComponent("%G", "\\d{4}", new IntegerFieldHandler(
-					Calendar.YEAR)),
-			new AliasComponent("%h", "%b"),
-			new ISODateComponent("%H", "[01]\\d|2[0123]",
-					new IntegerFieldHandler(Calendar.HOUR_OF_DAY)),
-			new ISODateComponent("%I", "0\\d|1[012]", new IntegerFieldHandler(
-					Calendar.HOUR)),
-			new ISODateComponent("%j", "[012]\\d\\d|3[0-5]\\d|36[0-6]",
-					new IntegerFieldHandler(Calendar.DAY_OF_YEAR)),
-			new ISODateComponent("%k", "\\d{3}", new IntegerFieldHandler(
-					Calendar.MILLISECOND)),
-			new ISODateComponent("%K", "\\d+", new EpochHandler()),
-			new ISODateComponent("%m", "0\\d|1[012]", new IntegerFieldHandler(
-					Calendar.MONTH, -1)),
-			new ISODateComponent("%M", "[0-5]\\d", new IntegerFieldHandler(
-					Calendar.MINUTE)),
-			new AliasComponent("%n", "\n"),
-			new ISODateComponent("%p", "", new AMPMHandler()),
-			new ISODateComponent("%r", "", null),
-			new AliasComponent("%R", "%H:%M"),
-			new ISODateComponent("%S", "[0-5]\\d|60", new IntegerFieldHandler(
-					Calendar.SECOND)),
-			new AliasComponent("%t", "\t"),
-			new AliasComponent("%T", "%H:%M:%S"),
-			new ISODateComponent("%u", "[1-7]", new IntegerFieldHandler(
-					Calendar.DAY_OF_WEEK)),
-			new ISODateComponent("%U", "[0-4]\\d|5[0123]",
-					new IntegerFieldHandler(Calendar.WEEK_OF_YEAR, 1)),
-			new ISODateComponent("%V", "0[1-9]|[2-4]\\d|5[0123]", null),
-			new ISODateComponent("%w", "[0-6]", new IntegerFieldHandler(
-					Calendar.DAY_OF_WEEK)),
-			new ISODateComponent("%W", "[0-4]\\d|5[0123]",
-					new IntegerFieldHandler(Calendar.WEEK_OF_YEAR)),
-			new ISODateComponent("%x", "", null),
-			new ISODateComponent("%X", "", null),
-			new ISODateComponent("%y", "\\d\\d", new IntegerFieldHandler(
-					Calendar.YEAR)),
-			new ISODateComponent("%Y", "\\d{4}", new IntegerFieldHandler(
-					Calendar.YEAR)),
-			new ISODateComponent("%z", "[-+]\\d{4}", new UTFOffsetHandler()),
-			new ISODateComponent("%Z", "\\w*", null),
-			new AliasComponent("%%", "%") };
+			ISODateComponent.ABBREVIATED_WEEKDAY_NAME,
+			ISODateComponent.FULL_WEEKDAY_NAME,
+			ISODateComponent.ABBREVIATED_MONTH_NAME,
+			ISODateComponent.FULL_MONTH_NAME,
+			ISODateComponent.LOCALE_DATE_AND_TIME, ISODateComponent.CENTURY,
+			ISODateComponent.DAY_OF_MONTH_2_DIGITS, ISODateComponent.DATE,
+			ISODateComponent.DAY_OF_MONTH, ISODateComponent.DATE_ISO8601,
+			ISODateComponent.WEEK_BASED_YEAR_2_DIGITS,
+			ISODateComponent.WEEK_BASED_YEAR_4_DIGITS,
+			ISODateComponent.ABBREVIATED_MONTH_NAME_ALIAS,
+			ISODateComponent.HOUR_OF_DAY, ISODateComponent.HOUR,
+			ISODateComponent.DAY_OF_YEAR, ISODateComponent.MILLISECOND,
+			ISODateComponent.EPOCH, ISODateComponent.MONTH,
+			ISODateComponent.MINUTE, ISODateComponent.NEW_LINE,
+			ISODateComponent.AM_PM, ISODateComponent.LOCALE_CLOCK_TIME_12_HOUR,
+			ISODateComponent.HOUR_AND_MINUTE, ISODateComponent.SECOND,
+			ISODateComponent.TABULATION, ISODateComponent.TIME_ISO8601,
+			ISODateComponent.DAY_OF_WEEK_1_7,
+			ISODateComponent.WEEK_OF_YEAR_FROM_SUNDAY,
+			ISODateComponent.WEEK_NUMBER_ISO8601,
+			ISODateComponent.DAY_OF_WEEK_0_6,
+			ISODateComponent.WEEK_OF_YEAR_FROM_MONDAY,
+			ISODateComponent.LOCALE_DATE_REPRESENTATION,
+			ISODateComponent.LOCALE_TIME_REPRESENTATION,
+			ISODateComponent.YEAR_2_DIGITS, ISODateComponent.YEAR_4_DIGITS,
+			ISODateComponent.UTC_OFFSET,
+			ISODateComponent.LOCALE_TIME_ZONE_NAME, ISODateComponent.PERCENT };
 
 	/**
 	 * List of components, build from a string format. Some of these components
@@ -228,7 +194,7 @@ public class ISODateScanner {
 			if (format.charAt(offset) == '%') {
 				boolean found = false;
 				for (int i = 0; !found && i < KNOWN_COMPONENTS.length; i++) {
-					if (format.startsWith(KNOWN_COMPONENTS[i].getShortcut(),
+					if (format.startsWith(KNOWN_COMPONENTS[i].getDirective(),
 							offset)) {
 						found = true;
 						if (KNOWN_COMPONENTS[i].isAlias()) {
@@ -238,7 +204,7 @@ public class ISODateScanner {
 						} else
 							components.addLast(KNOWN_COMPONENTS[i]);
 
-						offset += KNOWN_COMPONENTS[i].getShortcut().length();
+						offset += KNOWN_COMPONENTS[i].getDirective().length();
 					}
 				}
 				if (!found)
