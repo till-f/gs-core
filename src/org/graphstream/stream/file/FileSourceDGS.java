@@ -31,8 +31,12 @@ import java.io.Reader;
 import java.io.StreamTokenizer;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
+
+import org.graphstream.stream.sync.SourceTime;
+import org.graphstream.stream.time.ISODateIO;
 
 /**
  * Class responsible for parsing files in the DGS format.
@@ -89,6 +93,26 @@ public class FileSourceDGS extends FileSourceBase {
 	 */
 	protected boolean finished;
 
+	private static class TimestampSourceTime extends SourceTime {
+		public TimestampSourceTime(String sourceId) {
+			super(sourceId);
+		}
+
+		public void newTimestamp(long time) {
+			this.currentTimeId = time;
+		}
+
+		public long newEvent() {
+			return currentTimeId;
+		}
+	}
+
+	protected ISODateIO dateScanner;
+
+	protected long timeId = 0;
+
+	protected boolean timestampInitialized = false;
+	
 	// Construction
 
 	/**
@@ -96,6 +120,7 @@ public class FileSourceDGS extends FileSourceBase {
 	 */
 	public FileSourceDGS() {
 		super(true /* EOL is significant */);
+		sourceTime = new TimestampSourceTime(sourceTime.getSourceId());
 	}
 
 	// Command -- Parsing
@@ -128,12 +153,26 @@ public class FileSourceDGS extends FileSourceBase {
 	 * @return True if it remains things to read.
 	 */
 	protected boolean next(boolean readSteps, boolean stop) throws IOException {
-		String key = null;
+		String key = null, timestamp;
 		boolean loop = readSteps;
-
+		Calendar cal;
 		// Sorted in probability of appearance ...
 
 		do {
+			timestamp = getString();
+			cal = dateScanner.parse(timestamp);
+
+			if (cal == null)
+				parseError("invalid timestamp: \"" + timestamp + "\"");
+
+			if (cal.getTimeInMillis() == timeId)
+				parseError("two events have the same timestamp");
+			else if (cal.getTimeInMillis() < timeId)
+				parseError("events must be chronologically ordered");
+
+			timeId = cal.getTimeInMillis();
+			((TimestampSourceTime) sourceTime).newTimestamp(timeId);
+
 			key = getWordOrSymbolOrStringOrEolOrEof();
 
 			if (key.equals("ce")) {
@@ -436,22 +475,28 @@ public class FileSourceDGS extends FileSourceBase {
 		super.begin(reader);
 		begin();
 	}
-
+	
 	protected void begin() throws IOException {
 		st.parseNumbers();
-		eatWords("DGS003", "DGS004");
+		eatWords("DGS003","DGS004");
 
 		version = 3;
 
 		eatEol();
 		graphName = getWordOrString();
 		stepCountAnnounced = (int) getNumber();// Integer.parseInt( getWord() );
-		eventCountAnnounced = (int) getNumber();// Integer.parseInt( getWord()
-												// );
+		eventCountAnnounced = (int) getNumber();// Integer.parseInt( getWord());
+		try {
+			dateScanner = new ISODateIO(getStringOrNumber());
+		} catch (Exception e) {
+			parseError(e.getMessage());
+		}
+
 		eatEol();
 
-		if (graphName != null)
-			sendGraphAttributeAdded(graphName, "label", graphName);
+		if (graphName != null) {
+		}
+		// sendGraphAttributeAdded(graphName, "label", graphName);
 		else
 			graphName = "DGS_";
 

@@ -28,7 +28,7 @@ import java.util.Calendar;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.implementations.DefaultGraph;
 import org.graphstream.stream.sync.SourceTime;
-import org.graphstream.stream.time.ISODateScanner;
+import org.graphstream.stream.time.ISODateIO;
 import org.graphstream.stream.time.RealTimePipe;
 
 /**
@@ -64,7 +64,7 @@ public class FileSourceDGST extends FileSourceDGS {
 		}
 	}
 
-	protected ISODateScanner dateScanner;
+	protected ISODateIO dateScanner;
 
 	protected long timeId;
 
@@ -164,7 +164,7 @@ public class FileSourceDGST extends FileSourceDGS {
 		stepCountAnnounced = (int) getNumber();// Integer.parseInt( getWord() );
 		eventCountAnnounced = (int) getNumber();// Integer.parseInt( getWord());
 		try {
-			dateScanner = new ISODateScanner(getString());
+			dateScanner = new ISODateIO(getString());
 		} catch (Exception e) {
 			parseError(e.getMessage());
 		}

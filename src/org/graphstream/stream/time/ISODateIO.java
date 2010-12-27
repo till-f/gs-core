@@ -122,7 +122,7 @@ import org.graphstream.stream.time.ISODateComponent.TextComponent;
  * 
  * @author Guilhelm Savin
  */
-public class ISODateScanner {
+public class ISODateIO {
 
 	private static final ISODateComponent[] KNOWN_COMPONENTS = {
 			ISODateComponent.ABBREVIATED_WEEKDAY_NAME,
@@ -171,7 +171,7 @@ public class ISODateScanner {
 	 * @throws ParseException
 	 *             if bad directives found
 	 */
-	public ISODateScanner(String format) throws ParseException {
+	public ISODateIO(String format) throws ParseException {
 		components = findComponents(format);
 		buildRegularExpression();
 	}
@@ -260,5 +260,21 @@ public class ISODateScanner {
 			return null;
 
 		return cal;
+	}
+
+	/**
+	 * Convert a calendar into a string according to the format of this object.
+	 * 
+	 * @param calendar
+	 *            the calendar to convert
+	 * @return a string modeling the calendar.
+	 */
+	public String toString(Calendar calendar) {
+		StringBuffer buffer = new StringBuffer();
+
+		for (int i = 0; i < components.size(); i++)
+			buffer.append(components.get(i).get(calendar));
+
+		return buffer.toString();
 	}
 }

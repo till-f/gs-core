@@ -27,7 +27,7 @@ import java.util.Calendar;
 import java.util.Locale;
 
 /**
- * Defines components of {@link ISODateScanner}.
+ * Defines components of {@link ISODateIO}.
  * 
  */
 public abstract class ISODateComponent {
@@ -96,6 +96,15 @@ public abstract class ISODateComponent {
 	public abstract void set(String value, Calendar calendar);
 
 	/**
+	 * Get a string representation of this component for a given calendar.
+	 * 
+	 * @param calendar
+	 *            the calendar
+	 * @return string representation of this component.
+	 */
+	public abstract String get(Calendar calendar);
+
+	/**
 	 * Defines an alias component. Such component does nothing else that replace
 	 * them directive by another string.
 	 */
@@ -112,6 +121,10 @@ public abstract class ISODateComponent {
 		public void set(String value, Calendar calendar) {
 			// Nothing to do
 		}
+
+		public String get(Calendar calendar) {
+			return "";
+		}
 	}
 
 	/**
@@ -126,6 +139,10 @@ public abstract class ISODateComponent {
 		public void set(String value, Calendar calendar) {
 			// Nothing to do
 		}
+
+		public String get(Calendar calendar) {
+			return replace;
+		}
 	}
 
 	/**
@@ -136,16 +153,19 @@ public abstract class ISODateComponent {
 	public static class FieldComponent extends ISODateComponent {
 		protected final int field;
 		protected final int offset;
+		protected final String format;
 
-		public FieldComponent(String shortcut, String replace, int field) {
-			this(shortcut, replace, field, 0);
+		public FieldComponent(String shortcut, String replace, int field,
+				String format) {
+			this(shortcut, replace, field, 0, format);
 		}
 
 		public FieldComponent(String shortcut, String replace, int field,
-				int offset) {
+				int offset, String format) {
 			super(shortcut, replace);
 			this.field = field;
 			this.offset = offset;
+			this.format = format;
 		}
 
 		public void set(String value, Calendar calendar) {
@@ -153,6 +173,10 @@ public abstract class ISODateComponent {
 				value = value.substring(1);
 			int val = Integer.parseInt(value);
 			calendar.set(field, val + offset);
+		}
+
+		public String get(Calendar calendar) {
+			return String.format(format, calendar.get(field));
 		}
 	}
 
@@ -191,6 +215,10 @@ public abstract class ISODateComponent {
 					.equalsIgnoreCase(symbols.getAmPmStrings()[Calendar.PM]))
 				calendar.set(Calendar.AM_PM, Calendar.PM);
 		}
+
+		public String get(Calendar calendar) {
+			return symbols.getAmPmStrings()[calendar.get(Calendar.AM_PM)];
+		}
 	}
 
 	/**
@@ -215,6 +243,23 @@ public abstract class ISODateComponent {
 
 			calendar.getTimeZone().setRawOffset(i * (h * 60 + m) * 60000);
 		}
+
+		public String get(Calendar calendar) {
+			int offset = calendar.getTimeZone().getRawOffset();
+			String sign = "+";
+
+			if (offset < 0) {
+				sign = "-";
+				offset = -offset;
+			}
+
+			offset /= 60000;
+
+			int h = offset / 60;
+			int m = offset % 60;
+
+			return String.format("%s%02d%02d", sign, h, m);
+		}
 	}
 
 	/**
@@ -230,10 +275,15 @@ public abstract class ISODateComponent {
 			long e = Long.parseLong(value);
 			calendar.setTimeInMillis(e);
 		}
+
+		public String get(Calendar calendar) {
+			return String.format("%d", calendar.getTimeInMillis());
+		}
 	}
 
 	/**
-	 * Defines a not implemented component. Such components throw an Error if used.
+	 * Defines a not implemented component. Such components throw an Error if
+	 * used.
 	 */
 	public static class NotImplementedComponent extends ISODateComponent {
 		public NotImplementedComponent(String shortcut, String replace) {
@@ -241,6 +291,10 @@ public abstract class ISODateComponent {
 		}
 
 		public void set(String value, Calendar cal) {
+			throw new Error("not implemented component");
+		}
+
+		public String get(Calendar calendar) {
 			throw new Error("not implemented component");
 		}
 	}
@@ -258,32 +312,32 @@ public abstract class ISODateComponent {
 	public static final ISODateComponent CENTURY = new NotImplementedComponent(
 			"%C", "\\d\\d");
 	public static final ISODateComponent DAY_OF_MONTH_2_DIGITS = new FieldComponent(
-			"%d", "[012]\\d|3[01]", Calendar.DAY_OF_MONTH);
+			"%d", "[012]\\d|3[01]", Calendar.DAY_OF_MONTH, "%02d");
 	public static final ISODateComponent DATE = new AliasComponent("%D",
 			"%m/%d/%y");
 	public static final ISODateComponent DAY_OF_MONTH = new FieldComponent(
-			"%e", "\\d|[12]\\d|3[01]", Calendar.DAY_OF_MONTH);
+			"%e", "\\d|[12]\\d|3[01]", Calendar.DAY_OF_MONTH, "%2d");
 	public static final ISODateComponent DATE_ISO8601 = new AliasComponent(
 			"%F", "%Y-%m-%d");
 	public static final ISODateComponent WEEK_BASED_YEAR_2_DIGITS = new FieldComponent(
-			"%g", "\\d\\d", Calendar.YEAR);
+			"%g", "\\d\\d", Calendar.YEAR, "%02d");
 	public static final ISODateComponent WEEK_BASED_YEAR_4_DIGITS = new FieldComponent(
-			"%G", "\\d{4}", Calendar.YEAR);
+			"%G", "\\d{4}", Calendar.YEAR, "%04d");
 	public static final ISODateComponent ABBREVIATED_MONTH_NAME_ALIAS = new AliasComponent(
 			"%h", "%b");
 	public static final ISODateComponent HOUR_OF_DAY = new FieldComponent("%H",
-			"[01]\\d|2[0123]", Calendar.HOUR_OF_DAY);
+			"[01]\\d|2[0123]", Calendar.HOUR_OF_DAY, "%02d");
 	public static final ISODateComponent HOUR = new FieldComponent("%I",
-			"0\\d|1[012]", Calendar.HOUR);
+			"0\\d|1[012]", Calendar.HOUR, "%02d");
 	public static final ISODateComponent DAY_OF_YEAR = new FieldComponent("%j",
-			"[012]\\d\\d|3[0-5]\\d|36[0-6]", Calendar.DAY_OF_YEAR);
+			"[012]\\d\\d|3[0-5]\\d|36[0-6]", Calendar.DAY_OF_YEAR, "%03d");
 	public static final ISODateComponent MILLISECOND = new FieldComponent("%k",
-			"\\d{3}", Calendar.MILLISECOND);
+			"\\d{3}", Calendar.MILLISECOND, "%03d");
 	public static final ISODateComponent EPOCH = new EpochComponent();
 	public static final ISODateComponent MONTH = new FieldComponent("%m",
-			"0[1-9]|1[012]", Calendar.MONTH, -1);
+			"0[1-9]|1[012]", Calendar.MONTH, -1, "%02d");
 	public static final ISODateComponent MINUTE = new FieldComponent("%M",
-			"[0-5]\\d", Calendar.MINUTE);
+			"[0-5]\\d", Calendar.MINUTE, "%02d");
 	public static final ISODateComponent NEW_LINE = new AliasComponent("%n",
 			"\n");
 	public static final ISODateComponent AM_PM = new AMPMComponent();
@@ -292,29 +346,29 @@ public abstract class ISODateComponent {
 	public static final ISODateComponent HOUR_AND_MINUTE = new AliasComponent(
 			"%R", "%H:%M");
 	public static final ISODateComponent SECOND = new FieldComponent("%S",
-			"[0-5]\\d|60", Calendar.SECOND);
+			"[0-5]\\d|60", Calendar.SECOND, "%02d");
 	public static final ISODateComponent TABULATION = new AliasComponent("%t",
 			"\t");
 	public static final ISODateComponent TIME_ISO8601 = new AliasComponent(
 			"%T", "%H:%M:%S");
 	public static final ISODateComponent DAY_OF_WEEK_1_7 = new FieldComponent(
-			"%u", "[1-7]", Calendar.DAY_OF_WEEK, -1);
+			"%u", "[1-7]", Calendar.DAY_OF_WEEK, -1, "%1d");
 	public static final ISODateComponent WEEK_OF_YEAR_FROM_SUNDAY = new FieldComponent(
-			"%U", "[0-4]\\d|5[0123]", Calendar.WEEK_OF_YEAR, 1);
+			"%U", "[0-4]\\d|5[0123]", Calendar.WEEK_OF_YEAR, 1, "%2d");
 	public static final ISODateComponent WEEK_NUMBER_ISO8601 = new NotImplementedComponent(
 			"%V", "0[1-9]|[2-4]\\d|5[0123]");
 	public static final ISODateComponent DAY_OF_WEEK_0_6 = new FieldComponent(
-			"%w", "[0-6]", Calendar.DAY_OF_WEEK);
+			"%w", "[0-6]", Calendar.DAY_OF_WEEK, "%01d");
 	public static final ISODateComponent WEEK_OF_YEAR_FROM_MONDAY = new FieldComponent(
-			"%W", "[0-4]\\d|5[0123]", Calendar.WEEK_OF_YEAR);
+			"%W", "[0-4]\\d|5[0123]", Calendar.WEEK_OF_YEAR, "%02d");
 	public static final ISODateComponent LOCALE_DATE_REPRESENTATION = new NotImplementedComponent(
 			"%x", "");
 	public static final ISODateComponent LOCALE_TIME_REPRESENTATION = new NotImplementedComponent(
 			"%X", "");
 	public static final ISODateComponent YEAR_2_DIGITS = new FieldComponent(
-			"%y", "\\d\\d", Calendar.YEAR);
+			"%y", "\\d\\d", Calendar.YEAR, "%02d");
 	public static final ISODateComponent YEAR_4_DIGITS = new FieldComponent(
-			"%Y", "\\d{4}", Calendar.YEAR);
+			"%Y", "\\d{4}", Calendar.YEAR, "%04d");
 	public static final ISODateComponent UTC_OFFSET = new UTCOffsetComponent();
 	public static final ISODateComponent LOCALE_TIME_ZONE_NAME = new NotImplementedComponent(
 			"%Z", "\\w*");
