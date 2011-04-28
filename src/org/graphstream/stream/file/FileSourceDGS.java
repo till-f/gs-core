@@ -37,6 +37,7 @@ import java.util.zip.GZIPInputStream;
 
 import org.graphstream.stream.sync.SourceTime;
 import org.graphstream.stream.time.ISODateIO;
+import org.graphstream.stream.time.TimestampSourceTime;
 
 /**
  * Class responsible for parsing files in the DGS format.
@@ -93,26 +94,8 @@ public class FileSourceDGS extends FileSourceBase {
 	 */
 	protected boolean finished;
 
-	private static class TimestampSourceTime extends SourceTime {
-		public TimestampSourceTime(String sourceId) {
-			super(sourceId);
-		}
+	protected TimestampSourceTime timestampSourceTime;
 
-		public void newTimestamp(long time) {
-			this.currentTimeId = time;
-		}
-
-		public long newEvent() {
-			return currentTimeId;
-		}
-	}
-
-	protected ISODateIO dateScanner;
-
-	protected long timeId = 0;
-
-	protected boolean timestampInitialized = false;
-	
 	// Construction
 
 	/**
@@ -475,10 +458,13 @@ public class FileSourceDGS extends FileSourceBase {
 		super.begin(reader);
 		begin();
 	}
-	
+
 	protected void begin() throws IOException {
+		timestampSourceTime = new TimestampSourceTime(sourceTime.getSourceId());
+		sourceTime = timestampSourceTime;
+
 		st.parseNumbers();
-		eatWords("DGS003","DGS004");
+		eatWords("DGS003", "DGS004");
 
 		version = 3;
 

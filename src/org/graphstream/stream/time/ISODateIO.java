@@ -176,6 +176,10 @@ public class ISODateIO {
 		buildRegularExpression();
 	}
 
+	public Pattern getPattern() {
+		return pattern;
+	}
+	
 	/**
 	 * Build a list of component from a string.
 	 * 
