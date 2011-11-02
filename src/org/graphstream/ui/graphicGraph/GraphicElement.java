@@ -75,6 +75,24 @@ public abstract class GraphicElement extends AbstractElement {
 	public interface SwingElementRenderer {}
 
 	/**
+	 * A special object renderers can register inside the graphic element
+	 * to monitor changes in dedicated attributes and maintain data about the
+	 * geometry, decoration, dynamic size or color, etc. There is actually only
+	 * one such element per element. 
+	 */
+	public interface GraphicElementData {
+		/**
+		 * Called each time the position of an element changed.
+		 */
+		void positionChanged();
+		void pointsChanged();
+		void sizeChanged();
+		void labelChanged();
+		void iconChanged();
+		void colorChanged();
+	}
+
+	/**
 	 * Graph containing this element.
 	 */
 	protected GraphicGraph mygraph;
@@ -153,13 +171,17 @@ public abstract class GraphicElement extends AbstractElement {
 	 * The element center.
 	 */
 	public abstract Point3 getCenter();
-	
+
 	/**
-	 * The associated GUI component, or null if none.
+	 * The associated GUI component.
+	 * 
+	 * @return An object.
 	 */
 	public Object getComponent() {
 		return component;
 	}
+
+	// Commands
 
 	/**
 	 * The graphic element was removed from the graphic graph, clean up.
