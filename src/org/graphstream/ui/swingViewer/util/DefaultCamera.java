@@ -723,7 +723,8 @@ public class DefaultCamera implements Camera {
 		Values size = node.getStyle().getSize();
 		double w2 = metrics.lengthToPx(size, 0) / 2;
 		double h2 = size.size() > 1 ? metrics.lengthToPx(size, 1) / 2 : w2;
-		Point2D.Double src = new Point2D.Double(node.getX(), node.getY());
+		Point3 p = node.center;
+		Point2D.Double src = new Point2D.Double(p.x, p.y);
 		boolean vis = true;
 
 		Tx.transform(src, src);
@@ -800,22 +801,6 @@ public class DefaultCamera implements Camera {
 		Point2D.Double pos = new Point2D.Double();
 
 		return getSpritePosition(sprite, pos, Units.PX);
-		// if( sprite.getUnits() == Units.PX )
-		// {
-		// return new Point2D.Double( sprite.getX(), sprite.getY() );
-		// }
-		// else if( sprite.getUnits() == Units.GU )
-		// {
-		// Point2D.Double pos = new Point2D.Double( sprite.getX(), sprite.getY()
-		// );
-		// return (Point2D.Double) Tx.transform( pos, pos );
-		// }
-		// else// if( sprite.getUnits() == Units.PERCENTS )
-		// {
-		// return new Point2D.Double(
-		// (sprite.getX()/100f)*metrics.viewport.data[0],
-		// (sprite.getY()/100f)*metrics.viewport.data[1] );
-		// }
 	}
 
 	/**
@@ -833,7 +818,8 @@ public class DefaultCamera implements Camera {
 		Values size = elt.getStyle().getSize();
 		double w2 = metrics.lengthToPx(size, 0) / 2;
 		double h2 = size.size() > 1 ? metrics.lengthToPx(size, 1) / 2 : w2;
-		Point2D.Double src = new Point2D.Double(elt.getX(), elt.getY());
+		Point3 p = elt.getCenter();
+		Point2D.Double src = new Point2D.Double(p.x, p.y);
 		Point2D.Double dst = new Point2D.Double();
 
 		Tx.transform(src, dst);
@@ -918,26 +904,26 @@ public class DefaultCamera implements Camera {
 			pos = new Point2D.Double();
 
 		if (sprite.getUnits() == units) {
-			pos.x = sprite.getX();
-			pos.y = sprite.getY();
+			pos.x = sprite.center.x;
+			pos.y = sprite.center.y;
 		} else if (units == Units.GU && sprite.getUnits() == Units.PX) {
-			pos.x = sprite.getX();
-			pos.y = sprite.getY();
+			pos.x = sprite.center.x;
+			pos.y = sprite.center.y;
 
 			xT.transform(pos, pos);
 		} else if (units == Units.PX && sprite.getUnits() == Units.GU) {
-			pos.x = sprite.getX();
-			pos.y = sprite.getY();
+			pos.x = sprite.center.x;
+			pos.y = sprite.center.y;
 
 			Tx.transform(pos, pos);
 		} else if (units == Units.GU && sprite.getUnits() == Units.PERCENTS) {
-			pos.x = metrics.lo.x + (sprite.getX() / 100f)
+			pos.x = metrics.lo.x + (sprite.center.x / 100f)
 					* metrics.graphWidthGU();
-			pos.y = metrics.lo.y + (sprite.getY() / 100f)
+			pos.y = metrics.lo.y + (sprite.center.y / 100f)
 					* metrics.graphHeightGU();
 		} else if (units == Units.PX && sprite.getUnits() == Units.PERCENTS) {
-			pos.x = (sprite.getX() / 100f) * metrics.viewport.data[0];
-			pos.y = (sprite.getY() / 100f) * metrics.viewport.data[1];
+			pos.x = (sprite.center.x / 100f) * metrics.viewport.data[0];
+			pos.y = (sprite.center.y / 100f) * metrics.viewport.data[1];
 		} else {
 			throw new RuntimeException("Unhandled yet sprite positioning.");
 		}
@@ -963,11 +949,11 @@ public class DefaultCamera implements Camera {
 			pos = new Point2D.Double();
 
 		GraphicNode node = sprite.getNodeAttachment();
-		double radius = metrics.lengthToGu(sprite.getX(), sprite.getUnits());
-		double z = (double) (sprite.getZ() * (Math.PI / 180f));
+		double radius = metrics.lengthToGu(sprite.center.x, sprite.getUnits());
+		double z = (double) (sprite.center.y * (Math.PI / 180f));
 
-		pos.x = node.x + ((double) Math.cos(z) * radius);
-		pos.y = node.y + ((double) Math.sin(z) * radius);
+		pos.x = node.center.x + ((double) Math.cos(z) * radius);
+		pos.y = node.center.y + ((double) Math.sin(z) * radius);
 
 		if (units == Units.PX)
 			Tx.transform(pos, pos);
@@ -981,7 +967,7 @@ public class DefaultCamera implements Camera {
 	 * @param sprite
 	 *            The sprite.
 	 * @param pos
-	 *            Where to stored the computed position, if null, the position
+	 *            Where to store the computed position, if null, the position
 	 *            is created.
 	 * @param units
 	 *            The units the computed position must be given into.
@@ -996,28 +982,28 @@ public class DefaultCamera implements Camera {
 
 		if (edge.isCurve()) {
 			double ctrl[] = edge.getControlPoints();
-			Point2 p0 = new Point2(edge.from.getX(), edge.from.getY());
+			Point2 p0 = new Point2(edge.from.center.x, edge.from.center.y);
 			Point2 p1 = new Point2(ctrl[0], ctrl[1]);
 			Point2 p2 = new Point2(ctrl[1], ctrl[2]);
-			Point2 p3 = new Point2(edge.to.getX(), edge.to.getY());
+			Point2 p3 = new Point2(edge.to.center.x, edge.to.center.y);
 			Vector2 perp = CubicCurve.perpendicular(p0, p1, p2, p3,
-					sprite.getX());
-			double y = metrics.lengthToGu(sprite.getY(), sprite.getUnits());
+					sprite.center.x);
+			double y = metrics.lengthToGu(sprite.center.y, sprite.getUnits());
 
 			perp.normalize();
 			perp.scalarMult(y);
 
-			pos.x = CubicCurve.eval(p0.x, p1.x, p2.x, p3.x, sprite.getX())
+			pos.x = CubicCurve.eval(p0.x, p1.x, p2.x, p3.x, sprite.center.x)
 					- perp.data[0];
-			pos.y = CubicCurve.eval(p0.y, p1.y, p2.y, p3.y, sprite.getX())
+			pos.y = CubicCurve.eval(p0.y, p1.y, p2.y, p3.y, sprite.center.y)
 					- perp.data[1];
 		} else {
-			double x = ((GraphicNode) edge.getSourceNode()).x;
-			double y = ((GraphicNode) edge.getSourceNode()).y;
-			double dx = ((GraphicNode) edge.getTargetNode()).x - x;
-			double dy = ((GraphicNode) edge.getTargetNode()).y - y;
-			double d = sprite.getX(); // Percent on the edge.
-			double o = metrics.lengthToGu(sprite.getY(), sprite.getUnits());
+			double x = ((GraphicNode) edge.getSourceNode()).center.x;
+			double y = ((GraphicNode) edge.getSourceNode()).center.y;
+			double dx = ((GraphicNode) edge.getTargetNode()).center.x - x;
+			double dy = ((GraphicNode) edge.getTargetNode()).center.y - y;
+			double d = sprite.center.x; // Percent on the edge.
+			double o = metrics.lengthToGu(sprite.center.y, sprite.getUnits());
 			// Offset from the position given by percent, perpendicular to the
 			// edge.
 

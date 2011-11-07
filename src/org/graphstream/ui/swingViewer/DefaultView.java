@@ -51,12 +51,12 @@ import org.graphstream.ui.swingViewer.util.ShortcutManager;
  * Base for constructing views.
  * 
  * <p>
- * This base view is an abstract class that provides mechanism that are
+ * This base view is an abstract class that provides mechanisms that are
  * necessary in any view :
  * <ul>
- * <li>the painting and repainting mechanism.</li>
- * <li>the optional frame handling.</li>
- * <li>the frame closing protocol.</li>
+ * 		<li>the painting and repainting mechanism.</li>
+ * 		<li>the optional frame handling.</li>
+ * 		<li>the frame closing protocol.</li>
  * </ul>
  * </p>
  * 

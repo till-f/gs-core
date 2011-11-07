@@ -38,6 +38,7 @@ import java.awt.geom.AffineTransform;
 import org.graphstream.graph.Element;
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
+import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroup.ElementEvents;
@@ -47,8 +48,6 @@ import org.graphstream.ui.swingViewer.util.Camera;
 import org.graphstream.ui.swingViewer.util.FontCache;
 
 public abstract class ElementRenderer {
-	// Attribute
-
 	/**
 	 * Allow to know if an event began or ended.
 	 */
@@ -60,15 +59,11 @@ public abstract class ElementRenderer {
 
 	protected int textSize;
 
-	// Constructor
-
 	/**
 	 * New swing element renderer for the given style group.
 	 */
 	public ElementRenderer() {
 	}
-
-	// Command
 
 	/**
 	 * Render all the (visible) elements of the group.
@@ -208,6 +203,7 @@ public abstract class ElementRenderer {
 				&& group.getTextVisibilityMode() != StyleConstants.TextVisibilityMode.HIDDEN) {
 
 			Point3 p = null;
+			Point3 c = element.getCenter();
 			GraphicSprite s = null;
 
 			if (element instanceof GraphicSprite)
@@ -217,32 +213,32 @@ public abstract class ElementRenderer {
 				double w = camera.getMetrics().lengthToPx(group.getSize(),
 						0);
 				p = new Point3();
-				p.x = element.getX() + (w / 2);
-				p.y = element.getY();
+				p.x = c.x + (w / 2);
+				p.y = c.y;
 			} else if (s != null && s.getUnits() == Units.PERCENTS) {
 				double w = camera.getMetrics().lengthToPx(group.getSize(),
 						0);
 				p = new Point3();
-				p.x = camera.getMetrics().viewport.data[1] * element.getX()
+				p.x = camera.getMetrics().viewport.data[1] * c.x
 						+ (w / 2);
-				p.y = camera.getMetrics().viewport.data[2] * element.getY();
-			} else {
+				p.y = camera.getMetrics().viewport.data[2] * c.y;
+			} else if(element instanceof GraphicNode) {
 				double w = camera.getMetrics().lengthToGu(group.getSize(),
 						0);
-				p = camera.transformGuToPx(element.getX() + (w / 2), element
-						.getY(), 0);
+				p = camera.transformGuToPx(c.x + (w / 2), c.y, 0);
+			} else {
+				p = camera.transformGuToPx(c.x, c.y, 0);
 			}
 
 			AffineTransform Tx = g.getTransform();
-			Color c = g.getColor();
+			Color clr = g.getColor();
 
 			g.setColor(textColor);
 			g.setFont(textFont);
 			g.setTransform(new AffineTransform());
-			g.drawString(label, (float) p.x, (float) (p.y + textSize / 3)); // approximation
-			// to gain time.
+			g.drawString(label, (float) p.x, (float) (p.y + textSize / 3)); // approximation to gain time.
 			g.setTransform(Tx);
-			g.setColor(c);
+			g.setColor(clr);
 		}
 	}
 

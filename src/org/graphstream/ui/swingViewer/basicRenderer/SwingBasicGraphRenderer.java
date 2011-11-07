@@ -68,37 +68,53 @@ import org.graphstream.ui.swingViewer.util.GraphMetrics;
  * This is a minimal implementation of a renderer that only supports a subset of
  * the CSS :
  * <ul>
- * <li>Colours</li>
- * <li>Widths</li>
- * <li>Borders</li>
+ * 		<li>Fill</li>
+ * 		<li>Size</li>
+ * 		<li>Stroke</li>
+ * 		<li>Text</li>
  * </ul>
  * </p>
- * 
- * TODO - Les sprites. - Les bordures.
  */
 public class SwingBasicGraphRenderer extends GraphRendererBase {
-	// Attribute
-
 	/**
 	 * Set the view on the view port defined by the metrics.
 	 */
 	protected DefaultCamera camera = new DefaultCamera();
 
+	/**
+	 * Specific renderer for nodes.
+	 */
 	protected NodeRenderer nodeRenderer = new NodeRenderer();
 
+	/**
+	 * Specific renderer for edges.
+	 */
 	protected EdgeRenderer edgeRenderer = new EdgeRenderer();
 
+	/**
+	 * Specific renderer for sprites.
+	 */
 	protected SpriteRenderer spriteRenderer = new SpriteRenderer();
 
+	/**
+	 * Render the background of the graph, before anything is drawn.
+	 */
 	protected LayerRenderer backRenderer = null;
 
+	/**
+	 * Render the foreground of the graph, after anything is drawn.
+	 */
 	protected LayerRenderer foreRenderer = null;
-	
+
+	/**
+	 * Optional output log of the frame-per-second.
+	 */
 	protected PrintStream fpsLog = null;
 	
+	/**
+	 * Used to measure FPS.
+	 */
 	protected long T1 = 0;
-
-	// Construction
 
 	public SwingBasicGraphRenderer() {
 	}
@@ -134,8 +150,6 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		return camera.findNodeOrSpriteAt(graph, x, y);
 	}
 
-	// Command
-
 	public void render(Graphics2D g, int width, int height) {
 		// If not closed, one or two renders can occur after closed.
 		if (graph != null) {
@@ -155,14 +169,25 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 			endFrame();
 		}
 	}
-	
+
+	/**
+	 * Create or remove the FPS logger and start measuring time if activated.
+	 */
 	protected void beginFrame() {
-		if(graph.hasLabel("ui.log") && fpsLog == null) {
-			try {
-				fpsLog = new PrintStream(graph.getLabel("ui.log").toString());
-			} catch(IOException e) {
+		if(graph.hasLabel("ui.log")) {
+			if(fpsLog == null) {
+				try {
+					fpsLog = new PrintStream(graph.getLabel("ui.log").toString());
+				} catch(IOException e) {
+					fpsLog = null;
+					e.printStackTrace();
+				}
+			}
+		} else {
+			if(fpsLog != null) {
+				fpsLog.flush();
+				fpsLog.close();
 				fpsLog = null;
-				e.printStackTrace();
 			}
 		}
 		
@@ -171,6 +196,9 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		}
 	}
 	
+	/**
+	 * End measuring frame time.
+	 */
 	protected void endFrame() {
 		if(fpsLog != null) {
 			long T2 = System.currentTimeMillis();
@@ -182,38 +210,25 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 
 	public void moveElementAtPx(GraphicElement element, double x, double y) {
 		Point3 p = camera.transformPxToGu(x, y);
-		element.move(p.x, p.y, element.getZ());
+		element.move(p.x, p.y, element.getCenter().z);
 	}
 
-	// Rendering
-
+	/**
+	 * Render the whole graph.
+	 */
 	protected void renderGraph(Graphics2D g) {
-		StyleGroup style = graph.getStyle();
-		Rectangle2D rect = new Rectangle2D.Double();
-		GraphMetrics metrics = camera.getMetrics();
-		double px1 = metrics.px1;
-		Value stroke = style.getShadowWidth();
-
 		setupGraphics(g);
 		renderGraphBackground(g);
 		renderBackLayer(g);
 		camera.pushView(graph, g);
 		renderGraphElements(g);
-
-		if (style.getStrokeMode() != StyleConstants.StrokeMode.NONE
-				&& style.getStrokeWidth().value != 0) {
-			rect.setFrame(metrics.lo.x, metrics.lo.y + px1,
-					metrics.size.data[0] - px1, metrics.size.data[1] - px1);
-			g.setStroke(new BasicStroke((float)metrics.lengthToGu(stroke)));
-			g.setColor(graph.getStyle().getStrokeColor(0));
-			g.draw(rect);
-		}
-
+		renderGraphForeground(g);
 		camera.popView(g);
 		renderForeLayer(g);
 	}
 
 	protected void setupGraphics(Graphics2D g) {
+		// XXX we do this at each frame !!! Why not doing this only when it changes !!! XXX
 		if (graph.hasAttribute("ui.antialias")) {
 			g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
 					RenderingHints.VALUE_STROKE_PURE);
@@ -252,10 +267,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	}
 
 	/**
-	 * Render the background of the graph.
-	 * 
-	 * @param g
-	 *            The Swing graphics.
+	 * Render the background of the graph. This merely colors the background with the fill color.
 	 */
 	protected void renderGraphBackground(Graphics2D g) {
 		StyleGroup group = graph.getStyle();
@@ -266,54 +278,56 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	}
 
 	/**
-	 * Render the element of the graph.
-	 * 
-	 * @param g
-	 *            The Swing graphics.
+	 * Render the foreground of the graph. This draws a border if there is a stroke around the
+	 * graph.
+	 */
+	protected void renderGraphForeground(Graphics2D g) {
+		StyleGroup style = graph.getStyle();
+		Rectangle2D rect = new Rectangle2D.Double();
+		GraphMetrics metrics = camera.getMetrics();
+		double px1 = metrics.px1;
+		Value stroke = style.getShadowWidth();
+		
+		if (style.getStrokeMode() != StyleConstants.StrokeMode.NONE
+				&& style.getStrokeWidth().value != 0) {
+			rect.setFrame(metrics.lo.x, metrics.lo.y + px1,
+					metrics.size.data[0] - px1, metrics.size.data[1] - px1);
+			g.setStroke(new BasicStroke((float)metrics.lengthToGu(stroke)));
+			g.setColor(graph.getStyle().getStrokeColor(0));
+			g.draw(rect);
+		}
+	}
+	
+	/**
+	 * Render each element of the graph.
 	 */
 	protected void renderGraphElements(Graphics2D g) {
-		try {
-			StyleGroupSet sgs = graph.getStyleGroups();
+		StyleGroupSet sgs = graph.getStyleGroups();
 
-			if (sgs != null) {
-				for (HashSet<StyleGroup> groups : sgs.zIndex()) {
-					for (StyleGroup group : groups) {
-						renderGroup(g, group);
-					}
+		if (sgs != null) {
+			for (HashSet<StyleGroup> groups : sgs.zIndex()) {
+				for (StyleGroup group : groups) {
+					renderGroup(g, group);
 				}
 			}
-		} catch (NullPointerException e) {
-			// Mysterious bug, where are you ?
-			e.printStackTrace();
-			System.err.printf("We spotted the mysterious bug ...");
-			System.exit(1);
 		}
 	}
 
 	/**
 	 * Render a style group.
-	 * 
-	 * @param g
-	 *            The Swing graphics.
-	 * @param group
-	 *            The group to render.
 	 */
 	protected void renderGroup(Graphics2D g, StyleGroup group) {
 		switch (group.getType()) {
-		case NODE:
-			nodeRenderer.render(group, g, camera);
-			break;
-		case EDGE:
-			edgeRenderer.render(group, g, camera);
-			break;
-		case SPRITE:
-			spriteRenderer.render(group, g, camera);
-			break;
+			case NODE:
+				nodeRenderer.render(group, g, camera);
+				break;
+			case EDGE:
+				edgeRenderer.render(group, g, camera);
+				break;
+			case SPRITE:
+				spriteRenderer.render(group, g, camera);
+				break;
 		}
-	}
-
-	protected void setupSpriteStyle(Graphics2D g, StyleGroup group) {
-		g.setColor(group.getFillColor(0));
 	}
 
 	protected void renderSelection(Graphics2D g) {
@@ -374,6 +388,10 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 				metrics.hiVisible.y);
 	}
 
+//	protected void setupSpriteStyle(Graphics2D g, StyleGroup group) {
+//		g.setColor(group.getFillColor(0));
+//	}
+
 	// Utility | Debug
 
 	/**
@@ -410,9 +428,8 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 
 	public void screenshot(String filename, int width, int height) {
 		if (graph != null) {
-			if (filename.endsWith("png") || filename.endsWith("PNG")) {
-				BufferedImage img = new BufferedImage(width, height,
-						BufferedImage.TYPE_INT_ARGB);
+			if (filename.toLowerCase().endsWith("png")) {
+				BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 				renderGraph(img.createGraphics());
 
 				File file = new File(filename);
@@ -421,7 +438,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-			} else if (filename.endsWith("bmp") || filename.endsWith("BMP")) {
+			} else if (filename.toLowerCase().endsWith("bmp")) {
 				BufferedImage img = new BufferedImage(width, height,
 						BufferedImage.TYPE_INT_RGB);
 				renderGraph(img.createGraphics());
@@ -432,8 +449,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-			} else if (filename.endsWith("jpg") || filename.endsWith("JPG")
-					|| filename.endsWith("jpeg") || filename.endsWith("JPEG")) {
+			} else {// if (filename.toLowerCase().endsWith("jpg") || filename.toLowerCase().endsWith("jpeg")) {
 				BufferedImage img = new BufferedImage(width, height,
 						BufferedImage.TYPE_INT_RGB);
 				renderGraph(img.createGraphics());

@@ -28,15 +28,46 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
  */
-package org.graphstream.ui.graphicGraph;
+
+package org.graphstream.ui.swingViewer.basicRenderer.skeletons;
+
+import org.graphstream.ui.graphicGraph.GraphicElement;
 
 /**
- * Interface for entities interested in changes on graphic elements.
- * 
- * This interface main role is to advise renderer that an element changed and
- * therefore must be redrawn. This allows to avoid redrawing elements that did
- * not changed.
+ * Base skeleton.
  */
-public interface GraphicElementChangeListener {
-	void graphicElementChanged(GraphicElement element);
+public class BaseSkeleton implements GraphicElement.Skeleton {
+	protected GraphicElement element;
+	
+	public void installed(GraphicElement element) {
+		this.element = element;
+	}
+
+	public void uninstalled() {
+		this.element = null;
+	}
+
+	public void positionChanged() {
+	}
+
+	public void pointsChanged(Object newValue) {
+	}
+
+	public void sizeChanged(Object newValue) {
+	}
+
+	public void labelChanged() {
+	}
+
+	public void iconChanged(Object newValue) {
+	}
+
+	public void colorChanged(Object newValue) {
+	}
+
+	public void unknownUIAttributeChanged(String attribute, Object newValue) {
+	}
+
+	public void styleChanged() {
+	}
 }

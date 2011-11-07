@@ -37,10 +37,25 @@ import java.awt.Graphics2D;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.graphicGraph.StyleGroupListener;
 
+/**
+ * A base to build graph renderers.
+ *
+ * <p>
+ * This defines:
+ * <ul>
+ * 		<li>A reference to the graphic graph.</li>
+ * 		<li>A "selection" object that represents the current selection, and is
+ *      	updated according to the various methods changing the selection.</li>
+ * 		<li>A reference to a "rendering surface" that can be any kind of container.</li>
+ * </ul>
+ * </p>
+ * 
+ * <p>
+ * In addition, this graph renderer is a listener for the style groups.
+ * </p>
+ */
 public abstract class GraphRendererBase implements GraphRenderer,
 		StyleGroupListener {
-	// Attribute
-
 	/**
 	 * The graph to draw.
 	 */
@@ -56,12 +71,14 @@ public abstract class GraphRendererBase implements GraphRenderer,
 	 */
 	protected Container renderingSurface;
 
-	// Initialisation
-
+	/**
+	 * Open the renderer, keep a reference on the graphic graph and
+	 * rendering surface, and registers as a listener on the style groups.
+	 */
 	public void open(GraphicGraph graph, Container renderingSurface) {
 		if (this.graph != null)
 			throw new RuntimeException(
-					"renderer already open, cannot open twice");
+					"renderer already open, use close() first");
 
 		this.graph = graph;
 		this.renderingSurface = renderingSurface;
@@ -69,14 +86,17 @@ public abstract class GraphRendererBase implements GraphRenderer,
 		this.graph.getStyleGroups().addListener(this);
 	}
 
+	/**
+	 * Release any reference to the graph, the rendering surface and
+	 * removes this a as a listener for the style groups. 
+	 */
 	public void close() {
 		if (graph != null) {
 			graph.getStyleGroups().removeListener(this);
+			renderingSurface = null;
 			graph = null;
 		}
 	}
-
-	// Access
 
 	public Container getRenderingSurface() {
 		return renderingSurface;
@@ -103,8 +123,9 @@ public abstract class GraphRendererBase implements GraphRenderer,
 		selection = null;
 	}
 
-	// Utilities
-
+	/**
+	 * Utility method that draws a "nothing to display" message.
+	 */
 	protected void displayNothingToDo(Graphics2D g, int w, int h) {
 		String msg1 = "Graph width/height/depth is zero !!";
 		String msg2 = "Place components using the 'xyz' attribute.";

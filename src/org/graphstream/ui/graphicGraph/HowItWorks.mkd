@@ -22,7 +22,7 @@ Basically, a graphic graph can be seen as the sum of three elements:
 * A set of style groups (`StyleGroupSet`) that define which graph elements maps to which styles.
 * A connectivity that allows to know which node it tied to which other one.
 
-``An important note``: The `GraphicGraph` class is *NOT* a general purpose graph! It is not even intented to be used as a graph, but only as an easy way to represent the graph data needed to display a graph. Although it implements the `Graph` interface, it would perform poorly in almost all usual tasks requiring a general purpose graph. The data structures in the `graph` package are far more optimized to this end. However, the `GraphicGraph` is fairly optimized to graph drawing. It allows to process the graph elements in their Z order, style group by style group. It allows to easily be notified when important UI attributes change (lable, position, color, size). It defines specific `Elements` classes like `GraphicNode`, `GraphicEdge` and the very special `GraphicSprite`. The reason `GraphicGraph` implements `Graph` is that it allows it to be a Sink for a general graph, and that it is far more elegant to see it as a `Graph` is most situations, however, internally, it is not stored as a graph but as a set of style groups, stored in Z order, with additional connectivity information.
+``An important note``: The `GraphicGraph` class is *NOT* a general purpose graph! It is not even intented to be used as a graph, but only as an easy way to represent the graph data needed to display a graph. Although it implements the `Graph` interface, it would perform poorly in almost all usual tasks requiring a general purpose graph. The data structures in the `graph` package are far more optimized to this end. However, the `GraphicGraph` is fairly optimized for graph drawing. It allows to process the graph elements in their Z order, style group by style group. It allows to easily be notified when important UI attributes change (label, position, color, size). It defines specific `Elements` classes like `GraphicNode`, `GraphicEdge` and the very special `GraphicSprite`. The reason `GraphicGraph` implements `Graph` is that it allows it to be a Sink for a general graph, and that it is far more elegant to see it as a `Graph` in most situations, however, internally, it is not stored as a graph but as a set of style groups, stored in Z order, with additional connectivity information.
 
 The graphic graph, graphs and threads
 -------------------------------------
@@ -71,7 +71,7 @@ The graphic graph and all its graphic elements (including sprites) store attribu
 * attribute "label", although "ui.label" is preferred,
 * attribute "stylesheet", although "ui.stylesheet" is preferred.
 	
-Some of these attributes are directly converted to object attributes (variables of an instance) of the graphic graph elements. All styles are parsed automatically and update the style sheet.
+Some of these attributes are directly converted to object attributes (variables of an instance) of the graphic graph elements. For exemple all the "ui.sprite." attributes either create or delete a `GraphicSprite` object or modify such an object. Similarly, "ui.style." and "ui.stylesheet" styles are parsed automatically and update the style sheet object.
 
 The graphic graph, as all graphs in GraphStream is a `Filter`, that is something that can serve as sink or source. Most of the time the graphic graph is a sink, a copy of another graph that is used to do the real work on the graph. The graphic graph copies it for the purpose of displaying the main graph.
 	
@@ -107,7 +107,7 @@ When a style change the style groups are automatically updated, some elements ma
 How the sprites work
 --------------------
 
-Sprites are little graphical elements that can be added in a display of a graph to represent data stored in the graph. Sprites can be attached to nodes or edges or float freely in the graph representation area. Several sprites can be attached to one node, to one edge or to the graph. Sprites can have a style, in the very same way nodes, edges and graph can have one. You should read the general GraphStream documentation on sprite to better understand how they are attached to nodes and edges, and how they are positioned according to their attachment.
+Sprites are little (gentle) graphical elements that can be added in a display of a graph to represent data stored in the graph. Sprites can be attached to nodes or edges or float freely in the graph representation area. Several sprites can be attached to one node, to one edge or to the graph. Sprites can have a style, in the very same way nodes, edges and graph can have one. You should read the general GraphStream documentation on sprite to better understand how they are attached to nodes and edges, and how they are positioned according to their attachment.
 
 Sprites can move along edges, rotate around nodes or move freely in the graph display. They can change in appearance at any time. Therefore not only are they able to represent data, but they also can represent data dynamics.
 
@@ -210,6 +210,21 @@ So when such an event occur on an element it cannot be draw in a bulk operation,
 Most of the time all the elements of a group will be in the bulk set. But it can happen that the dynamic and event subset contain some elements (in which case the elements will not be in bulk, these subsets are exclusive).
 
 Therefore when drawing the elements of the group you first have to draw all the bulk elements. Then if they are not empty, draw the event and dynamic element subsets. The style group provide iterators for these three subsets. This way you can optimise drawing. Naturally the style group class also provides an iterator on all the elements without distinction and, if you push the graphic state for each element you can draw them using such an iterator.
+
+Attachments
+-----------
+
+Graphic elements can be attached one to another. When an element B is attached to another A, the attached one B is called each time its attach A is moved. This notification system is by no mean a necessity, but some renderers may need it to recompute some geometry when elements are moved. For example if an edge has a complex shape it can benefit greatly to be attached to its two nodes so that they all it when they move. It can then for example position a flag that tells the geometry needs to be recompute. At the next access to its geometry, it can be recomputed (using a flag here is useful, since the two nodes would otherwise trigger two computation of the geometry, when only one
+is needed). Another example is with sprites that can recompute their (sometimes complex) position only when their attachement changed.
+
+Be careful with sprites. Sprites can be attached to a node or edge using the sprite API, but this does not place them in the notification list of their node or edge. The general graphic element attachement process described here always require an explicit registration to receive notification.
+
+Skeletons
+---------
+
+Each `GraphicElement` can contain (but this is not required) a `Skeleton`. A skeleton is a way for renderers to store data in the graphic elements that would be useful when drawing the graph. Skeletons are listener of the graphic elements and specific methods are called when the element is moved, when some of its important attributes are changed etc. 
+
+This mechanism allows to define properties that are updated only when the graphic element changes. Used in combination with the attachements described above, it can help greatly in avoiding unecessary computations.
 
 How JComponent style works
 --------------------------

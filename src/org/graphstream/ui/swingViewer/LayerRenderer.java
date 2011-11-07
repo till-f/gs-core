@@ -35,8 +35,9 @@ import java.awt.Graphics2D;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 
 /**
- * A specific rendering class that can be plugged in any view and is called to
- * draw under or above the graph.
+ * A specific rendering class that can be plugged in any view (and in any graph
+ * renderer) and is called to draw under or above the graph, before and after the
+ * rendering of a frame.
  * 
  * @see View#setForeLayoutRenderer(LayerRenderer)
  * @see View#setBackLayerRenderer(LayerRenderer)

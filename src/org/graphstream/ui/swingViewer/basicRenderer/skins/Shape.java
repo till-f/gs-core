@@ -28,4 +28,38 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
  */
-package org.graphstream.ui.graphicGraph;
+package org.graphstream.ui.swingViewer.basicRenderer.skins;
+
+import java.awt.Graphics2D;
+
+import org.graphstream.ui.swingViewer.util.GraphMetrics;
+
+public abstract class Shape {
+	/**
+	 * Same as calling {@link #renderStroke(Graphics2D,GraphMetrics)} and
+	 * {@link #renderFill(Graphics2D,GraphMetrics)} at once.
+	 * 
+	 * @param g
+	 *            The Swing graphics.
+	 */
+	public void render(Graphics2D g, GraphMetrics metrics) {
+		renderStroke(g, metrics);
+		renderFill(g, metrics);
+	}
+
+	/**
+	 * Render the stroke of the shape.
+	 * 
+	 * @param g
+	 *            The Swing graphics.
+	 */
+	public abstract void renderStroke(Graphics2D g, GraphMetrics metrics);
+
+	/**
+	 * Render the filled part of the shape.
+	 * 
+	 * @param g
+	 *            The Swing graphics.
+	 */
+	public abstract void renderFill(Graphics2D g, GraphMetrics metrics);
+}

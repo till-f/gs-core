@@ -33,16 +33,38 @@ package org.graphstream.ui.swingViewer.util;
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 
+/**
+ * Define how the graph is viewed, what part is visible, etc.
+ * 
+ * <p>
+ * The camera is in charge of projecting coordinates in graph units (GU)
+ * into user spaces (often in pixels, PX). It defines the transformation (an affine
+ * matrix) to pass from the first to the second. It also contains the graph
+ * metrics, a set of values that give the overall dimensions of the graph in
+ * graph units, as well as the view port, the area on the screen (or any
+ * rendering surface) that will receive the results in pixels (or rendering
+ * units), and various conversion method to pass from GU to PX and the reverse. 
+ * </p>
+ * 
+ * <p>
+ * The camera defines a center at which it always points. It can zoom on the
+ * graph, pan in any direction and rotate along two axes.
+ * </p>
+ * 
+ * <p>
+ * Knowing the transformation also allows to provide services like "what element
+ * is visible ?" (in the camera view) or "on what element is the mouse
+ * cursor actually ?".
+ * </p>
+ */
 public interface Camera {
 	/**
-	 * The view centre (a point in graph units).
-	 * 
-	 * @return The view centre.
+	 * The view center (a point in graph units).
 	 */
 	Point3 getViewCenter();
 
 	/**
-	 * Change the view centre.
+	 * Change the view center.
 	 * 
 	 * @param x
 	 *            The new abscissa.
@@ -77,7 +99,7 @@ public interface Camera {
 	double getViewRotation();
 
 	/**
-	 * Rotate the view around its centre point by a given theta angles (in
+	 * Rotate the view around its center point by a given theta angles (in
 	 * degrees).
 	 * 
 	 * @param theta
@@ -89,7 +111,7 @@ public interface Camera {
 	 * A number in GU that gives the approximate graph size (often the diagonal
 	 * of the graph). This allows to compute displacements in the graph as
 	 * percent of its overall size. For example this can be used to move the
-	 * view centre.
+	 * view center.
 	 * 
 	 * @return The graph estimated size in graph units.
 	 */

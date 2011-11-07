@@ -34,17 +34,16 @@ import java.util.Iterator;
 
 import org.graphstream.graph.Node;
 import org.graphstream.stream.SourceBase.ElementType;
+import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.stylesheet.Selector;
 import org.graphstream.ui.graphicGraph.stylesheet.Style;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 
 /**
- * A small gentle sprite.
+ * Graphic data about a sprite, a small gentle sprite.
  */
 public class GraphicSprite extends GraphicElement {
-	// Attributes
-
 	/**
 	 * The node this sprite is attached to.
 	 */
@@ -58,10 +57,15 @@ public class GraphicSprite extends GraphicElement {
 	/**
 	 * Sprite position.
 	 */
-	public Values position = new Values(StyleConstants.Units.GU, 0, 0, 0);
+	public Point3 center = new Point3(0, 0, 0);
 	
-	// Constructors
+//	public Values position = new Values(StyleConstants.Units.GU, 0, 0, 0);
 
+	/**
+	 * Sprite position units (this can be specified by the user), be careful !
+	 */
+	public StyleConstants.Units units = StyleConstants.Units.GU;
+	
 	/**
 	 * New sprite.
 	 * 
@@ -80,18 +84,14 @@ public class GraphicSprite extends GraphicElement {
 
 			GraphicNode node = (GraphicNode) nodes.next();
 
-			position.setValue(0, node.x);
-			position.setValue(1, node.y);
-			position.setValue(2, node.z);
+			center.copy(node.center);
 		}
 
 		String myPrefix = String.format("ui.sprite.%s", id);
 
 		if (mygraph.getAttribute(myPrefix) == null)
-			mygraph.addAttribute(myPrefix, position);
+			mygraph.addAttribute(myPrefix, new Values(units, center.x, center.y, center.z));
 	}
-
-	// Access
 
 	/**
 	 * The node this sprite is attached to or null if not attached to an edge.
@@ -109,6 +109,12 @@ public class GraphicSprite extends GraphicElement {
 	 */
 	public GraphicEdge getEdgeAttachment() {
 		return edge;
+	}
+	
+	@Override
+	public void attachMoved(GraphicElement element) {
+		if(skeleton != null)
+			skeleton.positionChanged();
 	}
 
 	/**
@@ -153,25 +159,16 @@ public class GraphicSprite extends GraphicElement {
 	}
 
 	@Override
-	public double getX() {
-		return position.get(0);
+	public Point3 getCenter() {
+		return center;
 	}
 
-	@Override
-	public double getY() {
-		return position.get(1);
-	}
-
-	@Override
-	public double getZ() {
-		return position.get(2);
-	}
-
+	/**
+	 * The units in which the position is expressed.
+	 */
 	public Style.Units getUnits() {
-		return position.getUnits();
+		return units;
 	}
-
-	// Commands
 
 	@Override
 	public void move(double x, double y, double z) {
@@ -194,6 +191,9 @@ public class GraphicSprite extends GraphicElement {
 			this.node.addAttribute(prefix);
 
 		mygraph.graphChanged = true;
+
+		if(skeleton != null)
+			skeleton.positionChanged();
 	}
 
 	/**
@@ -212,6 +212,9 @@ public class GraphicSprite extends GraphicElement {
 			this.edge.addAttribute(prefix);
 
 		mygraph.graphChanged = true;
+
+		if(skeleton != null)
+			skeleton.positionChanged();
 	}
 
 	/**
@@ -228,6 +231,9 @@ public class GraphicSprite extends GraphicElement {
 		this.edge = null;
 		this.node = null;
 		mygraph.graphChanged = true;
+
+		if(skeleton != null)
+			skeleton.positionChanged();
 	}
 
 	/**
@@ -237,7 +243,7 @@ public class GraphicSprite extends GraphicElement {
 	 *            The coordinate.
 	 */
 	public void setPosition(double value) {
-		setPosition(value, 0, 0, getUnits());
+		setPosition(value, 0, 0, units);
 	}
 
 	/**
@@ -250,13 +256,10 @@ public class GraphicSprite extends GraphicElement {
 	 * @param z
 	 *            Third coordinate.
 	 * @param units
-	 *            The units to use for lengths and radii, null means
-	 *            "unchanged".
+	 *            The units to use for lengths and radii.
 	 */
 	public void setPosition(double x, double y, double z, Style.Units units) {
-		/*
-		 * if( node != null ) { y = checkAngle( y ); z = checkAngle( z ); } else
-		 */if (edge != null) {
+		if (edge != null) {
 			if (x < 0)
 				x = 0;
 			else if (x > 1)
@@ -265,21 +268,21 @@ public class GraphicSprite extends GraphicElement {
 
 		boolean changed = false;
 
-		if (getX() != x) {
+		if (center.x != x) {
 			changed = true;
-			position.setValue(0, x);
+			center.x = x;
 		}
-		if (getY() != y) {
+		if (center.y != y) {
 			changed = true;
-			position.setValue(1, y);
+			center.y = y;
 		}
-		if (getZ() != z) {
+		if (center.z != z) {
 			changed = true;
-			position.setValue(2, z);
+			center.z = z;
 		}
-		if (getUnits() != units) {
+		if (this.units != units) {
 			changed = true;
-			position.setUnits(units);
+			this.units = units;
 		}
 
 		if (changed) {
@@ -288,14 +291,18 @@ public class GraphicSprite extends GraphicElement {
 
 			String prefix = String.format("ui.sprite.%s", getId());
 
-			mygraph.setAttribute(prefix, position);
+			if(mygraph.feedbackXYZ)
+				mygraph.setAttribute(prefix, new Values(this.units, center.x, center.y, center.z));
+			
+			if(skeleton != null)
+				skeleton.positionChanged();
 		}
 	}
 
 	public void setPosition(Values values) {
-		double x = 0;
-		double y = 0;
-		double z = 0;
+		double x = center.x;
+		double y = center.y;
+		double z = center.z;
 
 		if (values.getValueCount() > 0)
 			x = values.get(0);
@@ -304,11 +311,6 @@ public class GraphicSprite extends GraphicElement {
 		if (values.getValueCount() > 2)
 			z = values.get(2);
 
-		// System.err.printf(
-		// "setting %s position x=%f y=%f z=%f units=%s (value in=%s)%n",
-		// getId(), x, y, z, values.units, values );
-		if (x == 1 && y == 1 && z == 1)
-			throw new RuntimeException("WTF !!!");
 		setPosition(x, y, z, values.units);
 	}
 
@@ -328,21 +330,11 @@ public class GraphicSprite extends GraphicElement {
 		super.attributeChanged(sourceId, timeId, attribute, event, oldValue,
 				newValue);
 
-		// if( attribute.equals( "ui.clicked" ) ) // Filter the clicks to avoid
-		// loops XXX BAD !!! XXX
-		// return;
-
 		String completeAttr = String.format("ui.sprite.%s.%s", getId(),
 				attribute);
-		// System.err.printf( "GSprite add attribute %s %s (old=%s) (new=%s)%n",
-		// event, attribute, oldValue, newValue );
 
 		mygraph.listeners.sendAttributeChangedEvent(sourceId, timeId,
 				mygraph.getId(), ElementType.GRAPH, completeAttr, event,
 				oldValue, newValue);
-	}
-
-	@Override
-	protected void removed() {
 	}
 }

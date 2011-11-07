@@ -42,12 +42,17 @@ import org.graphstream.ui.swingViewer.util.Camera;
  * Interface for classes that draw a GraphicGraph in a swing component.
  * 
  * <p>
- * There are two rendering mechanisms in the Swing ui package : the viewer and
+ * There are two rendering mechanisms in this UI package: the viewer and
  * the renderers. The viewer is a complete architecture to render a graph in a
- * panel or frame, handling all the details. The renderer architecture is a way
- * to only render the graph in any surface, handled directly by the developer.
- * When using the render you are must handle the graphic graph by yourself, but
- * you have a lot more flexibility.
+ * panel or frame, handling all the details of opening a window if needed, setting
+ * up a graphic graph, a renderer and calling it when the graph is changed, with
+ * a handling of the animation.
+ * </p>
+ * 
+ * <p>The renderer architecture is a way
+ * to only render a graphic graph in any surface, handled directly by the developer. One could
+ * use a renderer without using the {@link Viewer} or the {@link View}s. When using the renderer
+ * you must handle the graphic graph by yourself, but you have a lot more flexibility.
  * </p>
  * 
  * <p>
@@ -55,16 +60,21 @@ import org.graphstream.ui.swingViewer.util.Camera;
  * </p>
  */
 public interface GraphRenderer {
-	// Initialisation
-
+	/**
+	 * Called before any rendering operation.
+	 * @param graph The graphic graph to draw.
+	 * @param drawingSurface The container that will receive the painting.
+	 */
 	void open(GraphicGraph graph, Container drawingSurface);
 
+	/**
+	 * Called when the renderer is about to be released.
+	 */
 	void close();
 
-	// Access
-
 	/**
-	 * Get a camera object to provide control commands on the view.
+	 * Get a camera object to provide control commands on which part of the graph is
+	 * shown by the renderer.
 	 * 
 	 * @return a Camera instance
 	 */
@@ -140,7 +150,8 @@ public interface GraphRenderer {
 	public abstract void endSelectionAt(double x2, double y2);
 
 	/**
-	 * Force an element to move at the given location in pixels.
+	 * Force an element to move at the given location in pixels. This is
+	 * mainly used b mouse managers.
 	 * 
 	 * @param element
 	 *            The element.
@@ -152,6 +163,12 @@ public interface GraphRenderer {
 	public abstract void moveElementAtPx(GraphicElement element, double x,
 			double y);
 
+	/**
+	 * Save a bitmap image file of the current rendering.
+	 * @param filename Name of the file to save.
+	 * @param width The width in pixels of the resulting image.
+	 * @param height The height in pixels of the resulting image.
+	 */
 	public abstract void screenshot(String filename, int width, int height);
 
 	/**

@@ -49,15 +49,10 @@ import org.graphstream.ui.swingViewer.util.Camera;
  */
 public abstract class View extends JPanel {
 	private static final long serialVersionUID = 4372240131578395549L;
-	
-	// Attribute
-
 	/**
 	 * The view identifier.
 	 */
 	private String id;
-
-	// Construction
 
 	/**
 	 * New view.
@@ -69,16 +64,15 @@ public abstract class View extends JPanel {
 		id = identifier;
 	}
 
-	// Access
-
+	/**
+	 * The view unique identifier.
+	 */
 	public String getId() {
 		return id;
 	}
 
 	/**
-	 * Get a camera object to provide control commands on the view.
-	 * 
-	 * @return a Camera instance
+	 * Get a camera object to provide control on which part of the graph appears in the view.
 	 */
 	public abstract Camera getCamera();
 
@@ -112,36 +106,36 @@ public abstract class View extends JPanel {
 	public abstract ArrayList<GraphicElement> allNodesOrSpritesIn(double x1,
 			double y1, double x2, double y2);
 
-	// Command
-
 	/**
-	 * Redisplay or update the view contents. Called by the Viewer.
+	 * Redisplay or update the view contents. You should not need to call this
+	 * method yourself, it is called automatically by the viewer.
 	 * 
 	 * @param graph
 	 *            The graphic graph to represent.
 	 * @param graphChanged
 	 *            True if the graph changed since the last call to this method.
 	 */
-	public abstract void display(GraphicGraph graph, boolean graphChanged);
+	protected abstract void display(GraphicGraph graph, boolean graphChanged);
 
 	/**
-	 * Close definitively this view. Called by the Viewer.
+	 * Close definitively this view. You should not need to call this method yourself,
+	 * it is called by the viewer when the view is removed from it.
 	 * 
 	 * @param graph
 	 *            The graphic graph.
 	 */
-	public abstract void close(GraphicGraph graph);
+	protected abstract void close(GraphicGraph graph);
 
 	/**
-	 * Open this view JPanel in a frame. The argument allows to put the panel in
-	 * a new frame or to remove it from the frame (if it already exists). Called
+	 * Flag to tell to open this view JPanel in a frame. The argument allows to put the panel in
+	 * a new frame or to remove it from the frame (if it already exists). This method is called
 	 * by the Viewer.
 	 * 
 	 * @param on
 	 *            Add the panel in its own frame or remove it if it already was
 	 *            in its own frame.
 	 */
-	public abstract void openInAFrame(boolean on);
+	protected abstract void openInAFrame(boolean on);
 
 	/**
 	 * Set the size of the view frame, if any. If this view has been open in a frame, this changes
@@ -150,7 +144,7 @@ public abstract class View extends JPanel {
 	 * @param width The new width.
 	 * @param height The new height.
 	 */
-	public abstract void resizeFrame(int width, int height);
+	protected abstract void resizeFrame(int width, int height);
 
 	/**
 	 * Called by the mouse manager to specify where a node and sprite selection

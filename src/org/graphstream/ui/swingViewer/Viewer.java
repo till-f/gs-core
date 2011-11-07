@@ -53,13 +53,12 @@ import org.graphstream.ui.swingViewer.basicRenderer.SwingBasicGraphRenderer;
  * <p>
  * The viewer class is in charge of maintaining :
  * <ul>
- * <li>A "graphic graph" (a special graph that internally stores the graph under
- * the form of style sets of "graphic" elements),</li>
- * <li>The eventual proxy pipe from which the events come from (but graph events
- * can come from any kind of source),</li>
- * <li>A default view, and eventually more views on the graphic graph.</li>
- * <li>A flag that allows to repaint the view only if the graphic graph changed.
- * <li>
+ * 		<li>A "graphic graph" (a special graph that internally stores the graph under
+ * 		the form of style sets of "graphic" elements),</li>
+ * 		<li>The eventual proxy pipe from which the events come from (but graph events
+ * 		can come from any kind of source),</li>
+ * 		<li>A default view, and eventually more views on the graphic graph.</li>
+ * 		<li>A flag that allows to repaint the view only if the graphic graph changed.</li>
  * </ul>
  * </p>
  * 
@@ -69,11 +68,12 @@ import org.graphstream.ui.swingViewer.basicRenderer.SwingBasicGraphRenderer;
  * </p>
  * 
  * <p>
- * Once created, the viewer runs in a loop inside the Swing thread. You cannot
- * call methods on it directly if you are not in this thread. The only operation
- * that you can use in other threads is the constructor, the
- * {@link #addView(View)}, {@link #removeView(String)} and the {@link #close()}
- * methods. Other methods are not protected from concurrent accesses.
+ * Once created, the viewer runs in a loop inside the Swing thread, and repaint
+ * the graph as soon as its dirty flag is on. It tries to do this at a
+ * default maximum rate of 25 frames per second. However, be very careful
+ * that the viewer runs in the Swing thread. Therefore all public methods in
+ * this class are protected from concurrent accesses since they could be
+ * accessed from another thread than the Swing thread.
  * </p>
  * 
  * <p>
@@ -82,10 +82,9 @@ import org.graphstream.ui.swingViewer.basicRenderer.SwingBasicGraphRenderer;
  * loop. This allows to run algorithms on a graph in the main thread (or any
  * other thread) while letting the viewer run in the swing thread.
  * </p>
+ * </p>
  */
 public class Viewer implements ActionListener {
-	// Attributes
-
 	/**
 	 * Name of the default view.
 	 */
@@ -138,7 +137,7 @@ public class Viewer implements ActionListener {
 	protected Timer timer;
 
 	/**
-	 * Delay in milliseconds between frames.
+	 * Delay in milliseconds between frames, approximatively 25 fps.
 	 */
 	protected int delay = 40;
 
@@ -211,13 +210,13 @@ public class Viewer implements ActionListener {
 		case GRAPH_IN_SWING_THREAD:
 			graphInAnotherThread = false;
 			init(new GraphicGraph(newGGId()), (ProxyPipe) null, graph);
-			enableXYZfeedback(true);
+			//enableXYZfeedback(true);
 			break;
 		case GRAPH_IN_ANOTHER_THREAD:
 			graphInAnotherThread = true;
 			init(new GraphicGraph(newGGId()), new ThreadProxyPipe(graph, true),
 					(Source) null);
-			enableXYZfeedback(false);
+			//enableXYZfeedback(false);
 			break;
 		case GRAPH_ON_NETWORK:
 			throw new RuntimeException("TO DO, sorry !:-)");
@@ -234,7 +233,7 @@ public class Viewer implements ActionListener {
 	}
 
 	/**
-	 * Initialise the viewer.
+	 * Initialize the viewer.
 	 * 
 	 * @param graph
 	 *            The graphic graph.
@@ -293,9 +292,10 @@ public class Viewer implements ActionListener {
 	 * renderer class is given by the "gs.ui.renderer" system property. If the
 	 * class indicated by this property is not usable (not in the class path,
 	 * not of the correct type, etc.) or if the property is not present a
-	 * SwingBasicGraphRenderer is returned.
+	 * SwingBasicGraphRenderer is returned. This method is not protected from
+	 * concurrent accesses.
 	 */
-	public static GraphRenderer newGraphRenderer() {
+	protected static GraphRenderer newGraphRenderer() {
 		String rendererClassName = System.getProperty("gs.ui.renderer");
 
 		if (rendererClassName == null)
@@ -334,7 +334,9 @@ public class Viewer implements ActionListener {
 	 * What to do when a frame is closed.
 	 */
 	public CloseFramePolicy getCloseFramePolicy() {
-		return closeFramePolicy;
+		synchronized(views) {
+			return closeFramePolicy;
+		}
 	}
 
 	/**
@@ -343,7 +345,9 @@ public class Viewer implements ActionListener {
 	 * @return The new proxy pipe.
 	 */
 	public ProxyPipe newThreadProxyOnGraphicGraph() {
-		return new ThreadProxyPipe(graph);
+		synchronized(views) {
+			return new ThreadProxyPipe(graph);
+		}
 	}
 
 	/**
@@ -352,15 +356,16 @@ public class Viewer implements ActionListener {
 	 * @return The new viewer pipe.
 	 */
 	public ViewerPipe newViewerPipe() {
-		enableXYZfeedback(true);
-		return new ViewerPipe(String.format("viewer_%d",
+		synchronized(views) {
+			return new ViewerPipe(String.format("viewer_%d",
 				(int) (Math.random() * 10000)), new ThreadProxyPipe(graph,
 				false));
+		}
 	}
 
 	/**
-	 * The underlying graphic graph. Caution : Use the returned graph only
-	 * in the Swing thread !!
+	 * The underlying graphic graph. <em>Caution: Use the returned graph only
+	 * in the Swing thread !!</em>
 	 */
 	public GraphicGraph getGraphicGraph() {
 		return graph;
@@ -485,35 +490,26 @@ public class Viewer implements ActionListener {
 	}
 
 	/**
-	 * Never call this method.
+	 * Never call this method explicitly, it is public only because the ActionListener interface
+	 * forces this.
 	 */
 	public void actionPerformed(ActionEvent e) {
 		synchronized (views) {
-//long t1=System.currentTimeMillis();
-//long gsize1=graph.getNodeCount();
 			if (pumpPipe != null)
 				pumpPipe.pump();
-//long gsize2=graph.getNodeCount();
-//long t2=System.currentTimeMillis();
 
 			if (layoutPipeIn != null)
 				layoutPipeIn.pump();
-//long t3=System.currentTimeMillis();
 
 			boolean changed = graph.graphChangedFlag();
 
 			if (changed)
 				computeGraphMetrics();
-//long t4=System.currentTimeMillis();
 
 			for (View view : views.values())
 				view.display(graph, changed);
-//long t5=System.currentTimeMillis();
 
 			graph.resetGraphChangedFlag();
-			
-//System.err.printf("display pump=%f  layoutPump=%f  metrics=%f  display=%f (size delta=%d  size1=%d size2=%d)%n",
-//		(t2-t1)/1000.0, (t3-t2)/1000.0, (t4-t3)/1000.0, (t5-t4)/1000.0, (gsize2-gsize1), gsize1, gsize2);
 		}
 	}
 
@@ -550,7 +546,7 @@ public class Viewer implements ActionListener {
 
 	// Optional layout algorithm
 
-	/**
+	/*
 	 * Enable or disable the "xyz" attribute change when a node is moved in the
 	 * views. By default the "xyz" attribute is changed.
 	 * 
@@ -561,12 +557,12 @@ public class Viewer implements ActionListener {
 	 * change will be disabled until a listener is added.
 	 * 
 	 * When the viewer is created to be used only in the swing thread, this feature is always on.
-	 */
 	public void enableXYZfeedback(boolean on) {
 		synchronized(views) {
 			graph.feedbackXYZ(on);
 		}
 	}
+	 */
 
 	/**
 	 * Launch an automatic layout process that will position nodes in the

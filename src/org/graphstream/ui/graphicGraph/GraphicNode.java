@@ -46,11 +46,14 @@ import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.stylesheet.Selector;
 
 /**
- * Graphical node.
+ * Graphic data about a node.
  * 
  * <p>
- * A graphic node defines a position (x,y,z), a string label, and a style from
- * the style sheet.
+ * A graphic node defines a position center (x,y,z) that allows to
+ * draw its representation at this location. It can tell at which
+ * time this position has been setup for the first time. Most
+ * renderer will not render the node until it got a position
+ * (see the {@link #positionned} flag).
  * </p>
  * 
  * @see GraphicGraph
@@ -59,8 +62,11 @@ public class GraphicNode extends GraphicElement implements Node {
 	/**
 	 * The position of the node. In graph units.
 	 */
-	public double x, y, z;
+	public Point3 center;
 	
+	/**
+	 * True as soon as the center has been modified for the first time.
+	 */
 	public boolean positionned = false;
 
 	/**
@@ -85,43 +91,43 @@ public class GraphicNode extends GraphicElement implements Node {
 	}
 
 	@Override
-	public double getX() {
-		return x;
-	}
-
-	@Override
-	public double getY() {
-		return y;
-	}
-
-	@Override
-	public double getZ() {
-		return z;
-	}
-
-	protected Point3 getPosition() {
-		return new Point3(x, y, z);
+	public Point3 getCenter() {
+		return center;
 	}
 
 	protected void moveFromEvent(double x, double y, double z) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
-		
-		if(!positionned) { 
-			positionned = true;
-		}
+		center.set(x, y, z);
+		positionChanged();
+	}
+	
+	protected void positionChanged() {
+		positionned = true;
 
 		mygraph.graphChanged = true;
-		mygraph.boundsChanged = true;
+		mygraph.boundsChanged = true;	// Maybe ...
+
+		if (mygraph.feedbackXYZ)
+			setAttribute("xyz", center.x, center.y, center.z);
+		
+		if(skeleton != null) {
+			skeleton.positionChanged();
+
+		}
+
+		if(attached != null)
+			for(GraphicElement elt: attached)
+				elt.attachMoved(this);
+	}
+	
+	@Override
+	public void attachMoved(GraphicElement element) {
+		// Nodes are never attached.
 	}
 
 	@Override
 	public void move(double x, double y, double z) {
-		moveFromEvent(x, y, z);
-
-		if (mygraph.feedbackXYZ)
-			setAttribute("xyz", x, y, z);
+		center.set(x, y, z);
+		positionChanged();
 	}
 
 	@Override
@@ -132,19 +138,22 @@ public class GraphicNode extends GraphicElement implements Node {
 				newValue);
 
 		if (attribute.startsWith("ui.sprite.")) {
+			// An attachment ?
 			mygraph.spriteAttribute(event, this, attribute, newValue);
 		} else if (event == AttributeChangeEvent.ADD
 				|| event == AttributeChangeEvent.CHANGE) {
 			if (attribute.equals("x")) {
-				moveFromEvent(numberAttribute(newValue), y, z);
+				center.x = numberAttribute(newValue);
+				positionChanged();
 			} else if (attribute.equals("y")) {
-				moveFromEvent(x, numberAttribute(newValue), z);
+				center.y = numberAttribute(newValue);
+				positionChanged();
 			} else if (attribute.equals("z")) {
-				moveFromEvent(x, y, numberAttribute(newValue));
+				center.z = numberAttribute(newValue);
+				positionChanged();
 			} else if (attribute.equals("xy") || attribute.equals("xyz")) {
-				double pos[] = nodePosition(this);
-
-				moveFromEvent(pos[0], pos[1], pos[2]);
+				nodePosition(this, center);
+				positionChanged();
 			}
 		}
 
@@ -166,17 +175,12 @@ public class GraphicNode extends GraphicElement implements Node {
 			String xs = ((CharSequence) value).toString();
 
 			try {
-				return Float.parseFloat(xs);
+				return Double.parseDouble(xs);
 			} catch (NumberFormatException e) {
 			}
 		}
 
 		return 0;
-	}
-
-	@Override
-	protected void removed() {
-		// NOP
 	}
 
 	// Node interface.

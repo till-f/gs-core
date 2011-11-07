@@ -37,11 +37,11 @@ import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 
 /**
- * p Various geometric informations on the graphic graph.
+ * Various geometric informations on the graphic graph.
  * 
  * <p>
  * This class extends the GraphMetrics to provide not only metrics on the
- * graphic graph but also on the rendering canvas, and allow to convert from
+ * graphic graph but also on the rendering canvas, and allows to convert from
  * graph metrics to canvas metrics and the reverse.
  * </p>
  * 
@@ -51,8 +51,6 @@ import org.graphstream.ui.graphicGraph.stylesheet.Values;
  * </p>
  */
 public class GraphMetrics {
-	// Attribute
-
 	/**
 	 * Graph lower position (bottom,left,front).
 	 */
@@ -98,8 +96,6 @@ public class GraphMetrics {
 	 */
 	public double px1;
 
-	// Construction
-
 	/**
 	 * New canvas metrics with default values.
 	 */
@@ -121,10 +117,8 @@ public class GraphMetrics {
 		px1 = 1;
 	}
 
-	// Access
-
 	/**
-	 * The graph diagonal (the overall width).
+	 * The graph diagonal (either in 2D or 3D, from the lowest point to the highest).
 	 * 
 	 * @return The diagonal.
 	 */
@@ -159,19 +153,27 @@ public class GraphMetrics {
 		return hi;
 	}
 
+	/**
+	 * The graph width in graph units.
+	 */
 	public double graphWidthGU() {
 		return hi.x - lo.x;
 	}
 
+	/**
+	 * The graph height in graph units.
+	 * @return
+	 */
 	public double graphHeightGU() {
 		return hi.y - lo.y;
 	}
 
+	/**
+	 * The graph depth in graph units.
+	 */
 	public double graphDepthGU() {
 		return hi.z - lo.z;
 	}
-
-	// Access -- Convert values
 
 	/**
 	 * Convert a value in given units to graph units.
@@ -279,10 +281,9 @@ public class GraphMetrics {
 		return builder.toString();
 	}
 
-	// Command
-
 	/**
-	 * Set the output view port size in pixels.
+	 * Set the output view port size in pixels. This is the size of the rendering
+	 * surface, it need to be set each time the rendering surface is changed.
 	 * 
 	 * @param viewportWidth
 	 *            The width in pixels of the view port.
@@ -295,7 +296,8 @@ public class GraphMetrics {
 
 	/**
 	 * The ratio to pass by multiplication from pixels to graph units. This
-	 * ratio must be larger than zero, else nothing is changed.
+	 * ratio must be larger than zero, else it is not taken into account by
+	 * this method.
 	 * 
 	 * @param ratio
 	 *            The ratio.

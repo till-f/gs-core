@@ -30,6 +30,13 @@
  */
 package org.graphstream.ui.swingViewer;
 
+/**
+ * A representation of the coordinates of the selection zone.
+ * 
+ * <p>
+ * Instances of this class are used with and maintained by the {@link GraphRendererBase} class.
+ * </p>
+ */
 public class Selection {
 	public double x1, y1, x2, y2;
 }

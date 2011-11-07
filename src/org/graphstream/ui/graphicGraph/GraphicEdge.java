@@ -36,20 +36,46 @@ import java.util.HashMap;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Node;
 import org.graphstream.stream.SourceBase.ElementType;
+import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.stylesheet.Selector;
 
 /**
- * Graphical edge.
+ * Graphic data about an edge.
  * 
  * <p>
  * The graphic edge defines its source and target node as well as a direction, a
- * string label and a style from the style sheet.
+ * string label and a style from the style sheet. It also handle a "multi group".
+ * The multi group is an object created as soon as there are more than one edge
+ * between two same nodes. The group allows to easily retrieve all the edges between
+ * these two nodes and to give them an unique index allowing to draw them always
+ * at the same position.
+ * </p>
+ * 
+ * <h2>Geometry</h2>
+ * 
+ * <p>
+ * The graphic edge also handle a basic geometry for the edge. By default the edge
+ * is only defined by the two centers of its nodes. However with the "ui.points"
+ * property, the edge can have a more complex shape. The geometry records this
+ * shape. This shape can also be setup automatically. For example for multi graphs,
+ * where more than one edge can exist between two nodes, the shape of the edge is
+ * a curve. The geometry stores this. 
+ * </p>
+ * 
+ * <p>
+ * There are several kinds of geometry, depending on the type of edge. If the edge
+ * has "ui.points", its shape is decided by these points, even if this is a loop
+ * edge or if this is a multi graph. The way these points are interpreted depends
+ * on the style and the renderer. However, if there are not "ui.points" attribute,
+ * the edge can be attributed a default geometry if it is a loop or multi edge. In
+ * this case, most of the time the geometry describes a cubic curve (but the render
+ * is free to render it in another way by replacing the Geometry class used by
+ * default.
  * </p>
  * 
  * @see GraphicGraph
  */
 public class GraphicEdge extends GraphicElement implements Edge {
-	// Attributes
 
 	/**
 	 * The first node.
@@ -77,7 +103,7 @@ public class GraphicEdge extends GraphicElement implements Edge {
 	 */
 	public EdgeGroup group;
 
-	/**
+	/*
 	 * Control points for curved edges or polylines. This contains the control
 	 * points of an edge. If the edge is in 2D each sequence of two cells gives
 	 * the x and y coordinates of a control point. Else each sequence of three
@@ -85,10 +111,8 @@ public class GraphicEdge extends GraphicElement implements Edge {
 	 * points can be obtained by dividing by 2 or 3 the length of this array.
 	 * For example for cubic Bezier curves in 2D this array contains four cells.
 	 * The control points are ordered from node0 to node1.
-	 */
 	public double[] ctrl;
-
-	// Constructors
+	 */
 
 	/**
 	 * New graphic edge.
@@ -136,21 +160,15 @@ public class GraphicEdge extends GraphicElement implements Edge {
 	}
 
 	@Override
-	public double getX() {
-		return from.x + ((to.x - from.x) / 2);
+	public Point3 getCenter() {
+		Point3 from = this.from.center;
+		Point3 to   = this.to.center;
+		return new Point3(from.x + ((to.x - from.x) / 2),
+		                  from.y + ((to.y - from.y) / 2),
+		                  from.z + ((to.z - from.z) / 2));
 	}
 
-	@Override
-	public double getY() {
-		return from.y + ((to.y - from.y) / 2);
-	}
-
-	@Override
-	public double getZ() {
-		return from.z + ((to.z - from.z) / 2);
-	}
-
-	/**
+	/*
 	 * Control points for curved edges or polylines. This contains the control
 	 * points of an edge. If the edge is in 2D each sequence of two cells gives
 	 * the x and y coordinates of a control point. Else each sequence of three
@@ -162,33 +180,33 @@ public class GraphicEdge extends GraphicElement implements Edge {
 	 * 
 	 * @return The control points coordinates or null if this edge is a straight
 	 *         line.
-	 */
 	public double[] getControlPoints() {
 		return ctrl;
 	}
+	 */
 
-	/**
+	/*
 	 * True if the the edge defines control points to draw a curve or polyline.
 	 * This does not mean the edge style asks to paint the edge as a curve, only
 	 * that control points are defined.
 	 * 
 	 * @return True if control points are available.
-	 */
 	public boolean isCurve() {
 		return ctrl != null;
 	}
+	 */
 
-	/**
+	/*
 	 * Change the control points array for this edge.
 	 * 
 	 * @param points
 	 *            The new set of points. See the {@link #getControlPoints()}
 	 *            method for an explanation on the organisation of this array.
 	 * @see #getControlPoints()
-	 */
 	public void setControlPoints(double points[]) {
 		ctrl = points;
 	}
+	 */
 
 	/**
 	 * This edge is the i-th between the two same nodes.
@@ -204,18 +222,25 @@ public class GraphicEdge extends GraphicElement implements Edge {
 	public void move(double x, double y, double z) {
 		// NOP on edges !!!
 	}
+	
+	@Override
+	public void attachMoved(GraphicElement element) {
+		if(skeleton != null)
+			skeleton.positionChanged();
+	}
 
 	@Override
 	protected void attributeChanged(String sourceId, long timeId,
 			String attribute, AttributeChangeEvent event, Object oldValue,
 			Object newValue) {
 		super.attributeChanged(sourceId, timeId, attribute, event, oldValue,
-				newValue);
+			newValue);
 
 		if (attribute.startsWith("ui.sprite.")) {
+			// An attachment ?
 			mygraph.spriteAttribute(event, this, attribute, newValue);
 		}
-
+		
 		mygraph.listeners.sendAttributeChangedEvent(sourceId, timeId, getId(),
 				ElementType.EDGE, attribute, event, oldValue, newValue);
 	}
@@ -231,6 +256,7 @@ public class GraphicEdge extends GraphicElement implements Edge {
 	 *            connectivity in the graphic graph).
 	 */
 	protected void countSameEdges(ArrayList<GraphicEdge> edgeList) {
+		int before = group!=null?group.getCount() : 1;
 		for (GraphicEdge other : edgeList) {
 			if (other != this) {
 				if ((other.from == from && other.to == to)
@@ -246,6 +272,9 @@ public class GraphicEdge extends GraphicElement implements Edge {
 				}
 			}
 		}
+		
+		if(group.getCount() != before && skeleton != null)
+			skeleton.positionChanged();
 	}
 
 	@Override
@@ -256,6 +285,7 @@ public class GraphicEdge extends GraphicElement implements Edge {
 			if (group.getCount() == 1)
 				group = null;
 		}
+		super.removed();
 	}
 
 	// Edge interface
@@ -394,5 +424,41 @@ public class GraphicEdge extends GraphicElement implements Edge {
 				edges.get(i).multi = i;
 		}
 	}
-
+	
+	/*
+	 * Kinds of geometry stored as points.
+	public enum EdgeGeometryType {
+		** The edge is a loop and the cubic curve for it is computed automatically. *
+		AUTO_LOOP,
+		** The edge is a multi-edge and the cubic curve for it is computed automatically. *
+		AUTO_MULTI,
+		/** The edge is made of a set of 3D points that will not move. *
+		POINTS,
+		** The edge is made of a set of 3D vectors. *
+		VECTORS
+	}
+*/
+	
+	/*
+	 * Represents the geometry of the edge, if needed.
+	 * 
+	 * Most edges will need only the two nodes they link. However some edges have
+	 * more complex shapes that need several in-between points. This is the idea
+	 * begin this class.
+	public class EdgeGeometry {
+		*
+		 * The origin point of the edge, that is the center of the first node. 
+		 *
+		public Point3 from() {
+			return from.center;
+		}
+		
+		*
+		 * The target point of the edge, that is the center of the second node. 
+		 *
+		public Point3 to() {
+			return to.center;
+		}
+	}
+	 */
 }

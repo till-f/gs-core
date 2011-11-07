@@ -68,7 +68,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  * Graph representation used in display classes.
  * 
  * <p>
- * Warning: This class is NOT a general graph class, and it should NOT be used as it.
+ * <em>Warning</em>: This class is NOT a general graph class, and it should NOT be used as it.
  * This class is particularly dedicated to fast drawing of the graph and is internally
  * arranged to be fast for this task only. It implements graph solely to be easily susceptible
  * to be used as a sink and source for graph events. Some of the common methods
@@ -77,13 +77,25 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  * </p>
  * 
  * <p>
- * The purpose of the graphic graph is to represent a graph with some often used
- * graphic attributes (like position, label, etc.) stored as fields in the nodes
- * and edges and most of the style stored in styles pertaining to a style sheet
- * that tries to imitate the way CSS works. For example, the GraphicNode class
- * defines a label, a position (x,y,z) and a style that is taken from the style
- * sheet.
+ * The main goal of the graphic graph is to allows fast drawing of a graph.
  * </p>
+ * 
+ * <p>
+ * Its purpose is therefore to represent a graph with some often used
+ * graphic attributes (like position, label, etc.) stored as fields in the nodes
+ * and edges and a new kind of element: sprites. Each of these element also owns
+ * a styles pertaining to a style sheet that tries to imitate the way CSS works.
+ * </p>
+ *
+ * <p>
+ * The graphic graph does not completely duplicate a graph, it only
+ * store things that are useful for drawing it. Although it implements "Graph",
+ * some methods are not implemented and will throw a runtime exception. These
+ * methods are mostly utility methods like write(), read(), and naturally
+ * display().
+ * </p>
+ * 
+ * <h2>Style</h2>
  * 
  * <p>
  * The style sheet is uploaded on the graph using an attribute correspondingly
@@ -95,36 +107,57 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  * url(name)
  * </pre>
  * 
- * <p>
- * The graphic graph does not completely duplicate a graph, it only
- * store things that are useful for drawing it. Although it implements "Graph",
- * some methods are not implemented and will throw a runtime exception. These
- * methods are mostly utility methods like write(), read(), and naturally
- * display().
- * </p>
+ * <h2>Attributes</h2>
  * 
  * <p>
  * The graphic graph has the ability to store attributes like any other graph
  * element, however the attributes stored by the graphic graph are restricted.
  * There is a filter on the attribute adding methods that let pass only:
  * <ul>
- * <li>All attributes starting with "ui.".</li>
- * <li>The "x", "y", "z", "xy" and "xyz" attributes.</li>
- * <li>The "stylesheet" attribute (although "ui.stylesheet" is preferred).</li>
- * <li>The "label" attribute.</li>
+ * 		<li>All attributes starting with "ui.".</li>
+ * 		<li>The "x", "y", "z", "xy" and "xyz" attributes.</li>
+ * 		<li>The "stylesheet" attribute (although "ui.stylesheet" is preferred).</li>
+ * 		<li>The "label" attribute.</li>
  * </ul>
  * All other attributes are filtered and not stored. The result is that if the
  * graphic graph is used as an input (a source of graph events) some attributes
  * will not pass through the filter.
  * </p>
  * 
- * <p>The implementation of this graph relies on the StyleGroupSet class and this
- * is indeed its way to store its elements (grouped by style and Z level).</p>
+ * <h2>Internal representation</h2>
  * 
- * <p>In addition to this, it provides, as all graphs do, the relational information
- * for edges.</p>
+ * <p>
+ * The implementation of this graph relies on the {@link StyleGroupSet} class and this
+ * is indeed its way to store its elements (grouped by style and Z level).
+ * </p>
  * 
- * TODO : this graph cannot handle modification inside event listener methods !!
+ * <p>
+ * In addition to this, it provides, as all graphs do, the relational information
+ * for edges.
+ * </p>
+ * 
+ * <p>
+ * This graph defines specific factories for nodes and edges that create GraphicNode,
+ * and GraphicEdge instances. These factories cannot be changed. In addition, the
+ * graph handles the specific "ui.sprite." attributes to generate GraphicSprite
+ * instances that allow to easily handle sprites. In this graph, sprites are elements
+ * like nodes and edges.
+ * </p>
+ * 
+ * <p>
+ * To ease redrawing, the graph handles a "graphChanged" flag that is set to true
+ * at each change in the structure that would require a redraw. You an query this
+ * flag using {@link #graphChangedFlag()}, and reset it to false using
+ * {@link #resetGraphChangedFlag()}.
+ * </p>
+ * 
+ * <p>
+ * The graph is also able to compute its lower and upper bounds in graph units, that
+ * is, the coordinates of the top-left-front (lower bound) and upper-right-back (upper
+ * bound) node or sprite. You can use the {@link #computeBounds()} method to refresh
+ * this information, and you can access the lower bound using {@link #getMinPos()} and
+ * the upper bound with {@link #getMaxPos()}.
+ * </p>
  */
 public class GraphicGraph extends AbstractElement implements Graph,
 		StyleGroupListener {
@@ -147,20 +180,24 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	/**
 	 * The style of this graph. This is a shortcut to avoid searching it in the style sheet.
 	 */
-	public StyleGroup style;
+	protected StyleGroup style;
 
 	/**
 	 * Memorize the step events.
 	 */
-	public double step = 0;
+	protected double step = 0;
 
 	/**
-	 * Set to true each time the graph was modified internally and a redraw is needed.
+	 * Dirty bit, set to true each time the graph was modified internally and a redraw is needed,
+	 * this flag is controlled by this class as well as {@link GraphicNode}, {@link GraphicEdge}
+	 * and {@link GraphicSprite}.
 	 */
-	public boolean graphChanged;
+	protected boolean graphChanged;
 
 	/**
-	 * Set to true each time a sprite or node moved.
+	 * Dirty bit, set to true each time a sprite or node moved, this avoids recomputing bounds
+	 * endlessly. This flag is controlled by the {@link GraphicSprite} and the {@link GraphicNode}
+	 * classes.
 	 */
 	protected boolean boundsChanged = true;
 
@@ -191,10 +228,16 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	 */
 	protected boolean nullAttrError = false;
 
-	/**
+	/*
+	 * XXX Probably remove this XXX 
+	 * 
 	 * Report back the XYZ events on nodes and sprites? If enabled, each change in the position
 	 * of nodes and sprites will be sent to potential listeners of the graph. By default this is
-	 * disabled as long there are no listeners.
+	 * disabled. Be careful ! Do NOT enable this field if the graph receives the "xyz" attributes
+	 * from something else than a layout directly connected to it (if graph.display(false) was
+	 * called for example). This field is here to ask the
+	 * graph to change a "xyz" attribute if its nodes are moved directly (if graph.display(true)
+	 * was called for example).
 	 */
 	protected boolean feedbackXYZ = true;
 
@@ -247,17 +290,18 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	}
 
 	/**
-	 * True if the graph was edited or changed in any way since the last reset
-	 * of the "changed" flag.
+	 * Dirty bit, set to true if the graph was edited or changed in any way since the last reset
+	 * of the "changed" flag and needs a repaint.
 	 * 
-	 * @return true if the graph was changed.
+	 * @return true if the graph was changed and needs a repaint.
 	 */
 	public boolean graphChangedFlag() {
 		return graphChanged;
 	}
 
 	/**
-	 * Reset the "changed" flag.
+	 * Reset the dirty bit flag. Renderers call this method after having fully rendered the graphic
+	 * graph. If the flag is not reset, no need to repaint the graph.
 	 * 
 	 * @see #graphChangedFlag()
 	 */
@@ -323,36 +367,51 @@ public class GraphicGraph extends AbstractElement implements Graph,
 		return lo;
 	}
 
-	/**
+	/*
 	 * Does the graphic graph publish via attribute changes the XYZ changes on nodes and sprites
 	 * when changed ?. This is disabled by default, and enabled as soon as there is at least one
 	 * listener.
-	 */
 	public boolean feedbackXYZ() {
 		return feedbackXYZ;
 	}
+	 */
 
 	// Command
 
-	/**
+	/*
 	 * Should the graphic graph publish via attribute changes the XYZ changes on
 	 * nodes and sprites when changed ?.
-	 */
+	 * 
+	 * Be very careful with this setting. If some part of the pipeline is already
+	 * in charge of publishing "xyz" attributes (in the sources this graph is sink of), this
+	 * graph will propagate them as usual to its sink, no need to enable feedback). However
+	 * sometimes the nodes are moved directly by a special process (a layout for example) that
+	 * use the "move" methods of the GraphicNode and GraphicSprite classes. In this case, no
+	 * "xyz" attribute never passes in the event stream, so you can enable this flag to allow
+	 * the graph to produce them.
 	public void feedbackXYZ(boolean on) {
 		feedbackXYZ = on;
 	}
+	 */
 
 	/**
 	 * Compute the overall bounds of the graphic graph according to the nodes
-	 * and sprites positions. We can only compute the graph bounds from the
-	 * nodes and sprites centres since the node and graph bounds may in certain
-	 * circumstances be computed according to the graph bounds. The bounds are
-	 * stored in the graph metrics.
+	 * and sprites positions.
 	 * 
+	 * <p>
+	 * We can only compute the graph bounds from the
+	 * nodes and sprites centers to avoid an endless recursive call to this method,
+	 * since the node and sprite sizes may in certain circumstances be computed
+	 * according to the graph bounds. The bounds are stored in the graph metrics.
+	 * </p>
+	 * 
+	 * <p>
 	 * This operation will process each node and sprite and is therefore costly.
-	 * However it does this computation again only when a node or sprite moved.
-	 * Therefore it can be called several times, if nothing moved in the graph,
-	 * the computation will not be redone.
+	 * However it does this computation again only when a node or sprite moved,
+	 * according to an internal flag set by each {@link GraphicNode} or
+	 * {@link GraphicSprite} when then move. Therefore it can be called several times,
+	 * if nothing moved in the graph, the computation will not be redone.
+	 * </p>
 	 * 
 	 * @see #getMaxPos()
 	 * @see #getMinPos()
@@ -366,43 +425,42 @@ public class GraphicGraph extends AbstractElement implements Graph,
 
 			for (Node n : getEachNode()) {
 				GraphicNode node = (GraphicNode) n;
+				Point3 pos = node.center;
 
 				if(!node.hidden && node.positionned) {
-					if (node.x < lo.x)
-						lo.x = node.x;
-					if (node.x > hi.x)
-						hi.x = node.x;
-					if (node.y < lo.y)
-						lo.y = node.y;
-					if (node.y > hi.y)
-						hi.y = node.y;
-					if (node.z < lo.z)
-						lo.z = node.z;
-					if (node.z > hi.z)
-						hi.z = node.z;
+					if (pos.x < lo.x)
+						lo.x = pos.x;
+					else if (pos.x > hi.x)
+						hi.x = pos.x;
+					if (pos.y < lo.y)
+						lo.y = pos.y;
+					else if (pos.y > hi.y)
+						hi.y = pos.y;
+					if (pos.z < lo.z)
+						lo.z = pos.z;
+					else if (pos.z > hi.z)
+						hi.z = pos.z;
 				}
 			}
 
 			for (GraphicSprite sprite : spriteSet()) {
 				if (!sprite.isAttached()
 						&& sprite.getUnits() == StyleConstants.Units.GU) {
-					double x = sprite.getX();
-					double y = sprite.getY();
-					double z = sprite.getZ();
+					Point3 pos = sprite.center;
 
 					if(!sprite.hidden) {
-						if (x < lo.x)
-							lo.x = x;
-						if (x > hi.x)
-							hi.x = x;
-						if (y < lo.y)
-							lo.y = y;
-						if (y > hi.y)
-							hi.y = y;
-						if (z < lo.z)
-							lo.z = z;
-						if (z > hi.z)
-							hi.z = z;
+						if (pos.x < lo.x)
+							lo.x = pos.x;
+						else if (pos.x > hi.x)
+							hi.x = pos.x;
+						if (pos.y < lo.y)
+							lo.y = pos.y;
+						else if (pos.y > hi.y)
+							hi.y = pos.y;
+						if (pos.z < lo.z)
+							lo.z = pos.z;
+						else if (pos.z > hi.z)
+							hi.z = pos.z;
 					}
 				}
 			}
@@ -470,16 +528,24 @@ public class GraphicGraph extends AbstractElement implements Graph,
 		return node;
 	}
 
+	/**
+	 * Force a node to move at a new position.
+	 * @param id The node identifier.
+	 * @param x The new abscissa.
+	 * @param y The new ordinate.
+	 * @param z The new depth.
+	 */
 	protected void moveNode(String id, double x, double y, double z) {
 		GraphicNode node = (GraphicNode) styleGroups.getNode(id);
 
 		if (node != null) {
-			node.x = x;
-			node.y = y;
-			node.z = z;
-			node.addAttribute("x", x);
-			node.addAttribute("y", y);
-			node.addAttribute("z", z);
+			node.move(x, y, z);
+//			node.x = x;
+//			node.y = y;
+//			node.z = z;
+//			node.addAttribute("x", x);
+//			node.addAttribute("y", y);
+//			node.addAttribute("z", z);
 
 			graphChanged = true;
 		}
@@ -623,7 +689,7 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	}
 
 	/**
-	 * Display the node/edge relations.
+	 * Display the node/edge relations, for debugging purposes.
 	 */
 	public void printConnectivity() {
 		Iterator<GraphicNode> keys = connectivity.keySet().iterator();
@@ -647,7 +713,7 @@ public class GraphicGraph extends AbstractElement implements Graph,
 			StyleGroup style) {
 		if (element instanceof GraphicElement) {
 			GraphicElement ge = (GraphicElement) element;
-			ge.style = style;
+			ge.changeStyle(style);
 			graphChanged = true;
 		} else if (element instanceof GraphicGraph) {
 			GraphicGraph gg = (GraphicGraph) element;
@@ -659,7 +725,7 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	}
 
 	public void styleChanged(StyleGroup style) {
-
+		
 	}
 
 	// Graph interface
@@ -994,6 +1060,12 @@ public class GraphicGraph extends AbstractElement implements Graph,
 
 	// Sprite interface
 
+	/**
+	 * This method is called when a sprite attribute changed on the graph (or
+	 * on a node or edge). It handle the attributes, creating or deleting {@link GraphicSprite}
+	 * objects as needed, or updating them to reflect their current state. This
+	 * is the main method in charge of handling the set of sprites.
+	 */
 	protected void spriteAttribute(AttributeChangeEvent event, Element element,
 			String attribute, Object value) {
 
@@ -1038,6 +1110,10 @@ public class GraphicGraph extends AbstractElement implements Graph,
 		}
 	}
 
+	/**
+	 * Called by {@link #spriteAttribute(AttributeChangeEvent, Element, String, Object)} to
+	 * add a sprite or modify its position or attributes.
+	 */
 	protected void addOrChangeSprite(AttributeChangeEvent event,
 			Element element, String spriteId, Object value) {
 		
@@ -1071,6 +1147,11 @@ public class GraphicGraph extends AbstractElement implements Graph,
 		}
 	}
 
+	/**
+	 * Directly add a sprite in this graphic graph. The graph attributes are modified accordingly.
+	 * @param id The new sprite identifier.
+	 * @return The created sprite.
+	 */
 	public GraphicSprite addSprite(String id) {
 		String prefix = String.format("ui.sprite.%s", id);
 		addAttribute(prefix, 0, 0, 0);
@@ -1088,6 +1169,11 @@ public class GraphicGraph extends AbstractElement implements Graph,
 		return s;
 	}
 
+	/**
+	 * Directly remove a sprite from this graphic graph. The graph attributes are modified
+	 * accordingly.
+	 * @param id The sprite identifier.
+	 */
 	public void removeSprite(String id) {
 		String prefix = String.format("ui.sprite.%s", id);
 		removeAttribute(prefix);
@@ -1107,6 +1193,11 @@ public class GraphicGraph extends AbstractElement implements Graph,
 		return sprite;
 	}
 
+	/**
+	 * Decode a set the position of a sprite from an attribute value.
+	 * @param sprite The sprite to position.
+	 * @param value The value to decode.
+	 */
 	protected void positionSprite(GraphicSprite sprite, Object value) {
 		if (value instanceof Object[]) {
 			Object[] values = (Object[]) value;
