@@ -53,8 +53,7 @@ import org.graphstream.ui.graphicGraph.GraphicElement;
  * 
  * <p>
  * Knowing the transformation also allows to provide services like "what element
- * is visible ?" (in the camera view) or "on what element is the mouse
- * cursor actually ?".
+ * is visible ?" (in the camera view).
  * </p>
  */
 public interface Camera {
@@ -184,6 +183,12 @@ public interface Camera {
 	/**
 	 * Transform a point in graph units into pixels.
 	 * 
+	 * @param x
+	 *            The source point abscissa in pixels.
+	 * @param y
+	 *            The source point ordinate in pixels.
+	 * @param z
+	 *            The source point depth in pixels.
 	 * @return The transformed point.
 	 */
 	Point3 transformGuToPx(double x, double y, double z);
@@ -203,6 +208,25 @@ public interface Camera {
 	Point3 transformPxToGu(double x, double y);
 	
 	/**
+	 * Transform a point in graph units into pixels.
+	 *
+	 * @param p The point to transform.
+	 * @return The transformed point.
+	 */
+	Point3 transformGuToPx(Point3 p);
+	
+	/**
+	 * Return the given point in pixels converted in graph units (GU) using the
+	 * inverse transformation of the current projection matrix. The inverse
+	 * matrix is computed only once each time a new projection matrix is
+	 * created.
+	 * 
+	 * @param p The point to transform.
+	 * @return The resulting points in graph units.
+	 */
+	Point3 transformPxToGu(Point3 p);
+	
+	/**
 	 * True if the element would be visible on screen. The method used is to
 	 * transform the center of the element (which is always in graph units)
 	 * using the camera actual transformation to put it in pixel units. Then to
@@ -215,4 +239,5 @@ public interface Camera {
 	 * @return True if the element is visible and therefore must be rendered.
 	 */
 	boolean isVisible(GraphicElement element);
+
 }

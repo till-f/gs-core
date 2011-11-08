@@ -43,7 +43,6 @@ import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.FillMode;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
 import org.graphstream.ui.swingViewer.util.Camera;
-import org.graphstream.ui.swingViewer.util.DefaultCamera;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 public class SpriteRenderer extends ElementRenderer {

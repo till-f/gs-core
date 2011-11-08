@@ -273,8 +273,13 @@ public class GraphicEdge extends GraphicElement implements Edge {
 			}
 		}
 		
-		if(group.getCount() != before && skeleton != null)
-			skeleton.positionChanged();
+		if(group.getCount() != before) {
+			for(GraphicEdge edge:group.edges) {
+				if(edge.skeleton != null) {
+					edge.skeleton.positionChanged();
+				}
+			}
+		}
 	}
 
 	@Override

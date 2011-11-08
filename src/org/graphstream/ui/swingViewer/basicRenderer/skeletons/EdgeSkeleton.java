@@ -34,19 +34,24 @@ package org.graphstream.ui.swingViewer.basicRenderer.skeletons;
 import java.util.ArrayList;
 
 import org.graphstream.ui.geom.Point3;
+import org.graphstream.ui.geom.Vector2;
+import org.graphstream.ui.graphicGraph.GraphicEdge;
 import org.graphstream.ui.graphicGraph.GraphicElement;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+import org.graphstream.ui.swingViewer.util.Camera;
+import org.graphstream.ui.swingViewer.util.CubicCurve;
 
 /**
  * Skeleton for the edges.
  */
 public class EdgeSkeleton extends BaseSkeleton {
 	/**
-	 * The possible geometries handled by this simple renderer.
+	 * The possible geometries handled internally. This is mainly a guide for the skins to
+	 * render a specific shape, and a path for sprites when attached to the edge.
 	 */
 	public enum Kind {
-		AUTO_LOOP,
-		AUTO_MULTI,
 		LINE,
+		CUBIC_CURVE,
 		POINTS,
 		VECTORS
 	}
@@ -87,6 +92,7 @@ public class EdgeSkeleton extends BaseSkeleton {
 	@Override
 	public void installed(GraphicElement element) {
 		super.installed(element);
+		dirty = true;
 	}
 	
 	@Override
@@ -99,22 +105,246 @@ public class EdgeSkeleton extends BaseSkeleton {
 		dirty = true;
 	}
 	
-	public int pointCount() {
+	public int pointCount(Camera camera) {
+		if(dirty)
+			recomputeGeometry(camera);
 		if(points != null)
 			return points.size();
 		
 		return 0;
 	}
 	
-	public Point3 getPoint(int i) {
-		if(dirty) {
-			setupPoints(element.getAttribute("ui.points"));
-		}
+	public Point3 getPoint(int i, Camera camera) {
+		if(dirty)
+			recomputeGeometry(camera);
+
 		return points.get(i);
 	}
 	
-	protected void setupPoints(Object values) {
+	public Point3 positionOnGeometry(Camera camera, double percent, double offset, Point3 pos, Units units) {
+		if(pos == null)
+			pos = new Point3();
 		
+		switch(kind) {
+			case LINE:
+				return positionOnLine(camera, percent, offset, pos, units);
+			case CUBIC_CURVE:
+				return positionOnCubicCurve(camera, percent, offset, pos, units);
+			case POINTS:
+				return positionOnPoints(camera, percent, offset, pos, units);
+			case VECTORS:
+				return positionOnVectors(camera, percent, offset, pos, units);
+			default:
+				throw new RuntimeException("WTF?");
+		}
+	}
+	
+	protected void setupPoints(Object values) {
+		if(values == null) {
+			points = null;
+		} else {
+			// XXX TODO XXX
+			throw new RuntimeException("TODO");
+		}
+		
+		dirty = true;
+	}
+	
+	protected void recomputeGeometry(Camera camera) {
+		GraphicEdge edge = (GraphicEdge) element;
+		
+		switch(edge.style.getShape()) {
+			case POLYLINE:
+				if(points != null) {
+					kind = Kind.POINTS;
+				} else {
+					kind = Kind.LINE;
+				}
+				break;
+			case POLYLINE_SCALED:
+				if(points != null) {
+					kind = Kind.VECTORS;
+					recomputeGeometryVectors();
+				} else {
+					kind = Kind.LINE;
+				}
+				break;
+			case CUBIC_CURVE:
+				kind = Kind.CUBIC_CURVE;
+				recomputeGeometryCubicCurve();
+				break;
+			default:
+				kind = Kind.LINE;
+				if(edge.getNode0() == edge.getNode1()) {
+					recomputeGeometryLoop(edge, camera);
+				} else if(edge.multi > 1) {
+					recomputeGeometryMulti(edge);
+				}
+				break;
+		}
+
 		dirty = false;
+	}
+	
+	protected void recomputeGeometryVectors() {
+		throw new RuntimeException("TODO geometry vectors");
+	}
+	
+	protected void recomputeGeometryCubicCurve() {
+		throw new RuntimeException("TODO geometry cubic-curve");
+	}
+	
+	protected void recomputeGeometryMulti(GraphicEdge edge) {
+		Point3 from = edge.from.center;
+		Point3 to   = edge.to.center;
+		int multi   = edge.multi;
+		
+		double vx  = to.x - from.x;
+		double vy  = to.y - from.y;
+		double vx2 =  vy * 0.6;
+		double vy2 = -vx * 0.6;
+		double gap = 0.2;
+		double ox  = 0.0;
+		double oy  = 0.0;
+		double f   = ((1 + multi) / 2) * gap; // must be done on integers.
+  
+		vx *= 0.2;
+		vy *= 0.2;
+  
+		GraphicEdge main = edge.group.getEdge(0);
+ 
+		if(edge.group.getCount() %2 == 0) {
+			ox = vx2 * (gap/2);
+			oy = vy2 * (gap/2);
+			if(edge.from != main.from) {	// Edges are in the same direction.
+				ox = - ox;
+				oy = - oy;
+			}
+		}
+  
+		vx2 *= f;
+		vy2 *= f;
+  
+		double xx1 = from.x + vx;
+		double yy1 = from.y + vy;
+		double xx2 = to.x - vx;
+		double yy2 = to.y - vy;
+  
+		int m = multi + (edge.from == main.from ? 0 : 1);
+  
+		if(m % 2 == 0) {
+			xx1 += vx2 + ox;
+			yy1 += vy2 + oy;
+			xx2 += vx2 + ox;
+			yy2 += vy2 + oy;
+		} else {
+			xx1 -= vx2 - ox;
+			yy1 -= vy2 - oy;
+			xx2 -= vx2 - ox;
+			yy2 -= vy2 - oy;	  
+		}
+		
+		if(points == null) {
+			points = new ArrayList<Point3>();
+		}
+		while(points.size() < 2) {
+			points.add(new Point3());
+		}
+
+		points.get(0).set(xx1, yy1, 0);
+		points.get(1).set(xx2, yy2, 0);
+	}
+	
+	protected void recomputeGeometryLoop(GraphicEdge edge, Camera camera) {
+		int multi = edge.multi;
+		double x = edge.from.center.x;
+		double y = edge.from.center.y;
+		double m = 1f + multi * 0.2;
+		double s = 0;
+		NodeSkeleton nodeSkel = (NodeSkeleton)edge.from.getSkeleton(); 
+		if(nodeSkel != null) {
+			Point3 nodeSize = nodeSkel.getSizeGU(camera);
+			s = (nodeSize.x + nodeSize.y) / 2;
+		}
+		double d = s / 2 * m + 4 * s * m;
+
+		if(points == null) {
+			points = new ArrayList<Point3>();
+		}
+		while(points.size() < 2) {
+			points.add(new Point3());
+		}
+
+		points.get(0).set(x+d, y, 0);
+		points.get(1).set(x, y+d, 0);
+	}
+	
+	protected Point3 positionOnLine(Camera camera, double percent, double offset, Point3 pos, Units units) {
+		GraphicEdge edge = (GraphicEdge) element;
+
+		double x  = edge.from.center.x;
+		double y  = edge.from.center.y;
+		double dx = edge.to.center.x - x;
+		double dy = edge.to.center.y - y;
+
+		offset  = camera.getMetrics().lengthToGu(offset, units);
+		percent = percent > 1 ? 1 : percent;
+		percent = percent < 0 ? 0 : percent;
+
+		x += dx * percent;
+		y += dy * percent;
+
+		percent = Math.sqrt(dx * dx + dy * dy);
+		dx /= percent;
+		dy /= percent;
+
+		x += -dy * offset;
+		y +=  dx * offset;
+
+		pos.x = x;
+		pos.y = y;
+		pos.z = 0;
+
+		if (units == Units.PX)
+			pos = camera.transformGuToPx(pos);
+		
+		return pos;
+	}
+	
+	protected Point3 positionOnCubicCurve(Camera camera, double percent, double offset, Point3 pos, Units units) {
+		GraphicEdge edge = (GraphicEdge) element;
+		
+		Point3 p0 = edge.from.center;
+		Point3 p1 = points.get(0);
+		Point3 p2 = points.get(1);
+		Point3 p3 = edge.to.center;
+
+		if(offset != 0) {
+			Vector2 perp = CubicCurve.perpendicular(p0, p1, p2, p3, percent);
+			double  y    = camera.getMetrics().lengthToGu(offset, units);
+
+			perp.normalize();
+			perp.scalarMult(y);
+
+			pos.x = CubicCurve.eval(p0.x, p1.x, p2.x, p3.x, offset) - perp.data[0];
+			pos.y = CubicCurve.eval(p0.y, p1.y, p2.y, p3.y, offset) - perp.data[1];
+		} else {
+			pos.x = CubicCurve.eval(p0.x, p1.x, p2.x, p3.x, offset);
+			pos.y = CubicCurve.eval(p0.y, p1.y, p2.y, p3.y, offset);
+		}
+		
+		pos.z = 0;
+
+		return pos;
+	}
+	
+	protected Point3 positionOnPoints(Camera camera, double percent, double offset, Point3 pos, Units units) {
+		// XXX TODO XXX
+		throw new RuntimeException("TODO");
+	}
+	
+	protected Point3 positionOnVectors(Camera camera, double percent, double offset, Point3 pos, Units units) {
+		// XXX TODO XXX
+		throw new RuntimeException("TODO");
 	}
 }

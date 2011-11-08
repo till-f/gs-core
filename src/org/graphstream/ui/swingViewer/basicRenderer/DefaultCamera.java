@@ -28,7 +28,7 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
  */
-package org.graphstream.ui.swingViewer.util;
+package org.graphstream.ui.swingViewer.basicRenderer;
 
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -38,9 +38,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.graphstream.graph.Node;
-import org.graphstream.ui.geom.Point2;
 import org.graphstream.ui.geom.Point3;
-import org.graphstream.ui.geom.Vector2;
 import org.graphstream.ui.graphicGraph.GraphicEdge;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
@@ -49,6 +47,10 @@ import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.stylesheet.Style;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.NodeSkeleton;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.SpriteSkeleton;
+import org.graphstream.ui.swingViewer.util.Camera;
+import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 /**
  * Define how the graph is viewed.
@@ -56,7 +58,8 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  * <p>
  * The camera is in charge of projecting the graph spaces in graph units (GU)
  * into user spaces (often in pixels). It defines the transformation (an affine
- * matrix) to passe from the first to the second. It also contains the graph
+ * matrix) to passe from the first to the second (an the inverse to do the
+ * reverse transformation, often useful). It also contains the graph
  * metrics, a set of values that give the overall dimensions of the graph in
  * graph units, as well as the view port, the area on the screen (or any
  * rendering surface) that will receive the results in pixels (or rendering
@@ -64,31 +67,28 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  * </p>
  * 
  * <p>
- * The camera defines a centre at which it always points. It can zoom on the
+ * The camera defines a center at which it always points. It can zoom on the
  * graph, pan in any direction and rotate along two axes.
  * </p>
  * 
  * <p>
- * Knowing the transformation also allows to provide services like "what element
- * is not invisible ?" (not in the camera view) or "on what element is the mouse
- * cursor actually ?".
+ * The camera is also in charge of doing the visibility test. This test is made
+ * automatically, when not in auto-fit mode (else all is by definition visible).
  * </p>
  */
 public class DefaultCamera implements Camera {
-	// Attribute
-
 	/**
 	 * Information on the graph overall dimension and position.
 	 */
 	protected GraphMetrics metrics = new GraphMetrics();
 
 	/**
-	 * Automatic centring of the view.
+	 * Automatic centering of the view.
 	 */
 	protected boolean autoFit = true;
 
 	/**
-	 * The camera centre of view.
+	 * The camera center of view.
 	 */
 	protected Point3 center = new Point3();
 
@@ -135,28 +135,16 @@ public class DefaultCamera implements Camera {
 	 */
 	protected double gviewport[] = null;
 	
-	// Construction
-
 	/**
-	 * New camera.
+	 * New camera with default settings.
 	 */
 	public DefaultCamera() {
 	}
 
-	// Access
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.graphstream.ui.swingViewer.util.Camera#getViewCenter()
-	 */
 	public Point3 getViewCenter() {
 		return center;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.graphstream.ui.swingViewer.util.Camera#setViewCenter(double, double, double)
-	 */
 	public void setViewCenter(double x, double y, double z) {
 		setAutoFitView(false);
 		center.set(x, y, z);
@@ -166,35 +154,19 @@ public class DefaultCamera implements Camera {
 		setViewCenter(x, y, 0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.graphstream.ui.swingViewer.util.Camera#getViewPercent()
-	 */
 	public double getViewPercent() {
 		return zoom;
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see org.graphstream.ui.swingViewer.util.Camera#setViewPercent(double)
-	 */
 	public void setViewPercent(double percent) {
 		setAutoFitView(false);
 		setZoom(percent);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.graphstream.ui.swingViewer.util.Camera#getViewRotation()
-	 */
 	public double getViewRotation() {
 		return rotation;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.graphstream.ui.swingViewer.util.Camera#getMetrics()
-	 */
 	public GraphMetrics getMetrics() {
 		return metrics;
 	}
@@ -213,28 +185,16 @@ public class DefaultCamera implements Camera {
 		return builder.toString();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.graphstream.ui.swingViewer.util.Camera#resetView()
-	 */
 	public void resetView() {
 		setAutoFitView(true);
 		setViewRotation(0);
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see org.graphstream.ui.swingViewer.util.Camera#setBounds(double, double, double, double, double, double)
-	 */
 	public void setBounds(double minx, double miny, double minz, double maxx,
 			double maxy, double maxz) {
 		metrics.setBounds(minx, miny, minz, maxx, maxy, maxz);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.graphstream.ui.swingViewer.util.Camera#getGraphDimension()
-	 */
 	public double getGraphDimension() {
 		return metrics.diagonal;
 	}
@@ -269,24 +229,32 @@ public class DefaultCamera implements Camera {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.graphstream.ui.swingViewer.util.Camera#inverseTransform(double, double)
-	 */
 	public Point3 transformPxToGu(double x, double y) {
 		Point2D.Double p = new Point2D.Double(x, y);
 		xT.transform(p, p);
 		return new Point3(p.x, p.y, 0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.graphstream.ui.swingViewer.util.Camera#transform(double, double)
-	 */
 	public Point3 transformGuToPx(double x, double y, double z) {
 		Point2D.Double p = new Point2D.Double(x, y);
 		Tx.transform(p, p);
 		return new Point3(p.x, p.y, 0);
+	}
+
+	public Point3 transformPxToGu(Point3 p) {
+		Point2D.Double pp = new Point2D.Double(p.x, p.y);
+		xT.transform(pp, pp);
+		p.x = pp.x;
+		p.y = pp.y;
+		return p;
+	}
+
+	public Point3 transformGuToPx(Point3 p) {
+		Point2D.Double pp = new Point2D.Double(p.x, p.y);
+		Tx.transform(pp, pp);
+		p.x = pp.x;
+		p.y = pp.y;
+		return p;
 	}
 
 	/**
@@ -302,7 +270,8 @@ public class DefaultCamera implements Camera {
 		nodeInvisible.clear();
 
 		for (Node node : graph) {
-			boolean visible = isNodeIn((GraphicNode) node, 0, 0, W, H) && (! ((GraphicNode)node).hidden) && ((GraphicNode)node).positionned;
+			GraphicNode gnode = (GraphicNode) node;
+			boolean visible =  (!gnode.hidden) && gnode.positionned && isNodeVisibleIn((GraphicNode) node, 0, 0, W, H);
 
 			if (!visible)
 				nodeInvisible.add(node.getId());
@@ -360,48 +329,21 @@ public class DefaultCamera implements Camera {
 		ArrayList<GraphicElement> elts = new ArrayList<GraphicElement>();
 
 		for (Node node : graph) {
-			if (isNodeIn((GraphicNode) node, x1, y1, x2, y2))
+			if (isNodeVisibleIn((GraphicNode) node, x1, y1, x2, y2))
 				elts.add((GraphicNode) node);
 		}
 
 		for (GraphicSprite sprite : graph.spriteSet()) {
-			if (isSpriteIn(sprite, x1, y1, x2, y2))
+			if (isSpriteVisibleIn(sprite, x1, y1, x2, y2))
 				elts.add(sprite);
 		}
 
 		return elts;
 	}
 
-	/**
-	 * Compute the real position of a sprite according to its eventual
-	 * attachment in graph units.
-	 * 
-	 * @param sprite
-	 *            The sprite.
-	 * @param pos
-	 *            Receiver for the sprite 2D position, can be null.
-	 * @param units
-	 *            The units in which the position must be computed (the sprite
-	 *            already contains units).
-	 * @return The same instance as the one given by parameter pos or a new one
-	 *         if pos was null, containing the computed position in the given
-	 *         units.
-	 */
-	public Point2D.Double getSpritePosition(GraphicSprite sprite,
-			Point2D.Double pos, Units units) {
-		if (sprite.isAttachedToNode())
-			return getSpritePositionNode(sprite, pos, units);
-		else if (sprite.isAttachedToEdge())
-			return getSpritePositionEdge(sprite, pos, units);
-		else
-			return getSpritePositionFree(sprite, pos, units);
-	}
-
 	public double[] getGraphViewport() {
 		return gviewport;
 	}
-
-	// Command
 
 	public void setGraphViewport(double minx, double miny, double maxx, double maxy) {
 		setAutoFitView(false);
@@ -534,11 +476,7 @@ public class DefaultCamera implements Camera {
 				: metrics.size.data[0];
 		double gh = gviewport != null ? gviewport[3] - gviewport[1]
 				: metrics.size.data[1];
-		// double diag = ((double)Math.max( metrics.size.data[0]+padXgu,
-		// metrics.size.data[1]+padYgu )) * zoom;
-		//
-		// sx = ( metrics.viewport.data[0] - padXpx ) / diag;
-		// sy = ( metrics.viewport.data[1] - padYpx ) / diag;
+
 		sx = (metrics.viewport.data[0] - padXpx) / ((gw + padXgu) * zoom);
 		sy = (metrics.viewport.data[1] - padYpx) / ((gh + padYgu) * zoom);
 		tx = center.x;
@@ -583,9 +521,8 @@ public class DefaultCamera implements Camera {
 	 */
 	public void setAutoFitView(boolean on) {
 		if (autoFit && (!on)) {
-			// We go from autoFit to user view, ensure the current centre is at
-			// the
-			// middle of the graph, and the zoom is at one.
+			// We go from autoFit to user view, ensure the current center is at
+			// the middle of the graph, and the zoom is at one.
 
 			zoom = 1;
 			center.set(metrics.lo.x + (metrics.size.data[0] / 2), metrics.lo.y
@@ -638,8 +575,6 @@ public class DefaultCamera implements Camera {
 		padding.copy(graph.getStyle().getPadding());
 	}
 
-	// Utility
-
 	protected double getPaddingXgu() {
 		if (padding.units == Style.Units.GU && padding.size() > 0)
 			return padding.get(0);
@@ -676,7 +611,7 @@ public class DefaultCamera implements Camera {
 	 * @return True if visible.
 	 */
 	protected boolean isSpriteVisible(GraphicSprite sprite) {
-		return isSpriteIn(sprite, 0, 0, metrics.viewport.data[0],
+		return isSpriteVisibleIn(sprite, 0, 0, metrics.viewport.data[0],
 				metrics.viewport.data[1]);
 	}
 
@@ -704,7 +639,7 @@ public class DefaultCamera implements Camera {
 	}
 
 	/**
-	 * Is the given node visible in the given area.
+	 * Is the given node visible in the given area in pixels.
 	 * 
 	 * @param node
 	 *            The node to check.
@@ -718,36 +653,18 @@ public class DefaultCamera implements Camera {
 	 *            The max ordinate of the area.
 	 * @return True if the node lies in the given area.
 	 */
-	protected boolean isNodeIn(GraphicNode node, double X1, double Y1, double X2,
-			double Y2) {
-		Values size = node.getStyle().getSize();
-		double w2 = metrics.lengthToPx(size, 0) / 2;
-		double h2 = size.size() > 1 ? metrics.lengthToPx(size, 1) / 2 : w2;
-		Point3 p = node.center;
-		Point2D.Double src = new Point2D.Double(p.x, p.y);
-		boolean vis = true;
-
-		Tx.transform(src, src);
-
-		double x1 = src.x - w2;
-		double x2 = src.x + w2;
-		double y1 = src.y - h2;
-		double y2 = src.y + h2;
-
-		if (x2 < X1)
-			vis = false;
-		else if (y2 < Y1)
-			vis = false;
-		else if (x1 > X2)
-			vis = false;
-		else if (y1 > Y2)
-			vis = false;
-
-		return vis;
+	protected boolean isNodeVisibleIn(GraphicNode node, double X1, double Y1, double X2, double Y2) {
+		NodeSkeleton nskel = (NodeSkeleton) node.getSkeleton();
+		
+		if(nskel != null) {
+			return nskel.visibleIn(this, X1, Y1, X2, Y2, Units.PX);
+		} else {
+			throw new RuntimeException("cannot compute visibility of node without skeleton");
+		}
 	}
 
 	/**
-	 * Is the given sprite visible in the given area.
+	 * Is the given sprite visible in the given area in pixels.
 	 * 
 	 * @param sprite
 	 *            The sprite to check.
@@ -761,50 +678,25 @@ public class DefaultCamera implements Camera {
 	 *            The max ordinate of the area.
 	 * @return True if the node lies in the given area.
 	 */
-	protected boolean isSpriteIn(GraphicSprite sprite, double X1, double Y1,
+	protected boolean isSpriteVisibleIn(GraphicSprite sprite, double X1, double Y1,
 			double X2, double Y2) {
-		if (sprite.isAttachedToNode()
-				&& nodeInvisible.contains(sprite.getNodeAttachment().getId())) {
-			return false;
-		} else if (sprite.isAttachedToEdge()
-				&& !isEdgeVisible(sprite.getEdgeAttachment())) {
-			return false;
+		if (sprite.isAttachedToNode() && nodeInvisible.contains(sprite.getNodeAttachment().getId())) {
+			return false;	// To speed up things.
+		} else if (sprite.isAttachedToEdge() && !isEdgeVisible(sprite.getEdgeAttachment())) {
+			return false;	// To speed up things.
 		} else {
-			Values size = sprite.getStyle().getSize();
-			double w2 = metrics.lengthToPx(size, 0) / 2;
-			double h2 = size.size() > 1 ? metrics.lengthToPx(size, 1) / 2 : w2;
-			Point2D.Double src = spritePositionPx(sprite);// new Point2D.Double(
-															// sprite.getX(),
-															// sprite.getY() );
-
-			// Tx.transform( src, src );
-
-			double x1 = src.x - w2;
-			double x2 = src.x + w2;
-			double y1 = src.y - h2;
-			double y2 = src.y + h2;
-
-			if (x2 < X1)
-				return false;
-			if (y2 < Y1)
-				return false;
-			if (x1 > X2)
-				return false;
-			if (y1 > Y2)
-				return false;
-
-			return true;
+			SpriteSkeleton sskel = (SpriteSkeleton) sprite.getSkeleton();
+			
+			if(sskel != null) {
+				return sskel.visibleIn(this, X1, Y1, X2, Y2, Units.PX);
+			} else {
+				throw new RuntimeException("cannot compute visibility of node without skeleton");
+			}
 		}
 	}
 
-	protected Point2D.Double spritePositionPx(GraphicSprite sprite) {
-		Point2D.Double pos = new Point2D.Double();
-
-		return getSpritePosition(sprite, pos, Units.PX);
-	}
-
 	/**
-	 * Check if a node contains the given point (x,y).
+	 * Check if a node contains the given point (x,y) in pixels.
 	 * 
 	 * @param elt
 	 *            The node.
@@ -815,30 +707,13 @@ public class DefaultCamera implements Camera {
 	 * @return True if (x,y) is in the given element.
 	 */
 	protected boolean nodeContains(GraphicElement elt, double x, double y) {
-		Values size = elt.getStyle().getSize();
-		double w2 = metrics.lengthToPx(size, 0) / 2;
-		double h2 = size.size() > 1 ? metrics.lengthToPx(size, 1) / 2 : w2;
-		Point3 p = elt.getCenter();
-		Point2D.Double src = new Point2D.Double(p.x, p.y);
-		Point2D.Double dst = new Point2D.Double();
-
-		Tx.transform(src, dst);
-
-		double x1 = dst.x - w2;
-		double x2 = dst.x + w2;
-		double y1 = dst.y - h2;
-		double y2 = dst.y + h2;
-
-		if (x < x1)
-			return false;
-		if (y < y1)
-			return false;
-		if (x > x2)
-			return false;
-		if (y > y2)
-			return false;
-
-		return true;
+		NodeSkeleton skel = (NodeSkeleton) elt.getSkeleton();
+		
+		if(skel != null) {
+			return skel.contains(this, x, y, Units.PX);
+		}
+		
+		return false;
 	}
 	
 	protected boolean edgeContains(GraphicElement elt, double x, double y) {
@@ -846,7 +721,7 @@ public class DefaultCamera implements Camera {
 	}
 
 	/**
-	 * Check if a sprite contains the given point (x,y).
+	 * Check if a sprite contains the given point (x,y) in pixels.
 	 * 
 	 * @param elt
 	 *            The sprite.
@@ -857,177 +732,12 @@ public class DefaultCamera implements Camera {
 	 * @return True if (x,y) is in the given element.
 	 */
 	protected boolean spriteContains(GraphicElement elt, double x, double y) {
-		Values size = elt.getStyle().getSize();
-		double w2 = metrics.lengthToPx(size, 0) / 2;
-		double h2 = size.size() > 1 ? metrics.lengthToPx(size, 1) / 2 : w2;
-		Point2D.Double dst = spritePositionPx((GraphicSprite) elt); // new
-																	// Point2D.Double(
-																	// elt.getX(),
-																	// elt.getY()
-																	// );
-		// Point2D.Double dst = new Point2D.Double();
-
-		// Tx.transform( src, dst );
-
-		double x1 = dst.x - w2;
-		double x2 = dst.x + w2;
-		double y1 = dst.y - h2;
-		double y2 = dst.y + h2;
-
-		if (x < x1)
-			return false;
-		if (y < y1)
-			return false;
-		if (x > x2)
-			return false;
-		if (y > y2)
-			return false;
-
-		return true;
-	}
-
-	/**
-	 * Compute the position of a sprite if it is not attached.
-	 * 
-	 * @param sprite
-	 *            The sprite.
-	 * @param pos
-	 *            Where to stored the computed position, if null, the position
-	 *            is created.
-	 * @param units
-	 *            The units the computed position must be given into.
-	 * @return The same instance as pos, or a new one if pos was null.
-	 */
-	protected Point2D.Double getSpritePositionFree(GraphicSprite sprite,
-			Point2D.Double pos, Units units) {
-		if (pos == null)
-			pos = new Point2D.Double();
-
-		if (sprite.getUnits() == units) {
-			pos.x = sprite.center.x;
-			pos.y = sprite.center.y;
-		} else if (units == Units.GU && sprite.getUnits() == Units.PX) {
-			pos.x = sprite.center.x;
-			pos.y = sprite.center.y;
-
-			xT.transform(pos, pos);
-		} else if (units == Units.PX && sprite.getUnits() == Units.GU) {
-			pos.x = sprite.center.x;
-			pos.y = sprite.center.y;
-
-			Tx.transform(pos, pos);
-		} else if (units == Units.GU && sprite.getUnits() == Units.PERCENTS) {
-			pos.x = metrics.lo.x + (sprite.center.x / 100f)
-					* metrics.graphWidthGU();
-			pos.y = metrics.lo.y + (sprite.center.y / 100f)
-					* metrics.graphHeightGU();
-		} else if (units == Units.PX && sprite.getUnits() == Units.PERCENTS) {
-			pos.x = (sprite.center.x / 100f) * metrics.viewport.data[0];
-			pos.y = (sprite.center.y / 100f) * metrics.viewport.data[1];
-		} else {
-			throw new RuntimeException("Unhandled yet sprite positioning.");
+		SpriteSkeleton skel = (SpriteSkeleton) elt.getSkeleton();
+		
+		if(skel != null) {
+			return skel.contains(this, x, y, Units.PX);
 		}
-
-		return pos;
-	}
-
-	/**
-	 * Compute the position of a sprite if attached to a node.
-	 * 
-	 * @param sprite
-	 *            The sprite.
-	 * @param pos
-	 *            Where to stored the computed position, if null, the position
-	 *            is created.
-	 * @param units
-	 *            The units the computed position must be given into.
-	 * @return The same instance as pos, or a new one if pos was null.
-	 */
-	protected Point2D.Double getSpritePositionNode(GraphicSprite sprite,
-			Point2D.Double pos, Units units) {
-		if (pos == null)
-			pos = new Point2D.Double();
-
-		GraphicNode node = sprite.getNodeAttachment();
-		double radius = metrics.lengthToGu(sprite.center.x, sprite.getUnits());
-		double z = (double) (sprite.center.y * (Math.PI / 180f));
-
-		pos.x = node.center.x + ((double) Math.cos(z) * radius);
-		pos.y = node.center.y + ((double) Math.sin(z) * radius);
-
-		if (units == Units.PX)
-			Tx.transform(pos, pos);
-
-		return pos;
-	}
-
-	/**
-	 * Compute the position of a sprite if attached to an edge.
-	 * 
-	 * @param sprite
-	 *            The sprite.
-	 * @param pos
-	 *            Where to store the computed position, if null, the position
-	 *            is created.
-	 * @param units
-	 *            The units the computed position must be given into.
-	 * @return The same instance as pos, or a new one if pos was null.
-	 */
-	protected Point2D.Double getSpritePositionEdge(GraphicSprite sprite,
-			Point2D.Double pos, Units units) {
-		if (pos == null)
-			pos = new Point2D.Double();
-
-		GraphicEdge edge = sprite.getEdgeAttachment();
-
-		if (edge.isCurve()) {
-			double ctrl[] = edge.getControlPoints();
-			Point2 p0 = new Point2(edge.from.center.x, edge.from.center.y);
-			Point2 p1 = new Point2(ctrl[0], ctrl[1]);
-			Point2 p2 = new Point2(ctrl[1], ctrl[2]);
-			Point2 p3 = new Point2(edge.to.center.x, edge.to.center.y);
-			Vector2 perp = CubicCurve.perpendicular(p0, p1, p2, p3,
-					sprite.center.x);
-			double y = metrics.lengthToGu(sprite.center.y, sprite.getUnits());
-
-			perp.normalize();
-			perp.scalarMult(y);
-
-			pos.x = CubicCurve.eval(p0.x, p1.x, p2.x, p3.x, sprite.center.x)
-					- perp.data[0];
-			pos.y = CubicCurve.eval(p0.y, p1.y, p2.y, p3.y, sprite.center.y)
-					- perp.data[1];
-		} else {
-			double x = ((GraphicNode) edge.getSourceNode()).center.x;
-			double y = ((GraphicNode) edge.getSourceNode()).center.y;
-			double dx = ((GraphicNode) edge.getTargetNode()).center.x - x;
-			double dy = ((GraphicNode) edge.getTargetNode()).center.y - y;
-			double d = sprite.center.x; // Percent on the edge.
-			double o = metrics.lengthToGu(sprite.center.y, sprite.getUnits());
-			// Offset from the position given by percent, perpendicular to the
-			// edge.
-
-			d = d > 1 ? 1 : d;
-			d = d < 0 ? 0 : d;
-
-			x += dx * d;
-			y += dy * d;
-
-			d = (double) Math.sqrt(dx * dx + dy * dy);
-			dx /= d;
-			dy /= d;
-
-			x += -dy * o;
-			y += dx * o;
-
-			pos.x = x;
-			pos.y = y;
-
-			if (units == Units.PX) {
-				Tx.transform(pos, pos);
-			}
-		}
-
-		return pos;
+		
+		return false;
 	}
 }

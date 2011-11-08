@@ -58,7 +58,6 @@ import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.swingViewer.GraphRendererBase;
 import org.graphstream.ui.swingViewer.LayerRenderer;
 import org.graphstream.ui.swingViewer.util.Camera;
-import org.graphstream.ui.swingViewer.util.DefaultCamera;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 /**

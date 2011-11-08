@@ -295,7 +295,7 @@ public class Viewer implements ActionListener {
 	 * SwingBasicGraphRenderer is returned. This method is not protected from
 	 * concurrent accesses.
 	 */
-	protected static GraphRenderer newGraphRenderer() {
+	public static GraphRenderer newGraphRenderer() {
 		String rendererClassName = System.getProperty("gs.ui.renderer");
 
 		if (rendererClassName == null)
