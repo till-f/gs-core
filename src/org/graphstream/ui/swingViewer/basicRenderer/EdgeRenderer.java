@@ -36,6 +36,7 @@ import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 
+import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.geom.Vector2;
 import org.graphstream.ui.graphicGraph.GraphicEdge;
 import org.graphstream.ui.graphicGraph.GraphicElement;
@@ -46,7 +47,10 @@ import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.ArrowShape;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.FillMode;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.BaseSkeleton;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.EdgeSkeleton;
 import org.graphstream.ui.swingViewer.util.Camera;
+import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 public class EdgeRenderer extends ElementRenderer {
 	protected Line2D shape = new Line2D.Double();
@@ -56,45 +60,38 @@ public class EdgeRenderer extends ElementRenderer {
 	protected double arrowLength = 0;
 
 	protected double arrowWidth = 0;
+	
+	protected Path2D arrowShape = null;
 
 	@Override
 	protected void setupRenderingPass(StyleGroup group, Graphics2D g,
 			Camera camera) {
-		configureText(group, camera);
-	}
-
-	@Override
-	protected void pushDynStyle(StyleGroup group, Graphics2D g, Camera camera,
-			GraphicElement element) {
-		Color color = group.getFillColor(0);
-
-		if (element != null && group.getFillMode() == FillMode.DYN_PLAIN)
-			color = interpolateColor(group, element);
-
-		g.setColor(color);
-
-		if (group.getSizeMode() == SizeMode.DYN_SIZE) {
-			width = camera.getMetrics().lengthToGu(
-					StyleConstants
-							.convertValue(element.getAttribute("ui.size")));
-			// width = camera.getMetrics().lengthToGu( (double)
-			// element.getNumber( "ui.size" ), Units.PX );
-
-			g.setStroke(new BasicStroke((float) width, BasicStroke.CAP_BUTT,
-					BasicStroke.JOIN_BEVEL));
-		}
 	}
 
 	@Override
 	protected void pushStyle(StyleGroup group, Graphics2D g, Camera camera) {
-		width = camera.getMetrics().lengthToGu(group.getSize(), 0);
-		arrowLength = camera.getMetrics().lengthToGu(group.getArrowSize(), 0);
-		arrowWidth = camera.getMetrics().lengthToGu(group.getArrowSize(),
-				group.getArrowSize().size() > 1 ? 1 : 0);
+		GraphMetrics metrics = camera.getMetrics();
+		width = metrics.lengthToGu(group.getSize(), 0);
+		arrowLength = metrics.lengthToGu(group.getArrowSize(), 0);
+		arrowWidth = metrics.lengthToGu(group.getArrowSize(), group.getArrowSize().size() > 1 ? 1 : 0);
 
 		g.setColor(group.getFillColor(0));
-		g.setStroke(new BasicStroke((float) width, BasicStroke.CAP_BUTT,
-				BasicStroke.JOIN_BEVEL));
+		g.setStroke(new BasicStroke((float) width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+	}
+
+	@Override
+	protected void pushDynStyle(StyleGroup group, Graphics2D g, Camera camera, GraphicElement element) {
+		EdgeSkeleton skel = (EdgeSkeleton)element.getSkeleton();
+		
+		Color color = skel.getColor();
+		Point3 size = skel.getSizeGU(camera);
+
+		g.setColor(color);
+
+		if (group.getSizeMode() == SizeMode.DYN_SIZE) {
+			width = size.x;
+			g.setStroke(new BasicStroke((float) width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+		}
 	}
 
 	@Override
@@ -103,35 +100,42 @@ public class EdgeRenderer extends ElementRenderer {
 	}
 
 	@Override
-	protected void renderElement(StyleGroup group, Graphics2D g, Camera camera,
-			GraphicElement element) {
+	protected void renderElement(StyleGroup group, Graphics2D g, Camera camera, GraphicElement element) {
+		EdgeSkeleton skel = (EdgeSkeleton)element.getSkeleton();
 		GraphicEdge edge = (GraphicEdge) element;
-		GraphicNode node0 = (GraphicNode) edge.getNode0();
-		GraphicNode node1 = (GraphicNode) edge.getNode1();
 
-		shape.setLine(node0.x, node0.y, node1.x, node1.y);
+		Point3 src = skel.getSourcePoint();
+		Point3 trg = skel.getTargetPoint();
+		
+		shape.setLine(src.x, src.y, trg.x, trg.y);
 		g.draw(shape);
-		renderArrow(group, g, camera, edge);
-		renderText(group, g, camera, element);
+		renderArrow(group, g, camera, edge, skel);
+		
+		if(edge.label != null) {
+			textRenderer.queueElement(element);
+		}
 	}
 
 	protected void renderArrow(StyleGroup group, Graphics2D g, Camera camera,
-			GraphicEdge edge) {
+			GraphicEdge edge, EdgeSkeleton skel) {
 		if (edge.isDirected() && arrowWidth > 0 && arrowLength > 0) {
 			if (group.getArrowShape() != ArrowShape.NONE) {
-				Path2D shape = new Path2D.Double();
+				if(arrowShape == null)
+					arrowShape = new Path2D.Double();
+				
 				GraphicNode node0 = (GraphicNode) edge.getNode0();
 				GraphicNode node1 = (GraphicNode) edge.getNode1();
+				Point3 src = skel.getSourcePoint();
+				Point3 trg = skel.getTargetPoint();
 				double off = evalEllipseRadius(edge, node0, node1, camera);
-				Vector2 theDirection = new Vector2(node1.getX() - node0.getX(),
-						node1.getY() - node0.getY());
+				
+				Vector2 theDirection = new Vector2(trg.x - src.x, trg.y - src.y);
 
 				theDirection.normalize();
 
-				double x = node1.x - (theDirection.data[0] * off);
-				double y = node1.y - (theDirection.data[1] * off);
-				Vector2 perp = new Vector2(theDirection.data[1],
-						-theDirection.data[0]);
+				double x = trg.x - (theDirection.data[0] * off);
+				double y = trg.y - (theDirection.data[1] * off);
+				Vector2 perp = new Vector2(theDirection.data[1], -theDirection.data[0]);
 
 				perp.normalize();
 				theDirection.scalarMult(arrowLength);
@@ -139,33 +143,34 @@ public class EdgeRenderer extends ElementRenderer {
 
 				// Create a polygon.
 
-				shape.reset();
-				shape.moveTo(x, y);
-				shape.lineTo(x - theDirection.data[0] + perp.data[0], y
+				arrowShape.reset();
+				arrowShape.moveTo(x, y);
+				arrowShape.lineTo(x - theDirection.data[0] + perp.data[0], y
 						- theDirection.data[1] + perp.data[1]);
-				shape.lineTo(x - theDirection.data[0] - perp.data[0], y
+				arrowShape.lineTo(x - theDirection.data[0] - perp.data[0], y
 						- theDirection.data[1] - perp.data[1]);
-				shape.closePath();
+				arrowShape.closePath();
 
-				g.fill(shape);
+				g.fill(arrowShape);
 			}
 		}
 	}
 
-	protected double evalEllipseRadius(GraphicEdge edge, GraphicNode node0,
-			GraphicNode node1, Camera camera) {
-		Values size = node0.getStyle().getSize();
-		double w = camera.getMetrics().lengthToGu(size.get(0), size.getUnits());
-		double h = size.size() > 1 ? camera.getMetrics().lengthToGu(
-				size.get(1), size.getUnits()) : w;
+	protected double evalEllipseRadius(GraphicEdge edge, GraphicNode sourceNode, GraphicNode targetNode, Camera camera) {
+		Point3 size = ((BaseSkeleton)(targetNode.getSkeleton())).getSizeGU(camera);
+		double w = size.x;
+		double h = size.y;
 
 		if (w == h)
 			return w / 2; // Welcome simplification for circles ...
 
 		// Vector of the entering edge.
 
-		double dx = node1.getX() - node0.getX();
-		double dy = node1.getY() - node0.getY();
+		Point3 p0 = sourceNode.getCenter();
+		Point3 p1 = targetNode.getCenter();
+		
+		double dx = p1.x - p0.x;
+		double dy = p1.y - p0.y;
 
 		// The entering edge must be deformed by the ellipse ratio to find the
 		// correct angle.
@@ -184,9 +189,8 @@ public class EdgeRenderer extends ElementRenderer {
 		dx = Math.cos(a) * w;
 		dy = Math.sin(a) * h;
 
-		// The distance from the ellipse centre to the crossing point of the
-		// ellipse and
-		// vector. Yo !
+		// The distance from the ellipse center to the crossing point of the
+		// ellipse and vector.
 
 		return Math.sqrt(dx * dx + dy * dy);
 	}

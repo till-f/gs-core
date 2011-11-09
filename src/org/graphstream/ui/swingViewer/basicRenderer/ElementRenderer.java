@@ -34,37 +34,37 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
 
 import org.graphstream.graph.Element;
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
-import org.graphstream.ui.graphicGraph.GraphicNode;
-import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroup.ElementEvents;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.BaseSkeleton;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.EdgeSkeleton;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.NodeSkeleton;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.SpriteSkeleton;
 import org.graphstream.ui.swingViewer.util.Camera;
 import org.graphstream.ui.swingViewer.util.FontCache;
 
+/**
+ * Base renderer for element groups. 
+ */
 public abstract class ElementRenderer {
 	/**
 	 * Allow to know if an event began or ended.
 	 */
 	protected boolean hadEvents = false;
 
-	protected Font textFont;
-
-	protected Color textColor;
-
-	protected int textSize;
-
 	/**
-	 * New swing element renderer for the given style group.
+	 * The set of elements that need a text label. The rendering of text is done in a
+	 * separate pass, to avoid continually changing the graphics context.
 	 */
-	public ElementRenderer() {
-	}
-
+	protected TextRenderer textRenderer = new TextRenderer();
+	
 	/**
 	 * Render all the (visible) elements of the group.
 	 */
@@ -75,6 +75,8 @@ public abstract class ElementRenderer {
 		for (Element e : group.bulkElements()) {
 			GraphicElement ge = (GraphicElement) e;
 
+			maybeAddSkeleton(ge);
+			
 			if (camera.isVisible(ge))
 				renderElement(group, g, camera, ge);
 			else
@@ -84,6 +86,8 @@ public abstract class ElementRenderer {
 		if (group.hasDynamicElements()) {
 			for (Element e : group.dynamicElements()) {
 				GraphicElement ge = (GraphicElement) e;
+
+				maybeAddSkeleton(ge);
 
 				if (camera.isVisible(ge)) {
 					if (!group.elementHasEvents(ge)) {
@@ -99,6 +103,8 @@ public abstract class ElementRenderer {
 		if (group.hasEventElements()) {
 			for (ElementEvents event : group.elementsEvents()) {
 				GraphicElement ge = (GraphicElement) event.getElement();
+	
+				maybeAddSkeleton(ge);
 
 				if (camera.isVisible(ge)) {
 					event.activate();
@@ -114,6 +120,8 @@ public abstract class ElementRenderer {
 		} else {
 			hadEvents = false;
 		}
+		
+		textRenderer.renderTexts(group, camera, g);
 	}
 
 	/**
@@ -183,112 +191,89 @@ public abstract class ElementRenderer {
 	protected abstract void elementInvisible(StyleGroup group, Graphics2D g,
 			Camera camera, GraphicElement element);
 
-	// Utility
+	/**
+	 * Specific renderer for text labels.
+	 */
+	class TextRenderer {
+		/**
+		 * The set of elements that need a text label.
+		 */
+		protected ArrayList<GraphicElement> needTextRenderPass = new ArrayList<GraphicElement>();
 
-	protected void configureText(StyleGroup group, Camera camera) {
-		String fontName = group.getTextFont();
-		StyleConstants.TextStyle textStyle = group.getTextStyle();
+		/**
+		 * The actual text font.
+		 */
+		protected Font textFont;
 
-		textSize = (int) group.getTextSize().value;
-		textColor = group.getTextColor(0);
-		textFont = FontCache.defaultFontCache().getFont(fontName, textStyle,
-				textSize);
-	}
+		/**
+		 * The actual text color.
+		 */
+		protected Color textColor;
 
-	protected void renderText(StyleGroup group, Graphics2D g, Camera camera,
-			GraphicElement element) {
-		String label = element.getLabel();
+		/**
+		 * the Actual text size in points.
+		 */
+		protected int textSize;
+
+		/**
+		 * Register an element as needing to render a text when the text rendering pass will
+		 * come.
+		 * @param element The element.
+		 */
+		public void queueElement(GraphicElement element) {
+			needTextRenderPass.add(element);
+		}
 		
-		if (label != null && group.getTextMode() != StyleConstants.TextMode.HIDDEN
-				&& group.getTextVisibilityMode() != StyleConstants.TextVisibilityMode.HIDDEN) {
-
-			Point3 p = null;
-			Point3 c = element.getCenter();
-			GraphicSprite s = null;
-
-			if (element instanceof GraphicSprite)
-				s = (GraphicSprite) element;
-
-			if (s != null && s.getUnits() == Units.PX) {
-				double w = camera.getMetrics().lengthToPx(group.getSize(),
-						0);
-				p = new Point3();
-				p.x = c.x + (w / 2);
-				p.y = c.y;
-			} else if (s != null && s.getUnits() == Units.PERCENTS) {
-				double w = camera.getMetrics().lengthToPx(group.getSize(),
-						0);
-				p = new Point3();
-				p.x = camera.getMetrics().viewport.data[1] * c.x
-						+ (w / 2);
-				p.y = camera.getMetrics().viewport.data[2] * c.y;
-			} else if(element instanceof GraphicNode) {
-				double w = camera.getMetrics().lengthToGu(group.getSize(),
-						0);
-				p = camera.transformGuToPx(c.x + (w / 2), c.y, 0);
-			} else {
-				p = camera.transformGuToPx(c.x, c.y, 0);
+		/**
+		 * Render the queued elements texts.
+		 * @param group The style group.
+		 * @param camera The camera.
+		 * @param g2 The graphics.
+		 */
+		public void renderTexts(StyleGroup group, Camera camera, Graphics2D g2) {
+			AffineTransform Tx = g2.getTransform();
+			configureText(group, camera, g2);
+			
+			for(GraphicElement element: needTextRenderPass) {
+				renderText(group, g2, camera, element);
 			}
+			
+			needTextRenderPass.clear();
+			g2.setTransform(Tx);
+		}
+		
+		protected void configureText(StyleGroup group, Camera camera, Graphics2D g2) {
+			String fontName = group.getTextFont();
+			StyleConstants.TextStyle textStyle = group.getTextStyle();
 
-			AffineTransform Tx = g.getTransform();
-			Color clr = g.getColor();
+			textSize  = (int) group.getTextSize().value;
+			textColor = group.getTextColor(0);
+			textFont  = FontCache.defaultFontCache().getFont(fontName, textStyle, textSize);
+			
+			g2.setColor(textColor);
+			g2.setFont(textFont);
+			g2.setTransform(new AffineTransform());	// Go back in pixels.
+		}
 
-			g.setColor(textColor);
-			g.setFont(textFont);
-			g.setTransform(new AffineTransform());
-			g.drawString(label, (float) p.x, (float) (p.y + textSize / 3)); // approximation to gain time.
-			g.setTransform(Tx);
-			g.setColor(clr);
+		protected void renderText(StyleGroup group, Graphics2D g, Camera camera, GraphicElement element) {
+			if (element.label != null
+			 && group.getTextMode() != StyleConstants.TextMode.HIDDEN
+			 && group.getTextVisibilityMode() != StyleConstants.TextVisibilityMode.HIDDEN) {
+				BaseSkeleton skel = (BaseSkeleton) element.getSkeleton();
+				Point3 c = skel == null ? element.getCenter() : skel.getPosition(camera, null, Units.PX);
+
+				g.drawString(element.label, (float) c.x, (float) (c.y + textSize / 3)); // approximation to gain time.
+			}
 		}
 	}
-
-	protected Color interpolateColor(StyleGroup group, GraphicElement element) {
-		Color color = group.getFillColor(0);
-
-		int n = group.getFillColorCount();
-
-		if (n > 1) {
-			if (element.hasNumber("ui.color") && n > 1) {
-				double value = element.getNumber("ui.color");
-
-				if (value < 0)
-					value = 0;
-				else if (value > 1)
-					value = 1;
-
-				if (value == 1) {
-					color = group.getFillColor(n - 1); // Simplification,
-					// faster.
-				} else if (value != 0) // If value == 0, color is already set
-				// above.
-				{
-					double div = 1f / (n - 1);
-					int col = (int) (value / div);
-
-					div = (value - (div * col)) / div;
-					// div = value / div - col;
-
-					Color color0 = group.getFillColor(col);
-					Color color1 = group.getFillColor(col + 1);
-					double red = ((color0.getRed() * (1 - div)) + (color1
-							.getRed() * div)) / 255f;
-					double green = ((color0.getGreen() * (1 - div)) + (color1
-							.getGreen() * div)) / 255f;
-					double blue = ((color0.getBlue() * (1 - div)) + (color1
-							.getBlue() * div)) / 255f;
-					double alpha = ((color0.getAlpha() * (1 - div)) + (color1
-							.getAlpha() * div)) / 255f;
-
-					color = new Color((float) red, (float) green, (float) blue,
-							(float) alpha);
-				}
-			} else if (element.hasAttribute("ui.color", Color.class)) {
-				color = element.getAttribute("ui.color");
+	
+	protected void maybeAddSkeleton(GraphicElement element) {
+		if(element.getSkeleton() == null) {
+			switch(element.getSelectorType()) {
+				case NODE:   element.setSkeleton(new NodeSkeleton());   break;
+				case EDGE:   element.setSkeleton(new EdgeSkeleton());   break;
+				case SPRITE: element.setSkeleton(new SpriteSkeleton()); break;
 			}
-		} else if (element.hasAttribute("ui.color", Color.class)) {
-			color = element.getAttribute("ui.color");
 		}
-
-		return color;
 	}
 }

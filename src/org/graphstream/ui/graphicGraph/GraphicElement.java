@@ -74,7 +74,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
  * that are either attached to a node or edge. By default the attachment list is not created to
  * avoid consuming memory. It is created as soon as there is at least one attachment.
  * You can attach another element using {@link #addAttachment(GraphicElement)}. You correspondingly
- * remove it using {@link #removeAttachment(GraphicEdge)}. Each attached element
+ * remove it using {@link #removeAttachment(GraphicElement)}. Each attached element
  * {@link #attachMoved(GraphicElement)} method is called when this element will move.
  * </p>
  * 
@@ -359,10 +359,10 @@ public abstract class GraphicElement extends AbstractElement {
 	/**
 	 * Unregister an attachment.
 	 */
-	public void removeAttachment(GraphicEdge edge) {
+	public void removeAttachment(GraphicElement element) {
 		// XXX would a hash-set be better ?
 		if(attached != null) {
-			int pos = attached.indexOf(edge);
+			int pos = attached.indexOf(element);
 			if(pos >=0)
 				attached.remove(pos);
 			// XXX Should we keep the edgeSkeletons array is empty ?

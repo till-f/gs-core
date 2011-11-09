@@ -33,27 +33,102 @@ package org.graphstream.ui.swingViewer.basicRenderer.skeletons;
 
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicEdge;
+import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.swingViewer.util.Camera;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
+/**
+ * Skeleton for sprites.
+ *
+ * <p>
+ * This skeleton handles the absolute position of the sprite, computed from its relative coordinates
+ * center. Each time the center is changed, a flag indicate the position should be recomputed. When
+ * first accessed, the position is recomputed if needed.
+ * </p>
+ */
 public class SpriteSkeleton extends NodeSkeleton {
-
+	/**
+	 * Should the position be recomputed.
+	 */
+	protected boolean positionDirty = true;
+	
+	/**
+	 * Computed position, on the canvas.
+	 * The center of a sprite is a set of values that need interpretation depending on a possible
+	 * attachment. The position is the computed coordinates according to the center and the
+	 * attachment. It is expressed in graph units.
+	 */
+	protected Point3 position = new Point3();
+	
+	/**
+	 * Remember to which element the sprite was attached.
+	 */
+	protected GraphicElement attachment = null;
+	
+	@Override
+	public void uninstalled() {
+		super.uninstalled();
+		
+		if(attachment != null) {
+			attachment.removeAttachment(element);
+			attachment = null;
+		}
+	}
+	
+	@Override
+	public void positionChanged() {
+		positionDirty = true;
+		
+		GraphicSprite sprite = (GraphicSprite)element;
+		
+		if(sprite.getAttachment() != attachment) {
+			if(attachment != null)
+				attachment.removeAttachment(sprite);
+			attachment = sprite.getAttachment();
+			if(attachment != null)
+				attachment.addAttachment(sprite);
+		}
+	}
+	
 	@Override
 	public Point3 getPosition(Camera camera, Point3 pos, Units units) {
+		if(positionDirty) {
+			position = computeSpritePosition(camera, pos, Units.GU);
+			positionDirty = false;
+		}
+		
+		switch(units) {
+			case GU: return position;
+			case PX: return camera.transformGuToPx(new Point3(position));
+			case PERCENTS: throw new RuntimeException("TODO");
+			default: throw new RuntimeException("WTF?");
+		}
+	}
+		
+	/**
+	 * Compute the sprite absolute position, storing the result in "pos" if non null
+	 * in the units given.
+	 * @param camera The camera.
+	 * @param pos The memory location where the store the computed position or null. 
+	 * @param units The units in which the position is expected.
+	 * @return The computed position, either a reference to "pos" or a new point is
+	 * "pos" was null.
+	 */
+	protected Point3 computeSpritePosition(Camera camera, Point3 pos, Units units) {
 		GraphicSprite sprite = (GraphicSprite) element;
 		
 		if(pos == null)
 			pos = new Point3();
 		
 		if (sprite.isAttachedToNode())
-			return getSpritePositionNode(camera, sprite, pos, units);
+			return computeSpritePositionNode(camera, sprite, pos, units);
 		else if (sprite.isAttachedToEdge())
-			return getSpritePositionEdge(camera, sprite, pos, units);
+			return computeSpritePositionEdge(camera, sprite, pos, units);
 
-		return getSpritePositionFree(camera, sprite, pos, units);
+		return computeSpritePositionFree(camera, sprite, pos, units);
 	}
 
 	/**
@@ -70,7 +145,7 @@ public class SpriteSkeleton extends NodeSkeleton {
 	 *            The units the computed position must be given into.
 	 * @return The same instance as pos, or a new one if pos was null.
 	 */
-	protected Point3 getSpritePositionFree(Camera camera, GraphicSprite sprite, Point3 pos, Units units) {
+	protected Point3 computeSpritePositionFree(Camera camera, GraphicSprite sprite, Point3 pos, Units units) {
 		if (pos == null)
 			pos = new Point3();
 
@@ -113,7 +188,7 @@ public class SpriteSkeleton extends NodeSkeleton {
 	 *            The units the computed position must be given into.
 	 * @return The same instance as pos, or a new one if pos was null.
 	 */
-	protected Point3 getSpritePositionNode(Camera camera, GraphicSprite sprite, Point3 pos, Units units) {
+	protected Point3 computeSpritePositionNode(Camera camera, GraphicSprite sprite, Point3 pos, Units units) {
 		if (pos == null)
 			pos = new Point3();
 
@@ -148,7 +223,7 @@ public class SpriteSkeleton extends NodeSkeleton {
 	 *            The units the computed position must be given into.
 	 * @return The same instance as pos, or a new one if pos was null.
 	 */
-	protected Point3 getSpritePositionEdge(Camera camera, GraphicSprite sprite, Point3 pos, Units units) {
+	protected Point3 computeSpritePositionEdge(Camera camera, GraphicSprite sprite, Point3 pos, Units units) {
 		if (pos == null)
 			pos = new Point3();
 

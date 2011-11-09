@@ -115,9 +115,6 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	 */
 	protected long T1 = 0;
 
-	public SwingBasicGraphRenderer() {
-	}
-
 	@Override
 	public void open(GraphicGraph graph, Container renderingSurface) {
 		super.open(graph, renderingSurface);
@@ -134,8 +131,6 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		super.close();
 	}
 
-	// Access
-
 	public Camera getCamera() {
 		return camera;
 	}
@@ -150,13 +145,12 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	}
 
 	public void render(Graphics2D g, int width, int height) {
-		// If not closed, one or two renders can occur after closed.
 		if (graph != null) {
 			beginFrame();
 			
 			if (camera.getGraphViewport() == null
-					&& camera.getMetrics().diagonal == 0
-					&& (graph.getNodeCount() == 0 && graph.getSpriteCount() == 0)) {
+			 && camera.getMetrics().diagonal == 0
+			 && (graph.getNodeCount() == 0 && graph.getSpriteCount() == 0)) {
 				displayNothingToDo(g, width, height);
 			} else {
 				camera.setPadding(graph);
@@ -229,39 +223,25 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	protected void setupGraphics(Graphics2D g) {
 		// XXX we do this at each frame !!! Why not doing this only when it changes !!! XXX
 		if (graph.hasAttribute("ui.antialias")) {
-			g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-					RenderingHints.VALUE_STROKE_PURE);
-			g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-					RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					RenderingHints.VALUE_ANTIALIAS_ON);
+			g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+			g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		} else {
-			g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-					RenderingHints.VALUE_STROKE_DEFAULT);
-			g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-					RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					RenderingHints.VALUE_ANTIALIAS_OFF);
+			g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
+			g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 		}
 
 		if (graph.hasAttribute("ui.quality")) {
-			g.setRenderingHint(RenderingHints.KEY_RENDERING,
-					RenderingHints.VALUE_RENDER_SPEED);
-			g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-					RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-			g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING,
-					RenderingHints.VALUE_COLOR_RENDER_SPEED);
-			g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
-					RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
+			g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+			g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+			g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
+			g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
 		} else {
-			g.setRenderingHint(RenderingHints.KEY_RENDERING,
-					RenderingHints.VALUE_RENDER_QUALITY);
-			g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-					RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-			g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING,
-					RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-			g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
-					RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+			g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+			g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+			g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+			g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
 		}
 	}
 
@@ -272,7 +252,8 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		StyleGroup group = graph.getStyle();
 
 		g.setColor(group.getFillColor(0));
-		g.fillRect(0, 0, (int) camera.getMetrics().viewport.data[0],
+		g.fillRect(0, 0,
+				(int) camera.getMetrics().viewport.data[0],
 				(int) camera.getMetrics().viewport.data[1]);
 	}
 
@@ -288,9 +269,8 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		Value stroke = style.getShadowWidth();
 		
 		if (style.getStrokeMode() != StyleConstants.StrokeMode.NONE
-				&& style.getStrokeWidth().value != 0) {
-			rect.setFrame(metrics.lo.x, metrics.lo.y + px1,
-					metrics.size.data[0] - px1, metrics.size.data[1] - px1);
+		 && style.getStrokeWidth().value != 0) {
+			rect.setFrame(metrics.lo.x, metrics.lo.y + px1, metrics.size.data[0] - px1, metrics.size.data[1] - px1);
 			g.setStroke(new BasicStroke((float)metrics.lengthToGu(stroke)));
 			g.setColor(graph.getStyle().getStrokeColor(0));
 			g.draw(rect);
@@ -317,44 +297,36 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	 */
 	protected void renderGroup(Graphics2D g, StyleGroup group) {
 		switch (group.getType()) {
-			case NODE:
-				nodeRenderer.render(group, g, camera);
-				break;
-			case EDGE:
-				edgeRenderer.render(group, g, camera);
-				break;
-			case SPRITE:
-				spriteRenderer.render(group, g, camera);
-				break;
+			case NODE:   nodeRenderer.render(group, g, camera);   break;
+			case EDGE:   edgeRenderer.render(group, g, camera);   break;
+			case SPRITE: spriteRenderer.render(group, g, camera); break;
 		}
 	}
 
 	protected void renderSelection(Graphics2D g) {
-		if (selection != null && selection.x1 != selection.x2
-				&& selection.y1 != selection.y2) {
+		if (selection != null && selection.x1 != selection.x2 && selection.y1 != selection.y2) {
+			double t;
 			double x1 = selection.x1;
 			double y1 = selection.y1;
 			double x2 = selection.x2;
 			double y2 = selection.y2;
-			double t;
-
-			double w = camera.getMetrics().getSize().data[0];
-			double h = camera.getMetrics().getSize().data[1];
+			double w  = camera.getMetrics().getSize().data[0];
+			double h  = camera.getMetrics().getSize().data[1];
 
 			if (x1 > x2) {
-				t = x1;
+				t  = x1;
 				x1 = x2;
 				x2 = t;
 			}
 			if (y1 > y2) {
-				t = y1;
+				t  = y1;
 				y1 = y2;
 				y2 = t;
 			}
 
 			Stroke s = g.getStroke();
-			g.setStroke(new BasicStroke(1));
 
+			g.setStroke(new BasicStroke(1));
 			g.setColor(new Color(50, 50, 200, 128));
 			g.fillRect((int) x1, (int) y1, (int) (x2 - x1), (int) (y2 - y1));
 			g.setColor(new Color(0, 0, 0, 128));
@@ -387,14 +359,8 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 				metrics.hiVisible.y);
 	}
 
-//	protected void setupSpriteStyle(Graphics2D g, StyleGroup group) {
-//		g.setColor(group.getFillColor(0));
-//	}
-
-	// Utility | Debug
-
 	/**
-	 * Show the centre, the low and high points of the graph, and the visible
+	 * Show the center, the low and high points of the graph, and the visible
 	 * area (that should always map to the window borders).
 	 */
 	protected void debugVisibleArea(Graphics2D g) {

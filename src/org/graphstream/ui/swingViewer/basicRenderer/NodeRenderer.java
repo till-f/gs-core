@@ -30,90 +30,92 @@
  */
 package org.graphstream.ui.swingViewer.basicRenderer;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
 
+import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
-import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.StyleGroup;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
-import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.FillMode;
-import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.BaseSkeleton;
 import org.graphstream.ui.swingViewer.util.Camera;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 public class NodeRenderer extends ElementRenderer {
-	protected GraphMetrics metrics;
-
-	protected Values size;
-
 	protected Ellipse2D shape;
 
 	protected double width, height, w2, h2;
+	
+	protected Color strokeColor = null;
+	
+	protected double strokeWidth = 0;
 
 	@Override
 	protected void setupRenderingPass(StyleGroup group, Graphics2D g,
 			Camera camera) {
-		metrics = camera.getMetrics();
-		configureText(group, camera);
-	}
-
-	@Override
-	protected void pushDynStyle(StyleGroup group, Graphics2D g, Camera camera,
-			GraphicElement element) {
-		Color color = group.getFillColor(0);
-
-		if (element != null && group.getFillMode() == FillMode.DYN_PLAIN)
-			color = interpolateColor(group, element);
-
-		g.setColor(color);
-
-		if (group.getSizeMode() == SizeMode.DYN_SIZE) {
-			Object s = element.getAttribute("ui.size");
-
-			if (s != null) {
-				width = metrics.lengthToGu(StyleConstants.convertValue(s));
-				height = width;
-				w2 = width / 2;
-				h2 = height / 2;
-			} else {
-				size = group.getSize();
-				width = metrics.lengthToGu(size, 0);
-				height = size.size() > 1 ? metrics.lengthToGu(size, 1) : width;
-				w2 = width / 2;
-				h2 = height / 2;
-			}
-		}
 	}
 
 	@Override
 	protected void pushStyle(StyleGroup group, Graphics2D g, Camera camera) {
-		size = group.getSize();
+		GraphMetrics metrics = camera.getMetrics();
+		Values size = group.getSize();
 		shape = new Ellipse2D.Double();
 		width = metrics.lengthToGu(size, 0);
 		height = size.size() > 1 ? metrics.lengthToGu(size, 1) : width;
 		w2 = width / 2;
 		h2 = height / 2;
 
-		Color color = group.getFillColor(0);
+		g.setColor(group.getFillColor(0));
+		
+		if(group.getStrokeMode() != StyleConstants.StrokeMode.NONE) {
+			strokeWidth = camera.getMetrics().lengthToGu(group.getStrokeWidth());
+			if(strokeWidth > 0) {
+				strokeColor = group.getStrokeColor(0);
+				g.setStroke(new BasicStroke((float) width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+			}
+		}
+	}
+
+	@Override
+	protected void pushDynStyle(StyleGroup group, Graphics2D g, Camera camera,
+			GraphicElement element) {
+		BaseSkeleton skel = (BaseSkeleton)element.getSkeleton();
+		Color color = skel.getColor();
+		Point3 size = skel.getSizeGU(camera);
 
 		g.setColor(color);
+
+		width = size.x;
+		height = size.y;
+		w2 = width / 2;
+		h2 = height / 2;
+	}
+
+	@Override
+	protected void renderElement(StyleGroup group, Graphics2D g, Camera camera, GraphicElement element) {
+		BaseSkeleton skel = (BaseSkeleton)element.getSkeleton();
+		Point3 pos = skel.getPosition(camera, null, Units.GU);
+
+		shape.setFrame(pos.x - w2, pos.y - h2, width, height);
+		g.fill(shape);
+
+		if(strokeWidth > 0) {
+			Color c = g.getColor();
+			g.setColor(strokeColor);
+			g.draw(shape);
+			g.setColor(c);
+		}
+		
+		if(element.label != null)
+			textRenderer.queueElement(element);
 	}
 
 	@Override
 	protected void elementInvisible(StyleGroup group, Graphics2D g,
 			Camera camera, GraphicElement element) {
-	}
-
-	@Override
-	protected void renderElement(StyleGroup group, Graphics2D g, Camera camera,
-			GraphicElement element) {
-		GraphicNode node = (GraphicNode) element;
-
-		shape.setFrame(node.x - w2, node.y - h2, width, height);
-		g.fill(shape);
-		renderText(group, g, camera, element);
 	}
 }

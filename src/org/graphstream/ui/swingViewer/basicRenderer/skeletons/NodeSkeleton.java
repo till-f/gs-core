@@ -32,65 +32,24 @@
 package org.graphstream.ui.swingViewer.basicRenderer.skeletons;
 
 import org.graphstream.ui.geom.Point3;
-import org.graphstream.ui.graphicGraph.GraphicElement;
-import org.graphstream.ui.graphicGraph.GraphicNode;
-import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
-import org.graphstream.ui.graphicGraph.stylesheet.Values;
-import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.swingViewer.util.Camera;
 
+/**
+ * Skeleton for nodes (and a base for sprites).
+ * 
+ * <p>
+ * This skeleton handles tasks like computing the (absolute) position of the element (refined
+ * in the sprite skeleton) and the inclusion test to know if a point is whithin the rectangular
+ * bounds of the node/sprite.
+ * </p>
+ */
 public class NodeSkeleton extends BaseSkeleton {
-
-	protected boolean dirty = true;
-	
-	protected Point3 size = new Point3();
-	
-	@Override
-	public void installed(GraphicElement element) {
-		super.installed(element);
-		dirty = true;
-	}
-	
-	@Override
-	public void styleChanged() {
-		dirty = true;
-	}
-	
-	@Override
-	public void sizeChanged(Object newValue) {
-		dirty = true;
-	}
-	
-	public Point3 getSizeGU(Camera camera) {
-		if(dirty) {
-			recomputeGeometry(camera);
-		}
-		
-		return size;
-	}
-	
-	public Point3 getSize(Camera camera, Units units) {
-		if(dirty) {
-			recomputeGeometry(camera);
-		}
-		
-		if(units == Units.GU) {
-			return size;
-		} else if(units == Units.PX) {
-			Point3 s = new Point3();
-			s.x = camera.getMetrics().lengthToPx(size.x, Units.GU);
-			s.y = camera.getMetrics().lengthToPx(size.y, Units.GU);
-			return s;
-		} else {
-			throw new RuntimeException("TODO");
-		}
-	}
-	
 	public Point3 getPosition(Camera camera, Units units) {
 		return getPosition(camera, null, units);
 	}
 	
+	@Override
 	public Point3 getPosition(Camera camera, Point3 pos, Units units) {
 		if(pos == null)
 			pos = new Point3();
@@ -106,6 +65,15 @@ public class NodeSkeleton extends BaseSkeleton {
 		}
 	}
 	
+	/**
+	 * Does the rectangular bounds of the node contain the point (x,y), expressed
+	 * in the given units?
+	 * @param camera The camera.
+	 * @param x Abscissa of the point to test. 
+	 * @param y Ordinate of the point to test.
+	 * @param units Units of the point to test.
+	 * @return True if the point is in the rectangular bounds of the node.
+	 */
 	public boolean contains(Camera camera, double x, double y, Units units) {
 		getSizeGU(camera);
 		
@@ -123,6 +91,17 @@ public class NodeSkeleton extends BaseSkeleton {
 		return true;
 	}
 	
+	/**
+	 * True if the node rectangular bounds are visible (in intersection or inside) the given
+	 * region bounds, expressed in the given units.
+	 * @param camera The camera.
+	 * @param X1 The region lowest abscissa.
+	 * @param Y1 The region lowest ordinate.
+	 * @param X2 The region highest abscissa. 
+	 * @param Y2 The region highest ordinate.
+	 * @param units The units the region is expressed in.
+	 * @return True if the node intersects or is in the given region.
+	 */
 	public boolean visibleIn(Camera camera, double X1, double Y1, double X2, double Y2, Units units) {
 		Point3 s  = getSize(camera, Units.PX);
 		double w2 = s.x;
@@ -140,22 +119,5 @@ public class NodeSkeleton extends BaseSkeleton {
 		if (y1 > Y2) return false;
 
 		return true;
-	}
-	
-	protected void recomputeGeometry(Camera camera) {
-		GraphicNode node = (GraphicNode) element;
-		StyleGroup style = node.style;
-		Values sizes = style.getSize();
-
-		size.x = camera.getMetrics().lengthToGu(sizes, 0);
-		size.y = sizes.size() > 1 ? camera.getMetrics().lengthToGu(sizes, 1) : size.x;
-		
-		if(style.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE && node.hasNumber("ui.size")) {
-			double ratio = size.x / size.y;
-			size.x = node.getNumber("ui.size");
-			size.y = size.x * ratio;
-		}
-		
-		dirty = false;
 	}
 }

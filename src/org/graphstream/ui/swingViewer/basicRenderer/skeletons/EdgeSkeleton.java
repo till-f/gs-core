@@ -43,6 +43,22 @@ import org.graphstream.ui.swingViewer.util.CubicCurve;
 
 /**
  * Skeleton for the edges.
+ * 
+ * <p>
+ * This skeleton handles the geometry of the edge. It can handle four types of geometry:
+ * <ol>
+ * 		<li>A straight line.</li>
+ * 		<li>A cubic curve (mostly used for multi-edges and loop-edges).</li>
+ * 		<li>A set of absolute points.</li>
+ * 		<li>A set of vectors (relative).</li>
+ * </ol>
+ * </p>
+ * 
+ * <p>
+ * The geometry is used by example by sprites to compute a position on the edge. A flag is set
+ * each time the edge moved or the style changed or the "ui.points" attribute is changed. When the
+ * geometry is first accessed, it is computed or recomputed if this flag is set. 
+ * </p>
  */
 public class EdgeSkeleton extends BaseSkeleton {
 	/**
@@ -57,14 +73,14 @@ public class EdgeSkeleton extends BaseSkeleton {
 	}
 	
 	/**
-	 * The kind of edge.
+	 * The kind of geometry.
 	 */
 	protected Kind kind = Kind.LINE;
 	
 	/**
 	 * Set to true each time the geometry (points) needs to be recomputed.
 	 */
-	protected boolean dirty = true;
+	protected boolean geomDirty = true;
 	
 	/**
 	 * The set of points making up the geometry.
@@ -88,11 +104,32 @@ public class EdgeSkeleton extends BaseSkeleton {
 	 * </ul> 
 	 */
 	public ArrayList<Point3> points = null;
+
+	@Override
+	public Point3 getPosition(Camera camera, Point3 pos, Units units) {
+		switch(units) {
+			case GU: return element.getCenter();
+			case PX: return camera.transformGuToPx(new Point3(element.getCenter()));
+			case PERCENTS: throw new RuntimeException("TODO");
+			default: throw new RuntimeException("WTF?");
+		}
+	}
 	
 	@Override
 	public void installed(GraphicElement element) {
 		super.installed(element);
-		dirty = true;
+		geomDirty = true;
+		
+		GraphicEdge edge = (GraphicEdge)element;
+		edge.from.addAttachment(edge);
+		edge.to.addAttachment(edge);
+	}
+	
+	@Override
+	public void uninstalled() {
+		GraphicEdge edge = (GraphicEdge)element;
+		edge.from.removeAttachment(edge);
+		edge.to.removeAttachment(edge);
 	}
 	
 	@Override
@@ -102,25 +139,70 @@ public class EdgeSkeleton extends BaseSkeleton {
 	
 	@Override
 	public void positionChanged() {
-		dirty = true;
+		geomDirty = true;
 	}
 	
+	/**
+	 * Number of points in the geometry.
+	 * @param camera The camera.
+	 */
 	public int pointCount(Camera camera) {
-		if(dirty)
+		if(geomDirty)
 			recomputeGeometry(camera);
 		if(points != null)
 			return points.size();
 		
 		return 0;
 	}
-	
+
+	/**
+	 * I-th point in the geometry.
+	 * @param i The point index.
+	 * @param camera The camera.
+	 */
 	public Point3 getPoint(int i, Camera camera) {
-		if(dirty)
+		if(geomDirty)
 			recomputeGeometry(camera);
 
 		return points.get(i);
 	}
 	
+	/**
+	 * The kind of geometry the edge is using.
+	 */
+	public Kind getKind() {
+		return kind;
+	}
+	
+	/**
+	 * The source point of the edge, this point is never included in the set of
+	 * points of the geometry.
+	 */
+	public Point3 getSourcePoint() {
+		return ((GraphicEdge)element).from.getCenter();
+	}
+
+	/**
+	 * The target point of the edge, this point is never included in the set of
+	 * points of the geometry.
+	 */
+	public Point3 getTargetPoint() {
+		return ((GraphicEdge)element).to.getCenter();
+	}
+
+	/**
+	 * Compute the absolute coordinates of a point at "percent" percents on the geometry, starting
+	 * from the origin node of the edge. Use "pos" to store the result and return it. If "pos" is
+	 * null a new point is created and returned. The "units" allow to request the result to be
+	 * expressed in given units. The offset allows to compute a point that is perpendicular to the
+	 * position on the geometry at the "offset" distance.
+	 * @param camera The camera.
+	 * @param percent The position on the geometry.
+	 * @param offset The perpendicular offset from the geometry at the position.
+	 * @param pos Memory location where to store the result, if non null.
+	 * @param units The units in which the result is expressed.
+	 * @return The absolute position at percent + offset on the geometry.
+	 */
 	public Point3 positionOnGeometry(Camera camera, double percent, double offset, Point3 pos, Units units) {
 		if(pos == null)
 			pos = new Point3();
@@ -139,6 +221,10 @@ public class EdgeSkeleton extends BaseSkeleton {
 		}
 	}
 	
+	/**
+	 * Read the "ui.points" attribute and store the result as a geometry for this skeleton.
+	 * @param values The data to decode as points.
+	 */
 	protected void setupPoints(Object values) {
 		if(values == null) {
 			points = null;
@@ -147,9 +233,13 @@ public class EdgeSkeleton extends BaseSkeleton {
 			throw new RuntimeException("TODO");
 		}
 		
-		dirty = true;
+		geomDirty = true;
 	}
 	
+	/**
+	 * Compute or recompute the geometry of the edge.
+	 * @param camera The camera.
+	 */
 	protected void recomputeGeometry(Camera camera) {
 		GraphicEdge edge = (GraphicEdge) element;
 		
@@ -183,7 +273,7 @@ public class EdgeSkeleton extends BaseSkeleton {
 				break;
 		}
 
-		dirty = false;
+		geomDirty = false;
 	}
 	
 	protected void recomputeGeometryVectors() {
