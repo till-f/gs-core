@@ -257,6 +257,7 @@ public class GraphicEdge extends GraphicElement implements Edge {
 	 */
 	protected void countSameEdges(ArrayList<GraphicEdge> edgeList) {
 		int before = group!=null?group.getCount() : 1;
+		
 		for (GraphicEdge other : edgeList) {
 			if (other != this) {
 				if ((other.from == from && other.to == to)
@@ -273,7 +274,7 @@ public class GraphicEdge extends GraphicElement implements Edge {
 			}
 		}
 		
-		if(group.getCount() != before) {
+		if(group != null && group.getCount() != before) {
 			for(GraphicEdge edge:group.edges) {
 				if(edge.skeleton != null) {
 					edge.skeleton.positionChanged();

@@ -427,7 +427,7 @@ public class GraphicGraph extends AbstractElement implements Graph,
 				GraphicNode node = (GraphicNode) n;
 				Point3 pos = node.center;
 
-				if(!node.hidden && node.positionned) {
+				if(!node.hidden && node.positioned) {
 					if (pos.x < lo.x)
 						lo.x = pos.x;
 					else if (pos.x > hi.x)

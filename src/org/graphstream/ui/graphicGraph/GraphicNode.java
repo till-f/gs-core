@@ -53,7 +53,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.Selector;
  * draw its representation at this location. It can tell at which
  * time this position has been setup for the first time. Most
  * renderer will not render the node until it got a position
- * (see the {@link #positionned} flag).
+ * (see the {@link #positioned} flag).
  * </p>
  * 
  * @see GraphicGraph
@@ -62,12 +62,12 @@ public class GraphicNode extends GraphicElement implements Node {
 	/**
 	 * The position of the node. In graph units.
 	 */
-	public Point3 center;
+	public Point3 center = new Point3();
 	
 	/**
 	 * True as soon as the center has been modified for the first time.
 	 */
-	public boolean positionned = false;
+	public boolean positioned = false;
 
 	/**
 	 * New graphic node.
@@ -101,13 +101,13 @@ public class GraphicNode extends GraphicElement implements Node {
 	}
 	
 	protected void positionChanged() {
-		positionned = true;
+		positioned = true;
 
 		mygraph.graphChanged = true;
 		mygraph.boundsChanged = true;	// Maybe ...
 
-		if (mygraph.feedbackXYZ)
-			setAttribute("xyz", center.x, center.y, center.z);
+//		if (mygraph.feedbackXYZ)
+//			setAttribute("xyz", center.x, center.y, center.z);
 		
 		if(skeleton != null) {
 			skeleton.positionChanged();

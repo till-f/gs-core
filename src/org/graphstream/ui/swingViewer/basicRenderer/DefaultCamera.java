@@ -271,7 +271,7 @@ public class DefaultCamera implements Camera {
 
 		for (Node node : graph) {
 			GraphicNode gnode = (GraphicNode) node;
-			boolean visible =  (!gnode.hidden) && gnode.positionned && isNodeVisibleIn((GraphicNode) node, 0, 0, W, H);
+			boolean visible =  (!gnode.hidden) && gnode.positioned && isNodeVisibleIn((GraphicNode) node, 0, 0, W, H);
 
 			if (!visible)
 				nodeInvisible.add(node.getId());
@@ -629,7 +629,7 @@ public class DefaultCamera implements Camera {
 		if(edge.hidden)
 			return false;
 		
-		if((!node1.positionned) || (!node0.positionned))
+		if((!node1.positioned) || (!node0.positioned))
 			return false;
 		
 		boolean node0Invis = nodeInvisible.contains(node0.getId());
@@ -656,11 +656,12 @@ public class DefaultCamera implements Camera {
 	protected boolean isNodeVisibleIn(GraphicNode node, double X1, double Y1, double X2, double Y2) {
 		NodeSkeleton nskel = (NodeSkeleton) node.getSkeleton();
 		
-		if(nskel != null) {
-			return nskel.visibleIn(this, X1, Y1, X2, Y2, Units.PX);
-		} else {
-			throw new RuntimeException("cannot compute visibility of node without skeleton");
+		if(nskel == null) {
+			nskel = new NodeSkeleton();
+			node.setSkeleton(nskel);
 		}
+		
+		return nskel.visibleIn(this, X1, Y1, X2, Y2, Units.PX);
 	}
 
 	/**

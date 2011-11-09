@@ -42,10 +42,7 @@ import org.graphstream.ui.graphicGraph.GraphicEdge;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.StyleGroup;
-import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
-import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.ArrowShape;
-import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.FillMode;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.BaseSkeleton;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.EdgeSkeleton;
@@ -109,7 +106,7 @@ public class EdgeRenderer extends ElementRenderer {
 		
 		shape.setLine(src.x, src.y, trg.x, trg.y);
 		g.draw(shape);
-		renderArrow(group, g, camera, edge, skel);
+		renderArrow(group, g, camera, edge, skel);// Does not modify the graphics.
 		
 		if(edge.label != null) {
 			textRenderer.queueElement(element);
@@ -145,10 +142,8 @@ public class EdgeRenderer extends ElementRenderer {
 
 				arrowShape.reset();
 				arrowShape.moveTo(x, y);
-				arrowShape.lineTo(x - theDirection.data[0] + perp.data[0], y
-						- theDirection.data[1] + perp.data[1]);
-				arrowShape.lineTo(x - theDirection.data[0] - perp.data[0], y
-						- theDirection.data[1] - perp.data[1]);
+				arrowShape.lineTo(x - theDirection.data[0] + perp.data[0], y - theDirection.data[1] + perp.data[1]);
+				arrowShape.lineTo(x - theDirection.data[0] - perp.data[0], y - theDirection.data[1] - perp.data[1]);
 				arrowShape.closePath();
 
 				g.fill(arrowShape);
