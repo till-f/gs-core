@@ -52,6 +52,54 @@ import org.graphstream.ui.swingViewer.util.FontCache;
 
 /**
  * Base renderer for element groups. 
+ * 
+ * <p>
+ * This bass renderer handles the {@link #render(StyleGroup, Graphics2D, Camera)} method by
+ * providing an execution base for specific renderers. The {@link #render(StyleGroup, Graphics2D, Camera)}
+ * method is called at each frame for a group of element having the same style. This method will
+ * take care of which elements are bulk (all with the same style), and which elements are dynamic
+ * (with a dynamic color or size), as well as elements that may be modified due to an event (clicked,
+ * selected, etc.). It call corresponding rendering methods for each.
+ * </p>
+ * 
+ * <p>
+ * First the {@link #render(StyleGroup, Graphics2D, Camera)} method will call
+ * {@link #setupRenderingPass(StyleGroup, Graphics2D, Camera)}. This method may do all administrative
+ * tasks needed before rendering. Then it calls {@link #pushStyle(StyleGroup, Graphics2D, Camera)}.
+ * This method must setup all the settings that will remain unchanged during the rendering of all
+ * elements. Then for each bulk element it first check if the element has a skeleton, and if not
+ * add it, before calling {@link #renderElement(StyleGroup, Graphics2D, Camera, GraphicElement)} if
+ * the element is visible or {@link #elementInvisible(StyleGroup, Graphics2D, Camera, GraphicElement)}
+ * in the other case. {@link #renderElement(StyleGroup, Graphics2D, Camera, GraphicElement)} must
+ * do the rendering proper. 
+ * </p>
+ * 
+ * <p>
+ * In a second phase the {@link #render(StyleGroup, Graphics2D, Camera)} method will process each
+ * element that has a dynamic style. The graphic graph is organized so that if the sylesheet tells
+ * that the element has a dynamic color or size, but the element has no "ui.color" or "ui.size"
+ * attribute, the element is bulk and not dynamic. This way, only elements that are really dynamic
+ * will be drawn in this phase. In this phase, for each element, the {@link #pushDynStyle(StyleGroup, Graphics2D, Camera, GraphicElement)}
+ * method is first called to setup all dynamic parts of the style (mostly color and size) and then
+ * {@link #renderElement(StyleGroup, Graphics2D, Camera, GraphicElement)}.
+ * </p>
+ * 
+ * <p>
+ * In a third phase, all the elements actually modified by an event are drawn. In this case, for
+ * each element, the event is first pushed so that the style is modified. Then the {@link #pushStyle(StyleGroup, Graphics2D, Camera)}
+ * method is called and then the {@link #renderElement(StyleGroup, Graphics2D, Camera, GraphicElement)}
+ * method.
+ * </p>
+ * 
+ * <p>
+ * In a last phase, all the texts are rendered. Elements that have text may register to render
+ * a text in the {@link #textRenderer}. Then the text renderer will push the text style once,
+ * and render all the texts in place.
+ * </p>
+ * 
+ * <p>
+ * This class is completely generic and not dependent of any real drawing operations.
+ * </p>
  */
 public abstract class ElementRenderer {
 	/**
@@ -193,8 +241,16 @@ public abstract class ElementRenderer {
 
 	/**
 	 * Specific renderer for text labels.
+	 * 
+	 * <p>
+	 * The text renderer is a component that allows to register which elements need a text label
+	 * during the rendering pass (using the {@link #queueElement(GraphicElement)} method), and to
+	 * then draw these labels in a single pass (since drawing text often require lots of common
+	 * operations that can be done once before rendering all the labels). The rendering is then
+	 * done using the {@link #renderTexts(StyleGroup, Camera, Graphics2D)} method. 
+	 * </p>
 	 */
-	class TextRenderer {
+	public static class TextRenderer {
 		/**
 		 * The set of elements that need a text label.
 		 */
@@ -261,12 +317,17 @@ public abstract class ElementRenderer {
 			 && group.getTextVisibilityMode() != StyleConstants.TextVisibilityMode.HIDDEN) {
 				BaseSkeleton skel = (BaseSkeleton) element.getSkeleton();
 				Point3 c = skel == null ? element.getCenter() : skel.getPosition(camera, null, Units.PX);
+				Point3 s = skel == null ? new Point3(0, 0, 0) : skel.getSize(camera, Units.PX);
 
-				g.drawString(element.label, (float) c.x, (float) (c.y + textSize / 3)); // approximation to gain time.
+				// We draw the text always at the right of the element with 4 pixels of offset for readability.
+				g.drawString(element.label, (float) (c.x + s.x/2) + 4, (float) (c.y + textSize / 3)); // approximation to gain time.
 			}
 		}
 	}
 	
+	/**
+	 * Check if an element has a skeleton, and if not add it.
+	 */
 	protected void maybeAddSkeleton(GraphicElement element) {
 		if(element.getSkeleton() == null) {
 			switch(element.getSelectorType()) {

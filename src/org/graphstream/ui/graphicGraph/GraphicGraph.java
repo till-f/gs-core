@@ -430,15 +430,15 @@ public class GraphicGraph extends AbstractElement implements Graph,
 				if(!node.hidden && node.positioned) {
 					if (pos.x < lo.x)
 						lo.x = pos.x;
-					else if (pos.x > hi.x)
+					if (pos.x > hi.x)
 						hi.x = pos.x;
 					if (pos.y < lo.y)
 						lo.y = pos.y;
-					else if (pos.y > hi.y)
+					if (pos.y > hi.y)
 						hi.y = pos.y;
 					if (pos.z < lo.z)
 						lo.z = pos.z;
-					else if (pos.z > hi.z)
+					if (pos.z > hi.z)
 						hi.z = pos.z;
 				}
 			}
@@ -451,15 +451,15 @@ public class GraphicGraph extends AbstractElement implements Graph,
 					if(!sprite.hidden) {
 						if (pos.x < lo.x)
 							lo.x = pos.x;
-						else if (pos.x > hi.x)
+						if (pos.x > hi.x)
 							hi.x = pos.x;
 						if (pos.y < lo.y)
 							lo.y = pos.y;
-						else if (pos.y > hi.y)
+						if (pos.y > hi.y)
 							hi.y = pos.y;
 						if (pos.z < lo.z)
 							lo.z = pos.z;
-						else if (pos.z > hi.z)
+						if (pos.z > hi.z)
 							hi.z = pos.z;
 					}
 				}

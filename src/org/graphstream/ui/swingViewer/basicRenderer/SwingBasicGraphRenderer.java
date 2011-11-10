@@ -310,8 +310,8 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 			double y1 = selection.y1;
 			double x2 = selection.x2;
 			double y2 = selection.y2;
-			double w  = camera.getMetrics().getSize().data[0];
-			double h  = camera.getMetrics().getSize().data[1];
+			double w  = camera.getMetrics().viewport.data[0];
+			double h  = camera.getMetrics().viewport.data[1];
 
 			if (x1 > x2) {
 				t  = x1;
@@ -327,14 +327,12 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 			Stroke s = g.getStroke();
 
 			g.setStroke(new BasicStroke(1));
-			g.setColor(new Color(50, 50, 200, 128));
-			g.fillRect((int) x1, (int) y1, (int) (x2 - x1), (int) (y2 - y1));
-			g.setColor(new Color(0, 0, 0, 128));
+			g.setColor(new Color(222, 222, 222));
 			g.drawLine(0, (int) y1, (int) w, (int) y1);
 			g.drawLine(0, (int) y2, (int) w, (int) y2);
 			g.drawLine((int) x1, 0, (int) x1, (int) h);
 			g.drawLine((int) x2, 0, (int) x2, (int) h);
-			g.setColor(new Color(50, 50, 200, 64));
+			g.setColor(new Color(250, 200, 0));
 			g.drawRect((int) x1, (int) y1, (int) (x2 - x1), (int) (y2 - y1));
 			g.setStroke(s);
 		}
@@ -380,14 +378,11 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		g.setColor(Color.BLUE);
 		Ellipse2D ellipse = new Ellipse2D.Double();
 		double px1 = metrics.px1;
-		ellipse.setFrame(camera.getViewCenter().x - 3 * px1,
-				camera.getViewCenter().y - 3 * px1, px1 * 6, px1 * 6);
+		ellipse.setFrame(camera.getViewCenter().x - 3 * px1, camera.getViewCenter().y - 3 * px1, px1 * 6, px1 * 6);
 		g.fill(ellipse);
-		ellipse.setFrame(metrics.lo.x - 3 * px1, metrics.lo.y - 3 * px1,
-				px1 * 6, px1 * 6);
+		ellipse.setFrame(metrics.lo.x - 3 * px1, metrics.lo.y - 3 * px1, px1 * 6, px1 * 6);
 		g.fill(ellipse);
-		ellipse.setFrame(metrics.hi.x - 3 * px1, metrics.hi.y - 3 * px1,
-				px1 * 6, px1 * 6);
+		ellipse.setFrame(metrics.hi.x - 3 * px1, metrics.hi.y - 3 * px1, px1 * 6, px1 * 6);
 		g.fill(ellipse);
 	}
 

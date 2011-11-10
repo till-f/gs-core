@@ -264,17 +264,19 @@ public class DefaultCamera implements Camera {
 	 * rendering (if the view port changed).
 	 */
 	public void checkVisibility(GraphicGraph graph) {
-		double W = metrics.viewport.data[0];
-		double H = metrics.viewport.data[1];
-
-		nodeInvisible.clear();
-
-		for (Node node : graph) {
-			GraphicNode gnode = (GraphicNode) node;
-			boolean visible =  (!gnode.hidden) && gnode.positioned && isNodeVisibleIn((GraphicNode) node, 0, 0, W, H);
-
-			if (!visible)
-				nodeInvisible.add(node.getId());
+		if(! autoFit) {
+			double W = metrics.viewport.data[0];
+			double H = metrics.viewport.data[1];
+	
+			nodeInvisible.clear();
+	
+			for (Node node : graph) {
+				GraphicNode gnode = (GraphicNode) node;
+				boolean visible =  (!gnode.hidden) && gnode.positioned && isNodeVisibleIn((GraphicNode) node, 0, 0, W, H);
+	
+				if (!visible)
+					nodeInvisible.add(node.getId());
+			}
 		}
 	}
 
@@ -418,12 +420,10 @@ public class DefaultCamera implements Camera {
 		double padXpx = getPaddingXpx() * 2;
 		double padYpx = getPaddingYpx() * 2;
 
-		sx = (metrics.viewport.data[0] - padXpx)
-				/ (metrics.size.data[0] + padXgu); // Ratio along X
-		sy = (metrics.viewport.data[1] - padYpx)
-				/ (metrics.size.data[1] + padYgu); // Ratio along Y
-		tx = metrics.lo.x + (metrics.size.data[0] / 2); // Centre of graph in X
-		ty = metrics.lo.y + (metrics.size.data[1] / 2); // Centre of graph in Y
+		sx = (metrics.viewport.data[0] - padXpx) / (metrics.size.data[0] + padXgu); // Ratio along X
+		sy = (metrics.viewport.data[1] - padYpx) / (metrics.size.data[1] + padYgu); // Ratio along Y
+		tx = metrics.lo.x + (metrics.size.data[0] / 2); // Center of graph in X
+		ty = metrics.lo.y + (metrics.size.data[1] / 2); // Center of graph in Y
 
 		if (sx > sy) // The least ratio.
 			sx = sy;
