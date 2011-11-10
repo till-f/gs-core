@@ -30,6 +30,8 @@
  */
 package org.graphstream.ui.graphicGraph.stylesheet;
 
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+
 /**
  * A value and the units of the value.
  * 
@@ -40,8 +42,6 @@ package org.graphstream.ui.graphicGraph.stylesheet;
  * </p>
  */
 public class Value extends Number {
-	// Attributes
-
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -117,7 +117,7 @@ public class Value extends Number {
 			builder.append("%");
 			break;
 		default:
-			builder.append("wtf (what's the fuck?)");
+			builder.append("wtf");
 			break;
 		}
 
@@ -139,5 +139,70 @@ public class Value extends Number {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Try to convert the given object into a single numerical value.
+	 * 
+	 * <p>
+	 * It accepts string containing
+	 * a value, {@link Number} instances and {@link Value} instance. If the value is a string,
+	 * it can be suffixed by "px", "gu" or "%" and the units will be used. This method can also
+	 * understand values that are an array of objects. In this case it tries to interpret the first
+	 * cell of the array as it would do with a normal value and looks in the second cell of the
+	 * array if it contains a Units instance to change the units of the returned value.
+	 * </p>
+	 * 
+	 * <p>
+	 * Therefore, here are examples of understood attributes values, thanks to this method:
+	 * <pre>
+	 *     A.addAttribute("a", 1); Value v = getNumber(A.getAttribute("a"));  
+	 *     B.addAttribute("b", Value(Units.PX, 1); Value v = getNumber(B.getAttribute("b"));
+	 *     C.addAttribute("c", "1px"; Value v = getNumber(C.getAttribute("c"));
+	 *     D.addAttribute("d", 1, Units.PX); Value v = getNumber(D.getAttribute("d"));
+	 *     E.addAttribute("e", new Pixels(1)); Value v = getNumber(E.getNumber("e"));
+	 * </pre>
+	 * </p>
+	 * 
+	 * @param value The data to convert.
+	 * @return A value with its number and units.
+	 * @throw NumberFormatException if the value is a string that does not contain a number.
+	 */
+	public static Value getNumber(Object value) throws NumberFormatException {
+		// Value is a Number so we must test it first.
+		if(value instanceof Value) {
+			return (Value)value;
+		} else if(value instanceof Number) {
+			return new Value(Units.GU, ((Number)value).doubleValue());
+		} else if(value instanceof String) {
+			double n = 0;
+			String s = (String) value; s = s.toLowerCase().trim();
+			Units  u = Units.GU;
+				
+			if(s.endsWith("px")) {
+				u = Units.PX;
+				s = s.substring(0, s.length()-2).trim();
+			} else if(s.endsWith("%")) {
+				u = Units.PERCENTS;
+				s = s.substring(0, s.length()-2).trim();
+			} else if(s.endsWith("gu")) {
+				s = s.substring(0, s.length()-2).trim();
+			}
+				
+			n = Double.parseDouble(s);
+			
+			return new Value(u, n);
+		} else if(value instanceof Object[]) {
+			Object[] t = (Object[])value;
+			if(t.length > 0) {
+				Value v = getNumber(t[0]);
+				if(t.length > 1 && t[1] instanceof Units) {
+					v.units = (Units)t[1];
+				}
+				return v;
+			}
+		}
+		
+		throw new NumberFormatException("object cannot be converted to a number");
 	}
 }

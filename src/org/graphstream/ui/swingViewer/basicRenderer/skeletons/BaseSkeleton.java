@@ -37,6 +37,7 @@ import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
+import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.swingViewer.util.Camera;
@@ -192,10 +193,24 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 		size.x = camera.getMetrics().lengthToGu(sizes, 0);
 		size.y = sizes.size() > 1 ? camera.getMetrics().lengthToGu(sizes, 1) : size.x;
 		
-		if(style.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE && element.hasNumber("ui.size")) {
-			double ratio = size.x / size.y;
-			size.x = element.getNumber("ui.size");
-			size.y = size.x * ratio;
+		if(style.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE ) {
+			Object o = element.getAttribute("ui.size");
+			
+			if(o != null) {
+				if(o instanceof Values) {
+					Values val = (Values)o;
+					size.x = camera.getMetrics().lengthToGu(val, 0);
+					size.y = val.size() > 1 ? camera.getMetrics().lengthToGu(val, 1) : size.x;
+				} else {
+					try {
+						double ratio = size.x / size.y;
+						Value val = Value.getNumber(element.getAttribute("ui.size"));
+						size.x = camera.getMetrics().lengthToGu(val);
+						size.y = size.x * ratio;
+					} catch(NumberFormatException e) {}
+				}
+			}
+			
 		}
 		
 		sizeDirty = false;

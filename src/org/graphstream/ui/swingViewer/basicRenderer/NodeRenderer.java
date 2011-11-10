@@ -75,7 +75,7 @@ public class NodeRenderer extends ElementRenderer {
 			strokeWidth = camera.getMetrics().lengthToGu(group.getStrokeWidth());
 			if(strokeWidth > 0) {
 				strokeColor = group.getStrokeColor(0);
-				g.setStroke(new BasicStroke((float) width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+				g.setStroke(new BasicStroke((float) strokeWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
 			}
 		}
 	}
