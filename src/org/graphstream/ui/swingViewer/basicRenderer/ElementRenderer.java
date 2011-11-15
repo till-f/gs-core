@@ -319,8 +319,19 @@ public abstract class ElementRenderer {
 				Point3 c = skel == null ? element.getCenter() : skel.getPosition(camera, null, Units.PX);
 				Point3 s = skel == null ? new Point3(0, 0, 0) : skel.getSize(camera, Units.PX);
 
-				// We draw the text always at the right of the element with 4 pixels of offset for readability.
-				g.drawString(element.label, (float) (c.x + s.x/2) + 4, (float) (c.y + textSize / 3)); // approximation to gain time.
+// XXX TODO this feature would require to store the textLength in the skeleton.
+//				switch(element.getStyle().getTextAlignment()) {
+//					case CENTER:
+//						break;
+//					case AT_LEFT:
+						// We draw the text always at the right of the element with 4 pixels of offset for readability.
+						g.drawString(element.label, (float) (c.x + s.x/2) + 4, (float) (c.y + textSize / 3)); // approximation to gain time.
+//						break;
+//					case LEFT:
+//						// We draw the text always at the right of the element with 4 pixels of offset for readability.
+//						g.drawString(element.label, (float) c.x, (float) (c.y + textSize / 3)); // approximation to gain time.
+//						break;
+//				}
 			}
 		}
 	}

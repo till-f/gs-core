@@ -84,6 +84,16 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	protected Point3 size = new Point3();
 	
 	/**
+	 * Length of the label in pixels.
+	 */
+	protected boolean labelLengthPxDirty = true;
+	
+	/**
+	 * Length of the label in pixels.
+	 */
+	protected double labelLengthPx = 0;
+	
+	/**
 	 * Color of the element.
 	 */
 	public Color getColor() {
@@ -127,6 +137,28 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 			throw new RuntimeException("TODO");
 		}
 	}
+	
+	public double getLabelLengthPX(Camera camera) {
+		if(labelLengthPxDirty) {
+			computeLabelLength(camera);
+		}
+		
+		return labelLengthPx;
+	}
+	
+	public double getLabelLength(Camera camera, Units units) {
+		double len = getLabelLengthPX(camera);
+		switch(units) {
+			case PX: return len;
+			case GU: return camera.getMetrics().lengthToGu(len, Units.PX);
+			case PERCENTS: return camera.getMetrics().lengthToPercents(len, Units.PX);
+			default: throw new RuntimeException("WTF?");
+		}
+	}
+	
+	protected void computeLabelLength(Camera camera) {
+		
+	}
 
 	/**
 	 * The absolute coordinates of the element on the canvas in the units given. The position may be
@@ -164,6 +196,7 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	}
 
 	public void labelChanged() {
+		labelLengthPxDirty = true;
 	}
 
 	public void iconChanged(Object newValue) {

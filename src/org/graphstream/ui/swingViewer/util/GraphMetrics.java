@@ -263,6 +263,50 @@ public class GraphMetrics {
 		return lengthToPx(values.get(index), values.units);
 	}
 
+	/**
+	 * Convert a value in given units to percents of the diagonal of the graph.
+	 * 
+	 * @param value
+	 *            The value to convert.
+	 * @param units
+	 *            The units the value to convert is expressed in.
+	 * @return The value converted to GU.
+	 */
+	public double lengthToPercents(double value, StyleConstants.Units units) {
+		switch (units) {
+			case PX:
+				return (diagonal / ratioPx2Gu) / value;
+			case GU:
+				return diagonal / value;
+			case PERCENTS:
+			default:
+				return value;
+		}
+	}
+
+	/**
+	 * Convert a value in a given units to percents of the diagonal of the graph.
+	 * 
+	 * @param value
+	 *            The value to convert (it contains its own units).
+	 */
+	public double lengthToPercents(Value value) {
+		return lengthToPercents(value.value, value.units);
+	}
+
+	/**
+	 * Convert one of the given values in a given units to percents of the diagonal of the graph.
+	 * 
+	 * @param values
+	 *            The values set containing the value to convert (it contains
+	 *            its own units).
+	 * @param index
+	 *            Index of the value to convert.
+	 */
+	public double lengthToPercents(Values values, int index) {
+		return lengthToGu(values.get(index), values.units);
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder(
