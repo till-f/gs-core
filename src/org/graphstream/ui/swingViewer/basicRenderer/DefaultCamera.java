@@ -761,8 +761,10 @@ public class DefaultCamera implements Camera {
 	}
 	
 	public boolean cameraChangedFlag() {
-		boolean f = cameraChanged;
+		return cameraChanged;
+	}
+	
+	public void resetCameraChangedFlag() {
 		cameraChanged = false;
-		return f;
 	}
 }

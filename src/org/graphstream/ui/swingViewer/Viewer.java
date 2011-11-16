@@ -509,6 +509,8 @@ public class Viewer implements ActionListener {
 
 			for (View view : views.values())
 				view.display(graph, changed);
+			
+			graph.resetGraphChangedFlag();
 		}
 	}
 

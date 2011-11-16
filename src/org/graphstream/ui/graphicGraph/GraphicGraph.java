@@ -291,16 +291,22 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	}
 
 	/**
-	 * Dirty bit, set to true if the graph was edited or changed in any way since the last time
-	 * this method was called. This method therefore resets the flag at each access. It should only
-	 * be consulted by the view or viewer to know if a repaint is needed.
+	 * Dirty bit, set to true if the graph was edited or changed in any way since
+	 * the {@link #resetGraphChangedFlag()} method was called. 
 	 * 
 	 * @return true if the graph was changed and needs a repaint.
 	 */
 	public boolean graphChangedFlag() {
-		boolean f = graphChanged;
+		return graphChanged;
+	}
+	
+	/**
+	 * Reset the "graph changed" flag to false.
+	 * It should only
+	 * be consulted by the view or viewer to know if a repaint is needed.
+	 */
+	public void resetGraphChangedFlag() {
 		graphChanged = false;
-		return f;
 	}
 
 	/**

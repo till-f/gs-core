@@ -203,6 +203,7 @@ public class DefaultView extends View implements ComponentListener,
 		// super.paint( g );	// No need to call this, we fill the entire area.
 		render(g2);
 		paintChildren(g2);
+		renderer.getCamera().resetCameraChangedFlag();
 	}
 
 	protected void checkTitle() {
