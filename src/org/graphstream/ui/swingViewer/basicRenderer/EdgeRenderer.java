@@ -52,6 +52,8 @@ import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 public class EdgeRenderer extends ElementRenderer {
 	protected Line2D shape = new Line2D.Double();
+	
+	protected Path2D curve = new Path2D.Double();
 
 	protected double width = 1;
 
@@ -105,8 +107,24 @@ public class EdgeRenderer extends ElementRenderer {
 		Point3 src = skel.getSourcePoint();
 		Point3 trg = skel.getTargetPoint();
 		
-		shape.setLine(src.x, src.y, trg.x, trg.y);
-		g.draw(shape);
+		switch(skel.getKind()) {
+			case CUBIC_CURVE:
+				Point3 c0 = skel.getPoint(0, camera);
+				Point3 c1 = skel.getPoint(1, camera);
+				curve.reset();
+				curve.moveTo(src.x, src.y);
+				curve.curveTo(c0.x, c0.y, c1.x, c1.y, trg.x, trg.y);
+				g.draw(curve);
+				break;
+			case POINTS:
+			case VECTORS:
+			case LINE:
+			default:
+				shape.setLine(src.x, src.y, trg.x, trg.y);
+				g.draw(shape);
+				break;
+		}
+
 		renderArrow(group, g, camera, edge, skel);// Does not modify the graphics.
 		
 		if(edge.label != null) {
@@ -120,6 +138,10 @@ public class EdgeRenderer extends ElementRenderer {
 			if (group.getArrowShape() != ArrowShape.NONE) {
 				if(arrowShape == null)
 					arrowShape = new Path2D.Double();
+				
+				// XXX In theory, we can compute the position of the arrow attachment
+				// automatically when the attached node moves, instead of evaluating it
+				// each time we draw the arrow. XXX TODO see arrowPos in EdgeSkeleton.
 				
 				GraphicNode node0 = (GraphicNode) edge.getNode0();
 				GraphicNode node1 = (GraphicNode) edge.getNode1();

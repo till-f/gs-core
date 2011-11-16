@@ -105,6 +105,11 @@ public class EdgeSkeleton extends BaseSkeleton {
 	 */
 	public ArrayList<Point3> points = null;
 
+	/**
+	 * The position of the arrow. XXX TODO
+	 */
+	public Point3 arrowPos = null;
+	
 	@Override
 	public Point3 getPosition(Camera camera, Point3 pos, Units units) {
 		switch(units) {
@@ -247,6 +252,7 @@ public class EdgeSkeleton extends BaseSkeleton {
 			case POLYLINE:
 				if(points != null) {
 					kind = Kind.POINTS;
+					recomputeGeometryLines();
 				} else {
 					kind = Kind.LINE;
 				}
@@ -261,14 +267,16 @@ public class EdgeSkeleton extends BaseSkeleton {
 				break;
 			case CUBIC_CURVE:
 				kind = Kind.CUBIC_CURVE;
-				recomputeGeometryCubicCurve();
+				recomputeGeometryCubicCurve(edge, camera);
 				break;
 			default:
 				kind = Kind.LINE;
 				if(edge.getNode0() == edge.getNode1()) {
 					recomputeGeometryLoop(edge, camera);
+					kind = Kind.CUBIC_CURVE;
 				} else if(edge.multi > 1) {
 					recomputeGeometryMulti(edge);
+					kind = Kind.CUBIC_CURVE;
 				}
 				break;
 		}
@@ -280,8 +288,41 @@ public class EdgeSkeleton extends BaseSkeleton {
 		throw new RuntimeException("TODO geometry vectors");
 	}
 	
-	protected void recomputeGeometryCubicCurve() {
-		throw new RuntimeException("TODO geometry cubic-curve");
+	protected void recomputeGeometryLines() {
+		throw new RuntimeException("TODO geometry points");
+	}
+	
+	protected void recomputeGeometryCubicCurve(GraphicEdge edge, Camera camera) {
+		if(edge.getNode0() == edge.getNode1()) {
+			recomputeGeometryLoop(edge, camera);
+		} else if(edge.multi > 1) {
+			recomputeGeometryMulti(edge);
+		} else {
+			checkPointsArraySize(2);
+
+			Point3 from = edge.from.center;
+			Point3 to   = edge.to.center;
+			Point3 c1   = points.get(0);
+			Point3 c2   = points.get(1);
+
+	        Vector2 mainDir = new Vector2(from, to);
+	        double length  = mainDir.length();
+	        double angle   = mainDir.data[1] / length;
+	
+	        if (angle > 0.707107f || angle < -0.707107f) {
+	            // North or south.
+	            c1.x = from.x + mainDir.data[0] / 2;
+	            c2.x = c1.x;
+	            c1.y = from.y;
+	            c2.y = to.y;
+	        } else {
+	            // East or west.
+	            c1.x = from.x;
+	            c2.x = to.x;
+	            c1.y = from.y + mainDir.data[1] / 2;
+	            c2.y = c1.y;
+	        }
+		}
 	}
 	
 	protected void recomputeGeometryMulti(GraphicEdge edge) {
@@ -315,34 +356,28 @@ public class EdgeSkeleton extends BaseSkeleton {
 		vx2 *= f;
 		vy2 *= f;
   
-		double xx1 = from.x + vx;
-		double yy1 = from.y + vy;
-		double xx2 = to.x - vx;
-		double yy2 = to.y - vy;
+		checkPointsArraySize(2);
+		Point3 c0 = points.get(0);
+		Point3 c1 = points.get(1);
+		
+		c0.x = from.x + vx;
+		c0.y = from.y + vy;
+		c1.x = to.x - vx;
+		c1.y = to.y - vy;
   
 		int m = multi + (edge.from == main.from ? 0 : 1);
   
 		if(m % 2 == 0) {
-			xx1 += vx2 + ox;
-			yy1 += vy2 + oy;
-			xx2 += vx2 + ox;
-			yy2 += vy2 + oy;
+			c0.x += vx2 + ox;
+			c0.y += vy2 + oy;
+			c1.x += vx2 + ox;
+			c1.y += vy2 + oy;
 		} else {
-			xx1 -= vx2 - ox;
-			yy1 -= vy2 - oy;
-			xx2 -= vx2 - ox;
-			yy2 -= vy2 - oy;	  
+			c0.x -= vx2 - ox;
+			c0.y -= vy2 - oy;
+			c1.x -= vx2 - ox;
+			c1.y -= vy2 - oy;	  
 		}
-		
-		if(points == null) {
-			points = new ArrayList<Point3>();
-		}
-		while(points.size() < 2) {
-			points.add(new Point3());
-		}
-
-		points.get(0).set(xx1, yy1, 0);
-		points.get(1).set(xx2, yy2, 0);
 	}
 	
 	protected void recomputeGeometryLoop(GraphicEdge edge, Camera camera) {
@@ -358,13 +393,7 @@ public class EdgeSkeleton extends BaseSkeleton {
 		}
 		double d = s / 2 * m + 4 * s * m;
 
-		if(points == null) {
-			points = new ArrayList<Point3>();
-		}
-		while(points.size() < 2) {
-			points.add(new Point3());
-		}
-
+		checkPointsArraySize(2);
 		points.get(0).set(x+d, y, 0);
 		points.get(1).set(x, y+d, 0);
 	}
@@ -436,5 +465,14 @@ public class EdgeSkeleton extends BaseSkeleton {
 	protected Point3 positionOnVectors(Camera camera, double percent, double offset, Point3 pos, Units units) {
 		// XXX TODO XXX
 		throw new RuntimeException("TODO");
+	}
+	
+	protected void checkPointsArraySize(int minSize) {
+		if(points == null) {
+			points = new ArrayList<Point3>();
+		}
+		while(points.size() < minSize) {
+			points.add(new Point3());
+		}
 	}
 }
