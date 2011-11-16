@@ -77,6 +77,11 @@ import org.graphstream.ui.swingViewer.util.GraphMetrics;
  * The camera is also in charge of doing the visibility test. This test is made
  * automatically, when not in auto-fit mode (else all is by definition visible).
  * </p>
+ * 
+ * <p>
+ * It contains a {@link #cameraChanged} flag telling if the settings of the camera
+ * changed since this flag was last checked.
+ * </p>
  */
 public class DefaultCamera implements Camera {
 	/**
@@ -138,6 +143,11 @@ public class DefaultCamera implements Camera {
 	protected double gviewport[] = null;
 	
 	/**
+	 * A dirty flag that tells if the camera was changed during the last frame.
+	 */
+	protected boolean cameraChanged = true;
+	
+	/**
 	 * New camera with default settings.
 	 */
 	public DefaultCamera() {
@@ -195,6 +205,7 @@ public class DefaultCamera implements Camera {
 	public void setBounds(double minx, double miny, double minz, double maxx,
 			double maxy, double maxz) {
 		metrics.setBounds(minx, miny, minz, maxx, maxy, maxz);
+		cameraChanged = true;
 	}
 
 	public double getGraphDimension() {
@@ -532,6 +543,7 @@ public class DefaultCamera implements Camera {
 		}
 
 		autoFit = on;
+		cameraChanged = true;
 	}
 
 	/**
@@ -543,6 +555,7 @@ public class DefaultCamera implements Camera {
 	 */
 	public void setZoom(double z) {
 		zoom = z;
+		cameraChanged = true;
 	}
 
 	/**
@@ -553,6 +566,7 @@ public class DefaultCamera implements Camera {
 	 */
 	public void setViewRotation(double theta) {
 		rotation = theta;
+		cameraChanged = true;
 	}
 
 	/**
@@ -565,6 +579,7 @@ public class DefaultCamera implements Camera {
 	 */
 	public void setViewport(double viewportWidth, double viewportHeight) {
 		metrics.setViewport(viewportWidth, viewportHeight);
+		cameraChanged = true;
 	}
 
 	/**
@@ -575,6 +590,7 @@ public class DefaultCamera implements Camera {
 	 */
 	public void setPadding(GraphicGraph graph) {
 		padding.copy(graph.getStyle().getPadding());
+		cameraChanged = true;
 	}
 
 	protected double getPaddingXgu() {
@@ -742,5 +758,11 @@ public class DefaultCamera implements Camera {
 		}
 		
 		return false;
+	}
+	
+	public boolean cameraChangedFlag() {
+		boolean f = cameraChanged;
+		cameraChanged = false;
+		return f;
 	}
 }

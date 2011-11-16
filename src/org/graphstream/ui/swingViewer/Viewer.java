@@ -509,15 +509,13 @@ public class Viewer implements ActionListener {
 
 			for (View view : views.values())
 				view.display(graph, changed);
-
-			graph.resetGraphChangedFlag();
 		}
 	}
 
 	/**
 	 * Compute the overall bounds of the graphic graph according to the nodes
 	 * and sprites positions. We can only compute the graph bounds from the
-	 * nodes and sprites centres since the node and graph bounds may in certain
+	 * nodes and sprites centers since the node and graph bounds may in certain
 	 * circumstances be computed according to the graph bounds. The bounds are
 	 * stored in the graph metrics.
 	 */

@@ -111,8 +111,6 @@ import org.graphstream.ui.swingViewer.util.ShortcutManager;
 public class DefaultView extends View implements ComponentListener,
 		WindowListener {
 	private static final long serialVersionUID = - 4489484861592064398L;
-	// Attribute
-
 	/**
 	 * Parent viewer.
 	 */
@@ -153,8 +151,12 @@ public class DefaultView extends View implements ComponentListener,
 	 */
 	protected boolean canvasChanged = true;
 
-	// Construction
-
+	/**
+	 * New view.
+	 * @param viewer The parent viewer.
+	 * @param identifier The view unique identifier.
+	 * @param renderer The view renderer.
+	 */
 	public DefaultView(Viewer viewer, String identifier, GraphRenderer renderer) {
 		super(identifier);
 
@@ -183,23 +185,24 @@ public class DefaultView extends View implements ComponentListener,
 	@Override
 	public void display(GraphicGraph graph, boolean graphChanged) {
 		this.graphChanged = graphChanged;
-
-		repaint();
+		
+		Camera camera = renderer.getCamera();
+		
+		if (graphChanged || canvasChanged || camera.cameraChangedFlag()) {
+			repaint();
+			this.graphChanged = canvasChanged = false;
+		}
 	}
 
 	@Override
 	public void paint(Graphics g) {
-		if (graphChanged || canvasChanged) {
-			checkTitle();
+		checkTitle();
 
-			Graphics2D g2 = (Graphics2D) g;
+		Graphics2D g2 = (Graphics2D) g;
 
-			// super.paint( g );
-			render(g2);
-			paintChildren(g2);
-
-			graphChanged = canvasChanged = false;
-		}
+		// super.paint( g );	// No need to call this, we fill the entire area.
+		render(g2);
+		paintChildren(g2);
 	}
 
 	protected void checkTitle() {

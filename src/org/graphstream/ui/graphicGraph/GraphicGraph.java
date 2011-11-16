@@ -147,9 +147,9 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  * 
  * <p>
  * To ease redrawing, the graph handles a "graphChanged" flag that is set to true
- * at each change in the structure that would require a redraw. You an query this
- * flag using {@link #graphChangedFlag()}, and reset it to false using
- * {@link #resetGraphChangedFlag()}.
+ * at each change in the structure that would require a redraw. You can query this
+ * flag using {@link #graphChangedFlag()}. Usually it is not advisable to reset it
+ * to false manually. The graph renderer will do this after having drawn the graph.
  * </p>
  * 
  * <p>
@@ -179,7 +179,7 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	protected HashMap<GraphicNode, ArrayList<GraphicEdge>> connectivity;
 
 	/**
-	 * The style of this graph. This is a shortcut to avoid searching it in the style sheet.
+	 * The style of this graph. Shortcut to avoid searching it in the style sheet.
 	 */
 	protected StyleGroup style;
 
@@ -291,23 +291,16 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	}
 
 	/**
-	 * Dirty bit, set to true if the graph was edited or changed in any way since the last reset
-	 * of the "changed" flag and needs a repaint.
+	 * Dirty bit, set to true if the graph was edited or changed in any way since the last time
+	 * this method was called. This method therefore resets the flag at each access. It should only
+	 * be consulted by the view or viewer to know if a repaint is needed.
 	 * 
 	 * @return true if the graph was changed and needs a repaint.
 	 */
 	public boolean graphChangedFlag() {
-		return graphChanged;
-	}
-
-	/**
-	 * Reset the dirty bit flag. Renderers call this method after having fully rendered the graphic
-	 * graph. If the flag is not reset, no need to repaint the graph.
-	 * 
-	 * @see #graphChangedFlag()
-	 */
-	public void resetGraphChangedFlag() {
+		boolean f = graphChanged;
 		graphChanged = false;
+		return f;
 	}
 
 	/**
@@ -340,8 +333,7 @@ public class GraphicGraph extends AbstractElement implements Graph,
 
 	@Override
 	public String toString() {
-		return String.format("[%s %d nodes %d edges]", getId(), getNodeCount(),
-				getEdgeCount());
+		return String.format("[%s %d nodes %d edges]", getId(), getNodeCount(), getEdgeCount());
 	}
 
 	public double getStep() {
@@ -410,7 +402,7 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	 * This operation will process each node and sprite and is therefore costly.
 	 * However it does this computation again only when a node or sprite moved,
 	 * according to an internal flag set by each {@link GraphicNode} or
-	 * {@link GraphicSprite} when then move. Therefore it can be called several times,
+	 * {@link GraphicSprite} when they move. Therefore it can be called several times,
 	 * if nothing moved in the graph, the computation will not be redone.
 	 * </p>
 	 * 
@@ -419,10 +411,8 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	 */
 	public void computeBounds() {
 		if (boundsChanged) {
-			lo.x = lo.y = lo.z = 10000000; // A bug with Float.MAX_VALUE during
-											// comparisons ?
-			hi.x = hi.y = hi.z = -10000000; // A bug with Float.MIN_VALUE during
-											// comparisons ?
+			lo.x = lo.y = lo.z = Double.MAX_VALUE;
+			hi.x = hi.y = hi.z = Double.MIN_VALUE;
 
 			for (Node n : getEachNode()) {
 				GraphicNode node = (GraphicNode) n;

@@ -241,4 +241,11 @@ public interface Camera {
 	 */
 	boolean isVisible(GraphicElement element);
 
+	/**
+	 * A flag set to true if something changed in the camera settings since
+	 * it was last checked. This flag is therefore reset to false each time it is
+	 * accessed. It should be used only by the view to know if the camera settings
+	 * changed and if a redraw is needed. The GraphicGraph has a similar flag.
+	 */
+	boolean cameraChangedFlag();
 }
