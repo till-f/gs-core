@@ -143,6 +143,15 @@ public class GraphicEdge extends GraphicElement implements Edge {
 		if (attributes != null)
 			addAttributes(attributes);
 	}
+	
+	@Override
+	public Skeleton getSkeleton() {
+		if(skeleton == null && from.mygraph.skeletonFactory != null) {
+			setSkeleton(from.mygraph.skeletonFactory.newEdgeSkeleton());
+		}
+		
+		return skeleton;
+	}
 
 	@Override
 	public Selector.Type getSelectorType() {
@@ -217,6 +226,19 @@ public class GraphicEdge extends GraphicElement implements Edge {
 	 */
 	public int getMultiIndex() {
 		return multi;
+	}
+	
+	/**
+	 * The number of edges between the same nodes as this edge.
+	 * 
+	 * @return The number of edges in the multi-group. 
+	 */
+	public int getMultiCount() {
+		if(group != null) {
+			return group.getCount();
+		}
+		
+		return 1;
 	}
 
 	@Override
@@ -431,41 +453,4 @@ public class GraphicEdge extends GraphicElement implements Edge {
 				edges.get(i).multi = i;
 		}
 	}
-	
-	/*
-	 * Kinds of geometry stored as points.
-	public enum EdgeGeometryType {
-		** The edge is a loop and the cubic curve for it is computed automatically. *
-		AUTO_LOOP,
-		** The edge is a multi-edge and the cubic curve for it is computed automatically. *
-		AUTO_MULTI,
-		/** The edge is made of a set of 3D points that will not move. *
-		POINTS,
-		** The edge is made of a set of 3D vectors. *
-		VECTORS
-	}
-*/
-	
-	/*
-	 * Represents the geometry of the edge, if needed.
-	 * 
-	 * Most edges will need only the two nodes they link. However some edges have
-	 * more complex shapes that need several in-between points. This is the idea
-	 * begin this class.
-	public class EdgeGeometry {
-		*
-		 * The origin point of the edge, that is the center of the first node. 
-		 *
-		public Point3 from() {
-			return from.center;
-		}
-		
-		*
-		 * The target point of the edge, that is the center of the second node. 
-		 *
-		public Point3 to() {
-			return to.center;
-		}
-	}
-	 */
 }

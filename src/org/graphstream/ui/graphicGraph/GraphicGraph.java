@@ -58,6 +58,7 @@ import org.graphstream.stream.file.FileSink;
 import org.graphstream.stream.file.FileSource;
 import org.graphstream.stream.sync.SinkTime;
 import org.graphstream.ui.geom.Point3;
+import org.graphstream.ui.graphicGraph.GraphicElement.Skeleton;
 import org.graphstream.ui.graphicGraph.stylesheet.Style;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleSheet;
@@ -159,6 +160,17 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  * this information, and you can access the lower bound using {@link #getMinPos()} and
  * the upper bound with {@link #getMaxPos()}.
  * </p>
+ * 
+ * <h2>Skeletons</h2>
+ * 
+ * <p>
+ * Each {@link GraphicElement} can contain a skeleton that describes its basic geometry (that
+ * is, the geometry not related to the style). Due to their interelation to the rendering process,
+ * the skeletons must be provided by the renderers. However, specifying the skeleton for each
+ * element may be tricky, therefore the graphic graph can be equiped with a {@link SkeletonFactory}.
+ * If this is the case, the factory will be used by each {@link GraphicElement} when their
+ * {@link GraphicElement#getSkeleton()} method is called for the first time.
+ * </p>
  */
 public class GraphicGraph extends AbstractElement implements Graph,
 		StyleGroupListener {
@@ -223,6 +235,12 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	 * Time of other known sources.
 	 */
 	protected SinkTime sinkTime = new SinkTime();
+	
+	/**
+	 * The skeleton factory.
+	 * @see SkeletonFactory
+	 */
+	protected SkeletonFactory skeletonFactory = null;
 	
 	/**
 	 * Are null attributes access an error ?
@@ -1322,5 +1340,38 @@ public class GraphicGraph extends AbstractElement implements Graph,
 
 	public <T extends Node> T removeNode(Node node) {
 		throw new RuntimeException("not implemented !");
+	}
+	
+	// Skeletons
+	
+	/**
+	 * Interface for skeleton factories.
+	 * 
+	 * The graphic graph may contains a skeleton factory. If it does, each time the
+	 * {@link GraphicElement#getSkeleton()} method is called on a {@link GraphicElement}, the
+	 * factory will be invoked if the element does not own a skeleton.
+	 */
+	public interface SkeletonFactory {
+		Skeleton newNodeSkeleton();
+		Skeleton newEdgeSkeleton();
+		Skeleton newSpriteSkeleton();
+	}
+	
+	/**
+	 * Set the skeleton factory, use null to disable it.
+	 * 
+	 * <p>
+	 * The skeleton factory allows, if setup, to generate a skeleton for each {@link GraphicElement}
+	 * when their {@link GraphicElement#getSkeleton()} method is called for the first time.
+	 * </p>
+	 * 
+	 * <p>
+	 * By default there is no factory and therefore no skeletons are generated for elements.
+	 * </p>
+	 * 
+	 * @param factory The new factory or null to disable skeleton generation.
+	 */
+	public void setSkeletonFactory(SkeletonFactory factory) {
+		skeletonFactory = factory;
 	}
 }

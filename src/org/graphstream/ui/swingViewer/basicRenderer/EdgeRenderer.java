@@ -107,7 +107,7 @@ public class EdgeRenderer extends ElementRenderer {
 		Point3 src = skel.getSourcePoint();
 		Point3 trg = skel.getTargetPoint();
 		
-		switch(skel.getKind()) {
+		switch(skel.getKind(camera)) {
 			case CUBIC_CURVE:
 				Point3 c0 = skel.getPoint(0, camera);
 				Point3 c1 = skel.getPoint(1, camera);

@@ -94,6 +94,15 @@ public class GraphicSprite extends GraphicElement {
 			mygraph.addAttribute(myPrefix, new Values(units, center.x, center.y, center.z));
 	}
 
+	@Override
+	public Skeleton getSkeleton() {
+		if(skeleton == null && mygraph.skeletonFactory != null) {
+			setSkeleton(mygraph.skeletonFactory.newSpriteSkeleton());
+		}
+		
+		return skeleton;
+	}
+
 	/**
 	 * The node this sprite is attached to or null if not attached to an edge.
 	 * 

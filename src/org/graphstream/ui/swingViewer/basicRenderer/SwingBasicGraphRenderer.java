@@ -51,6 +51,7 @@ import javax.imageio.ImageIO;
 import org.graphstream.graph.Element;
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
+import org.graphstream.ui.graphicGraph.GraphicElement.Skeleton;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroupSet;
@@ -58,6 +59,9 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.swingViewer.GraphRendererBase;
 import org.graphstream.ui.swingViewer.LayerRenderer;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.EdgeSkeleton;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.NodeSkeleton;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.SpriteSkeleton;
 import org.graphstream.ui.swingViewer.util.Camera;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
@@ -119,6 +123,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	@Override
 	public void open(GraphicGraph graph, Container renderingSurface) {
 		super.open(graph, renderingSurface);
+		graph.setSkeletonFactory(new SwingBasicSkeletonFactory());
 	}
 
 	@Override
@@ -129,6 +134,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 			fpsLog = null;
 		}
 		
+		graph.setSkeletonFactory(null);
 		super.close();
 	}
 
@@ -437,5 +443,24 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 
 	public void elementStyleChanged(Element element, StyleGroup oldStyle,
 			StyleGroup style) {
+	}
+	
+	// Nested classes
+	
+	/**
+	 * Factory for the skeletons adapted to this renderer.
+	 */
+	class SwingBasicSkeletonFactory implements GraphicGraph.SkeletonFactory {
+		public Skeleton newNodeSkeleton() {
+			return new NodeSkeleton();
+		}
+
+		public Skeleton newEdgeSkeleton() {
+			return new EdgeSkeleton();
+		}
+
+		public Skeleton newSpriteSkeleton() {
+			return new SpriteSkeleton();
+		}
 	}
 }

@@ -328,9 +328,7 @@ public abstract class GraphicElement extends AbstractElement {
 	/**
 	 * The skeleton or null if none.
 	 */
-	public Skeleton getSkeleton() {
-		return skeleton;
-	}
+	abstract public Skeleton getSkeleton();
 
 	/**
 	 * The element center. For nodes and sprites this is the position of the element. For edges

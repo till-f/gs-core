@@ -59,6 +59,11 @@ import org.graphstream.ui.swingViewer.util.CubicCurve;
  * each time the edge moved or the style changed or the "ui.points" attribute is changed. When the
  * geometry is first accessed, it is computed or recomputed if this flag is set. 
  * </p>
+ * 
+ * <p>
+ * This is the reason why several method take a {@link Camera} as argument, since they need it
+ * to recompute correctly the geometry (metrics, etc.).
+ * </p>
  */
 public class EdgeSkeleton extends BaseSkeleton {
 	/**
@@ -103,7 +108,7 @@ public class EdgeSkeleton extends BaseSkeleton {
 	 * 			are at least two points in the set.</li>
 	 * </ul> 
 	 */
-	public ArrayList<Point3> points = null;
+	protected ArrayList<Point3> points = null;
 
 	/**
 	 * The position of the arrow. XXX TODO
@@ -174,8 +179,12 @@ public class EdgeSkeleton extends BaseSkeleton {
 	
 	/**
 	 * The kind of geometry the edge is using.
+	 * @param camera The camera.
 	 */
-	public Kind getKind() {
+	public Kind getKind(Camera camera) {
+		if(geomDirty)
+			recomputeGeometry(camera);
+		
 		return kind;
 	}
 	
@@ -274,7 +283,7 @@ public class EdgeSkeleton extends BaseSkeleton {
 				if(edge.getNode0() == edge.getNode1()) {
 					recomputeGeometryLoop(edge, camera);
 					kind = Kind.CUBIC_CURVE;
-				} else if(edge.multi > 1) {
+				} else if(edge.getMultiCount() > 1) {
 					recomputeGeometryMulti(edge);
 					kind = Kind.CUBIC_CURVE;
 				}
@@ -385,7 +394,7 @@ public class EdgeSkeleton extends BaseSkeleton {
 		double x = edge.from.center.x;
 		double y = edge.from.center.y;
 		double m = 1f + multi * 0.2;
-		double s = 0;
+		double s = camera.getMetrics().lengthToGu(edge.from.style.getSize(), 0);
 		NodeSkeleton nodeSkel = (NodeSkeleton)edge.from.getSkeleton(); 
 		if(nodeSkel != null) {
 			Point3 nodeSize = nodeSkel.getSizeGU(camera);

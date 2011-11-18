@@ -87,6 +87,15 @@ public class GraphicNode extends GraphicElement implements Node {
 	}
 
 	@Override
+	public Skeleton getSkeleton() {
+		if(skeleton == null && mygraph.skeletonFactory != null) {
+			setSkeleton(mygraph.skeletonFactory.newNodeSkeleton());
+		}
+		
+		return skeleton;
+	}
+
+	@Override
 	public Selector.Type getSelectorType() {
 		return Selector.Type.NODE;
 	}

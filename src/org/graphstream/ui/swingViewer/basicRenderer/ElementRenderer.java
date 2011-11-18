@@ -124,8 +124,6 @@ public abstract class ElementRenderer {
 		for (Element e : group.bulkElements()) {
 			GraphicElement ge = (GraphicElement) e;
 
-			maybeAddSkeleton(ge);
-			
 			if (camera.isVisible(ge))
 				renderElement(group, g, camera, ge);
 			else
@@ -135,8 +133,6 @@ public abstract class ElementRenderer {
 		if (group.hasDynamicElements()) {
 			for (Element e : group.dynamicElements()) {
 				GraphicElement ge = (GraphicElement) e;
-
-				maybeAddSkeleton(ge);
 
 				if (camera.isVisible(ge)) {
 					if (!group.elementHasEvents(ge)) {
@@ -153,8 +149,6 @@ public abstract class ElementRenderer {
 			for (ElementEvents event : group.elementsEvents()) {
 				GraphicElement ge = (GraphicElement) event.getElement();
 	
-				maybeAddSkeleton(ge);
-
 				if (camera.isVisible(ge)) {
 					event.activate();
 					pushStyle(group, g, camera);
@@ -333,19 +327,6 @@ public abstract class ElementRenderer {
 //						g.drawString(element.label, (float) c.x, (float) (c.y + textSize / 3)); // approximation to gain time.
 //						break;
 //				}
-			}
-		}
-	}
-	
-	/**
-	 * Check if an element has a skeleton, and if not add it.
-	 */
-	protected void maybeAddSkeleton(GraphicElement element) {
-		if(element.getSkeleton() == null) {
-			switch(element.getSelectorType()) {
-				case NODE:   element.setSkeleton(new NodeSkeleton());   break;
-				case EDGE:   element.setSkeleton(new EdgeSkeleton());   break;
-				case SPRITE: element.setSkeleton(new SpriteSkeleton()); break;
 			}
 		}
 	}
