@@ -182,7 +182,9 @@ public class GraphicSprite extends GraphicElement {
 
 	@Override
 	public void move(double x, double y, double z) {
-		setPosition(x, y, z, Style.Units.GU);
+		// Move on sprites is only called by the UI and never from an event, but this is unclear and need
+		// simplification.
+		setPosition(x, y, z, Style.Units.GU, false);
 	}
 
 	/**
@@ -251,9 +253,12 @@ public class GraphicSprite extends GraphicElement {
 	 * 
 	 * @param value
 	 *            The coordinate.
+	 * @param fromEvent
+	 * 			  True if the position change comes from an event received by the graph and should
+	 *            not be propagated.
 	 */
-	public void setPosition(double value) {
-		setPosition(value, 0, 0, units);
+	public void setPosition(double value, boolean fromEvent) {
+		setPosition(value, 0, 0, units, fromEvent);
 	}
 
 	/**
@@ -267,8 +272,11 @@ public class GraphicSprite extends GraphicElement {
 	 *            Third coordinate.
 	 * @param units
 	 *            The units to use for lengths and radii.
+	 * @param fromEvent
+	 * 			  True if the position change comes from an event received by the graph and should
+	 *            not be propagated.
 	 */
-	public void setPosition(double x, double y, double z, Style.Units units) {
+	public void setPosition(double x, double y, double z, Style.Units units, boolean fromEvent) {
 		if (edge != null) {
 			if (x < 0)
 				x = 0;
@@ -301,7 +309,7 @@ public class GraphicSprite extends GraphicElement {
 
 			String prefix = String.format("ui.sprite.%s", getId());
 
-			if(mygraph.feedbackXYZ)
+			if(!fromEvent && mygraph.feedbackXYZ)
 				mygraph.setAttribute(prefix, new Values(this.units, center.x, center.y, center.z));
 			
 			if(skeleton != null)
@@ -309,7 +317,15 @@ public class GraphicSprite extends GraphicElement {
 		}
 	}
 
-	public void setPosition(Values values) {
+	/**
+	 * Move a sprite at given coordinates.
+	 * @param values
+	 *            The coordinates and their units.
+	 * @param fromEvent
+	 * 			  True if the position change comes from an event received by the graph and should
+	 *            not be propagated.
+	 */
+	public void setPosition(Values values, boolean fromEvent) {
 		double x = center.x;
 		double y = center.y;
 		double z = center.z;
@@ -321,7 +337,7 @@ public class GraphicSprite extends GraphicElement {
 		if (values.getValueCount() > 2)
 			z = values.get(2);
 
-		setPosition(x, y, z, values.units);
+		setPosition(x, y, z, values.units, fromEvent);
 	}
 
 	protected double checkAngle(double angle) {

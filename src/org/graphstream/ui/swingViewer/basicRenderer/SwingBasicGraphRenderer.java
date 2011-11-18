@@ -42,7 +42,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -63,6 +62,7 @@ import org.graphstream.ui.swingViewer.basicRenderer.skeletons.EdgeSkeleton;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.NodeSkeleton;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.SpriteSkeleton;
 import org.graphstream.ui.swingViewer.util.Camera;
+import org.graphstream.ui.swingViewer.util.FPSLogger;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 /**
@@ -113,13 +113,8 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	/**
 	 * Optional output log of the frame-per-second.
 	 */
-	protected PrintStream fpsLog = null;
+	protected FPSLogger fpsLog = null;
 	
-	/**
-	 * Used to measure FPS.
-	 */
-	protected long T1 = 0;
-
 	@Override
 	public void open(GraphicGraph graph, Container renderingSurface) {
 		super.open(graph, renderingSurface);
@@ -129,7 +124,6 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	@Override
 	public void close() {
 		if(fpsLog != null) {
-			fpsLog.flush();
 			fpsLog.close();
 			fpsLog = null;
 		}
@@ -176,23 +170,17 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	protected void beginFrame() {
 		if(graph.hasLabel("ui.log")) {
 			if(fpsLog == null) {
-				try {
-					fpsLog = new PrintStream(graph.getLabel("ui.log").toString());
-				} catch(IOException e) {
-					fpsLog = null;
-					e.printStackTrace();
-				}
+				fpsLog = new FPSLogger(graph.getLabel("ui.log").toString());
 			}
 		} else {
 			if(fpsLog != null) {
-				fpsLog.flush();
 				fpsLog.close();
 				fpsLog = null;
 			}
 		}
 		
 		if(fpsLog != null) {
-			T1 = System.currentTimeMillis();
+			fpsLog.beginFrame();
 		}
 	}
 	
@@ -201,10 +189,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	 */
 	protected void endFrame() {
 		if(fpsLog != null) {
-			long T2 = System.currentTimeMillis();
-			long time = T2 - T1;
-			double fps = 1000.0 / time;
-			fpsLog.printf("%.2f   %d%n", fps, time);
+			fpsLog.endFrame();
 		}
 	}
 

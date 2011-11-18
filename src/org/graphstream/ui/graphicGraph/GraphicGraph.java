@@ -1224,7 +1224,7 @@ public class GraphicGraph extends AbstractElement implements Graph,
 					sprite.setPosition(((Number) values[0]).doubleValue(),
 							((Number) values[1]).doubleValue(),
 							((Number) values[2]).doubleValue(),
-							(Style.Units) values[3]);
+							(Style.Units) values[3], true);
 				} else {
 					System.err
 							.printf("GraphicGraph : cannot parse values[4] for sprite position.%n");
@@ -1234,14 +1234,14 @@ public class GraphicGraph extends AbstractElement implements Graph,
 						&& values[2] instanceof Number) {
 					sprite.setPosition(((Number) values[0]).doubleValue(),
 							((Number) values[1]).doubleValue(),
-							((Number) values[2]).doubleValue(), Units.GU);
+							((Number) values[2]).doubleValue(), Units.GU, true);
 				} else {
 					System.err
 							.printf("GraphicGraph : cannot parse values[3] for sprite position.%n");
 				}
 			} else if (values.length == 1) {
 				if (values[0] instanceof Number) {
-					sprite.setPosition(((Number) values[0]).doubleValue());
+					sprite.setPosition(((Number) values[0]).doubleValue(), true);
 				} else {
 					System.err
 							.printf("GraphicGraph : sprite position percent is not a number.%n");
@@ -1252,11 +1252,11 @@ public class GraphicGraph extends AbstractElement implements Graph,
 								Arrays.toString(values), values.length);
 			}
 		} else if (value instanceof Number) {
-			sprite.setPosition(((Number) value).doubleValue());
+			sprite.setPosition(((Number) value).doubleValue(), true);
 		} else if (value instanceof Value) {
-			sprite.setPosition(((Value) value).value);
+			sprite.setPosition(((Value) value).value, true);
 		} else if (value instanceof Values) {
-			sprite.setPosition((Values) value);
+			sprite.setPosition((Values) value, true);
 		} else if (value == null) {
 			throw new RuntimeException("What do you expect with a null value ?");
 		} else {
