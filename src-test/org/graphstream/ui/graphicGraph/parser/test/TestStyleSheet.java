@@ -247,10 +247,10 @@ public class TestStyleSheet {
 				&& sD.getFillColor(0).getGreen() == 190
 				&& sD.getFillColor(0).getBlue() == 190);
 
-		assertEquals(1, sA.getStrokeWidth().value);
-		assertEquals(1, sB.getStrokeWidth().value);
-		assertEquals(1, sC.getStrokeWidth().value);
-		assertEquals(1, sD.getStrokeWidth().value);
+		assertEquals(1, sA.getStrokeWidth().value, 0);
+		assertEquals(1, sB.getStrokeWidth().value, 0);
+		assertEquals(1, sC.getStrokeWidth().value, 0);
+		assertEquals(1, sD.getStrokeWidth().value, 0);
 
 		assertTrue(sAB.getFillColor(0).getRed() == 255
 				&& sAB.getFillColor(0).getGreen() == 255
@@ -295,10 +295,10 @@ public class TestStyleSheet {
 		StyleGroup sC = sgs.getStyleForElement(C);
 		StyleGroup sD = sgs.getStyleForElement(D);
 
-		assertEquals(1, sA.getStrokeWidth().value);
-		assertEquals(1, sB.getStrokeWidth().value);
-		assertEquals(1, sC.getStrokeWidth().value);
-		assertEquals(1, sD.getStrokeWidth().value);
+		assertEquals(1, sA.getStrokeWidth().value, 0);
+		assertEquals(1, sB.getStrokeWidth().value, 0);
+		assertEquals(1, sC.getStrokeWidth().value, 0);
+		assertEquals(1, sD.getStrokeWidth().value, 0);
 
 		// Test global events (events that apply to a whole group or groups).
 
@@ -310,10 +310,10 @@ public class TestStyleSheet {
 		sC = sgs.getStyleForElement(C);
 		sD = sgs.getStyleForElement(D);
 
-		assertEquals(2, sA.getStrokeWidth().value);
-		assertEquals(3, sB.getStrokeWidth().value);
-		assertEquals(3, sC.getStrokeWidth().value);
-		assertEquals(3, sD.getStrokeWidth().value);
+		assertEquals(2, sA.getStrokeWidth().value, 0);
+		assertEquals(3, sB.getStrokeWidth().value, 0);
+		assertEquals(3, sC.getStrokeWidth().value, 0);
+		assertEquals(3, sD.getStrokeWidth().value, 0);
 
 		sgs.popEvent("clicked"); // This is normally done automatically by the
 									// GraphicElement
@@ -323,10 +323,10 @@ public class TestStyleSheet {
 		sC = sgs.getStyleForElement(C);
 		sD = sgs.getStyleForElement(D);
 
-		assertEquals(1, sA.getStrokeWidth().value);
-		assertEquals(1, sB.getStrokeWidth().value);
-		assertEquals(1, sC.getStrokeWidth().value);
-		assertEquals(1, sD.getStrokeWidth().value);
+		assertEquals(1, sA.getStrokeWidth().value, 0);
+		assertEquals(1, sB.getStrokeWidth().value, 0);
+		assertEquals(1, sC.getStrokeWidth().value, 0);
+		assertEquals(1, sD.getStrokeWidth().value, 0);
 
 		sgs.pushEvent("clicked"); // Both events at a time.
 		sgs.pushEvent("selected"); // They should cascade.
@@ -336,10 +336,10 @@ public class TestStyleSheet {
 		sC = sgs.getStyleForElement(C);
 		sD = sgs.getStyleForElement(D);
 
-		assertEquals(4, sA.getStrokeWidth().value);
-		assertEquals(3, sB.getStrokeWidth().value);
-		assertEquals(3, sC.getStrokeWidth().value);
-		assertEquals(3, sD.getStrokeWidth().value);
+		assertEquals(4, sA.getStrokeWidth().value, 0);
+		assertEquals(3, sB.getStrokeWidth().value, 0);
+		assertEquals(3, sC.getStrokeWidth().value, 0);
+		assertEquals(3, sD.getStrokeWidth().value, 0);
 
 		sgs.popEvent("clicked"); // This is normally done automatically by the
 									// GraphicElement
@@ -365,25 +365,25 @@ public class TestStyleSheet {
 
 		assertTrue(sA.hasEventElements());
 
-		assertEquals(1, sA.getStrokeWidth().value); // Individual events must be
+		assertEquals(1, sA.getStrokeWidth().value, 0); // Individual events must be
 													// activated
-		assertEquals(1, sB.getStrokeWidth().value); // to work, so just pushing
+		assertEquals(1, sB.getStrokeWidth().value, 0); // to work, so just pushing
 													// them is not
-		assertEquals(1, sC.getStrokeWidth().value); // sufficient.
-		assertEquals(1, sD.getStrokeWidth().value);
+		assertEquals(1, sC.getStrokeWidth().value, 0); // sufficient.
+		assertEquals(1, sD.getStrokeWidth().value, 0);
 
 		sA.activateEventsFor(A);
-		assertEquals(2, sA.getStrokeWidth().value); // Only A should change.
-		assertEquals(1, sB.getStrokeWidth().value);
-		assertEquals(1, sC.getStrokeWidth().value);
-		assertEquals(1, sD.getStrokeWidth().value);
+		assertEquals(2, sA.getStrokeWidth().value, 0); // Only A should change.
+		assertEquals(1, sB.getStrokeWidth().value, 0);
+		assertEquals(1, sC.getStrokeWidth().value, 0);
+		assertEquals(1, sD.getStrokeWidth().value, 0);
 		sA.deactivateEvents();
 		sB.activateEventsFor(B);
-		assertEquals(1, sA.getStrokeWidth().value);
-		assertEquals(3, sB.getStrokeWidth().value); // B and all its group
+		assertEquals(1, sA.getStrokeWidth().value, 0);
+		assertEquals(3, sB.getStrokeWidth().value, 0); // B and all its group
 													// change.
-		assertEquals(3, sC.getStrokeWidth().value); // Therefore C also changes.
-		assertEquals(1, sD.getStrokeWidth().value);
+		assertEquals(3, sC.getStrokeWidth().value, 0); // Therefore C also changes.
+		assertEquals(1, sD.getStrokeWidth().value, 0);
 		sB.deactivateEvents();
 
 		sgs.popEventFor(A, "clicked"); // This is normally done automatically by
@@ -403,20 +403,20 @@ public class TestStyleSheet {
 		sC = sgs.getStyleForElement(C);
 		sD = sgs.getStyleForElement(D);
 
-		assertEquals(1, sA.getStrokeWidth().value); // Individual events must be
-													// activated
-		assertEquals(1, sB.getStrokeWidth().value); // to work, so just pushing
-													// them is not
-		assertEquals(1, sC.getStrokeWidth().value); // sufficient.
-		assertEquals(1, sD.getStrokeWidth().value);
+		assertEquals(1, sA.getStrokeWidth().value, 0); // Individual events must be
+														// activated
+		assertEquals(1, sB.getStrokeWidth().value, 0); // to work, so just pushing
+														// them is not
+		assertEquals(1, sC.getStrokeWidth().value, 0); // sufficient.
+		assertEquals(1, sD.getStrokeWidth().value, 0);
 
 		sA.activateEventsFor(A);
-		assertEquals(4, sA.getStrokeWidth().value); // Only A should change,
+		assertEquals(4, sA.getStrokeWidth().value, 0); // Only A should change,
 													// "selected" has
-		assertEquals(1, sB.getStrokeWidth().value); // precedence over "clicked"
+		assertEquals(1, sB.getStrokeWidth().value, 0); // precedence over "clicked"
 													// since added
-		assertEquals(1, sC.getStrokeWidth().value); // after.
-		assertEquals(1, sD.getStrokeWidth().value);
+		assertEquals(1, sC.getStrokeWidth().value, 0); // after.
+		assertEquals(1, sD.getStrokeWidth().value, 0);
 		sA.deactivateEvents();
 
 		sgs.popEventFor(A, "clicked"); // This is normally done automatically by
@@ -465,10 +465,10 @@ public class TestStyleSheet {
 		Style sC = sgs.getStyleForElement(C);
 		Style sD = sgs.getStyleForElement(D);
 
-		assertEquals(10, sA.getStrokeWidth().value);
-		assertEquals(10, sB.getStrokeWidth().value);
-		assertEquals(10, sC.getStrokeWidth().value);
-		assertEquals(10, sD.getStrokeWidth().value);
+		assertEquals(10, sA.getStrokeWidth().value, 0);
+		assertEquals(10, sB.getStrokeWidth().value, 0);
+		assertEquals(10, sC.getStrokeWidth().value, 0);
+		assertEquals(10, sD.getStrokeWidth().value, 0);
 
 		sgs.pushEvent("clicked");
 		sA = sgs.getStyleForElement(A);
@@ -476,10 +476,10 @@ public class TestStyleSheet {
 		sC = sgs.getStyleForElement(C);
 		sD = sgs.getStyleForElement(D);
 
-		assertEquals(2, sA.getStrokeWidth().value);
-		assertEquals(3, sB.getStrokeWidth().value);
-		assertEquals(3, sC.getStrokeWidth().value);
-		assertEquals(3, sD.getStrokeWidth().value);
+		assertEquals(2, sA.getStrokeWidth().value, 0);
+		assertEquals(3, sB.getStrokeWidth().value, 0);
+		assertEquals(3, sC.getStrokeWidth().value, 0);
+		assertEquals(3, sD.getStrokeWidth().value, 0);
 
 		sgs.popEvent("clicked");
 		sA = sgs.getStyleForElement(A);
@@ -487,10 +487,10 @@ public class TestStyleSheet {
 		sC = sgs.getStyleForElement(C);
 		sD = sgs.getStyleForElement(D);
 
-		assertEquals(10, sA.getStrokeWidth().value);
-		assertEquals(10, sB.getStrokeWidth().value);
-		assertEquals(10, sC.getStrokeWidth().value);
-		assertEquals(10, sD.getStrokeWidth().value);
+		assertEquals(10, sA.getStrokeWidth().value, 0);
+		assertEquals(10, sB.getStrokeWidth().value, 0);
+		assertEquals(10, sC.getStrokeWidth().value, 0);
+		assertEquals(10, sD.getStrokeWidth().value, 0);
 
 		// Now augment the style sheet with a change that applies only to node
 		// B.
@@ -515,11 +515,11 @@ public class TestStyleSheet {
 		sC = sgs.getStyleForElement(C);
 		sD = sgs.getStyleForElement(D);
 
-		assertEquals(10, sA.getStrokeWidth().value);
-		assertEquals(5, sB.getStrokeWidth().value); // <-- The specific style
+		assertEquals(10, sA.getStrokeWidth().value, 0);
+		assertEquals(5, sB.getStrokeWidth().value, 0); // <-- The specific style
 													// changed.
-		assertEquals(10, sC.getStrokeWidth().value);
-		assertEquals(10, sD.getStrokeWidth().value);
+		assertEquals(10, sC.getStrokeWidth().value, 0);
+		assertEquals(10, sD.getStrokeWidth().value, 0);
 
 		// Now augment the style sheet with a change that applies to all edges
 		// with the ".foo" class.
@@ -545,10 +545,10 @@ public class TestStyleSheet {
 		Style sCD = sgs.getStyleForElement(CD);
 		Style sDA = sgs.getStyleForElement(DA);
 
-		assertEquals(2, sAB.getStrokeWidth().value);
-		assertEquals(2, sBC.getStrokeWidth().value);
-		assertEquals(1, sCD.getStrokeWidth().value);
-		assertEquals(1, sDA.getStrokeWidth().value);
+		assertEquals(2, sAB.getStrokeWidth().value, 0);
+		assertEquals(2, sBC.getStrokeWidth().value, 0);
+		assertEquals(1, sCD.getStrokeWidth().value, 0);
+		assertEquals(1, sDA.getStrokeWidth().value, 0);
 
 		System.err.printf(
 				"After adding new style sheets, there are %d groups !!%n",

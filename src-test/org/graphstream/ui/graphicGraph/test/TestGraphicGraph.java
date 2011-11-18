@@ -360,19 +360,19 @@ public class TestGraphicGraph {
 
 		// Position a sprite.
 
-		assertEquals(0, gs1.getX());
-		assertEquals(0, gs1.getY());
-		assertEquals(0, gs1.getZ());
+		assertEquals(0, gs1.getCenter().x, 0);
+		assertEquals(0, gs1.getCenter().y, 0);
+		assertEquals(0, gs1.getCenter().z, 0);
 
 		s1.setPosition(0.5f);
 
-		assertEquals(0.5f, gs1.getX());
+		assertEquals(0.5f, gs1.getCenter().x, 0);
 
 		s1.setPosition(0.5f, 0.5f, 0.5f);
 
-		assertEquals(0.5f, gs1.getX());
-		assertEquals(0.5f, gs1.getY());
-		assertEquals(0.5f, gs1.getZ());
+		assertEquals(0.5f, gs1.getCenter().x, 0);
+		assertEquals(0.5f, gs1.getCenter().y, 0);
+		assertEquals(0.5f, gs1.getCenter().z, 0);
 
 		// Now test removing the sprite manager and creating a new one to see if
 		// it gets sprites back. We first add some new sprites with attribute,

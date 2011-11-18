@@ -137,8 +137,8 @@ public class TestGraphSynchronisationProxyThread {
 		assertTrue(main.hasAttribute("ui.STOP"));
 		assertTrue(graphic.hasAttribute("ui.STOP"));
 
-		assertEquals(3, graphic.getStep());
-		assertEquals(2, main.getStep()); // We do not listen at elements events
+		assertEquals(3, graphic.getStep(), 0);
+		assertEquals(2, main.getStep(), 0); // We do not listen at elements events
 											// the step 3
 											// of the graphic graph did not
 											// reached us.
@@ -179,16 +179,16 @@ public class TestGraphSynchronisationProxyThread {
 
 		GraphicSprite gs3 = graphic.getSprite("S3");
 
-		assertEquals(0.5f, S1.getX());
-		assertEquals(0, S1.getY());
-		assertEquals(0, S1.getZ());
-		assertEquals(1, S2.getX());
-		assertEquals(2, S2.getY());
-		assertEquals(3, S2.getZ());
+		assertEquals(0.5f, S1.getX(), 0);
+		assertEquals(0, S1.getY(), 0);
+		assertEquals(0, S1.getZ(), 0);
+		assertEquals(1, S2.getX(), 0);
+		assertEquals(2, S2.getY(), 0);
+		assertEquals(3, S2.getZ(), 0);
 
-		assertEquals(3, gs3.getX());
-		assertEquals(2, gs3.getY());
-		assertEquals(1, gs3.getZ());
+		assertEquals(3, gs3.getCenter().x, 0);
+		assertEquals(2, gs3.getCenter().y, 0);
+		assertEquals(1, gs3.getCenter().z, 0);
 	}
 
 	protected void sleep(int millis) {

@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import org.graphstream.util.Environment;
 
 /**
- * Tests the {@link org.util.Environment} class and shows an example of use.
+ * Tests the {@link org.graphstream.util.Environment} class and shows an example of use.
  *
  * @author Yoann Pigné
  * @author Antoine Dutot

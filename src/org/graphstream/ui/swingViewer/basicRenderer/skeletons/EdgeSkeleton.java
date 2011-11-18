@@ -275,8 +275,16 @@ public class EdgeSkeleton extends BaseSkeleton {
 				}
 				break;
 			case CUBIC_CURVE:
-				kind = Kind.CUBIC_CURVE;
-				recomputeGeometryCubicCurve(edge, camera);
+				if(edge.getNode0() == edge.getNode1()) {
+					recomputeGeometryLoop(edge, camera);
+					kind = Kind.CUBIC_CURVE;
+				} else if(edge.getMultiCount() > 1) {
+					recomputeGeometryMulti(edge);
+					kind = Kind.CUBIC_CURVE;
+				} else {
+					recomputeGeometryCubicCurve(edge, camera);
+					kind = Kind.CUBIC_CURVE;
+				}
 				break;
 			default:
 				kind = Kind.LINE;
