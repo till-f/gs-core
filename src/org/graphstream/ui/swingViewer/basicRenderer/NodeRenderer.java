@@ -98,9 +98,8 @@ public class NodeRenderer extends ElementRenderer {
 
 	@Override
 	protected void renderElement(StyleGroup group, Graphics2D g, Camera camera, GraphicElement element) {
-//		BaseSkeleton skel = (BaseSkeleton)element.getSkeleton();
-//		Point3 pos = skel.getPosition(camera, null, Units.GU);
-		Point3 pos = element.getCenter();
+		BaseSkeleton skel = (BaseSkeleton)element.getSkeleton();
+		Point3 pos = skel.getPosition(camera, null, Units.GU);
 
 		shape.setFrame(pos.x - w2, pos.y - h2, width, height);
 		g.fill(shape);

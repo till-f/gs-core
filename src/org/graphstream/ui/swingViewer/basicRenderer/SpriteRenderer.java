@@ -31,34 +31,5 @@
  */
 package org.graphstream.ui.swingViewer.basicRenderer;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-
-import org.graphstream.ui.geom.Point3;
-import org.graphstream.ui.graphicGraph.GraphicElement;
-import org.graphstream.ui.graphicGraph.StyleGroup;
-import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
-import org.graphstream.ui.swingViewer.basicRenderer.skeletons.BaseSkeleton;
-import org.graphstream.ui.swingViewer.util.Camera;
-
 public class SpriteRenderer extends NodeRenderer {
-
-	@Override
-	protected void renderElement(StyleGroup group, Graphics2D g, Camera camera, GraphicElement element) {
-		BaseSkeleton skel = (BaseSkeleton)element.getSkeleton();
-		Point3 pos = skel.getPosition(camera, null, Units.GU);
-
-		shape.setFrame(pos.x - w2, pos.y - h2, width, height);
-		g.fill(shape);
-
-		if(strokeWidth > 0) {
-			Color c = g.getColor();
-			g.setColor(strokeColor);
-			g.draw(shape);
-			g.setColor(c);
-		}
-		
-		if(element.label != null)
-			textRenderer.queueElement(element);
-	}
 }
