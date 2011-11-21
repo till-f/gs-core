@@ -54,7 +54,7 @@ public class NodeRenderer extends ElementRenderer {
 	protected Color strokeColor = null;
 	
 	protected double strokeWidth = 0;
-
+	
 	@Override
 	protected void setupRenderingPass(StyleGroup group, Graphics2D g,
 			Camera camera) {

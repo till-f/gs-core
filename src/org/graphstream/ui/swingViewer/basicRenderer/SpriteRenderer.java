@@ -31,5 +31,14 @@
  */
 package org.graphstream.ui.swingViewer.basicRenderer;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+
+import org.graphstream.ui.graphicGraph.GraphicElement;
+import org.graphstream.ui.graphicGraph.StyleGroup;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+import org.graphstream.ui.swingViewer.basicRenderer.skeletons.BaseSkeleton;
+import org.graphstream.ui.swingViewer.util.Camera;
+
 public class SpriteRenderer extends NodeRenderer {
 }

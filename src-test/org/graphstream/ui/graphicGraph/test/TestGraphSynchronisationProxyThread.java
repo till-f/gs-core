@@ -252,11 +252,11 @@ public class TestGraphSynchronisationProxyThread {
 
 				if (S2 != null) {
 					S2.addAttribute("ui.foobar", "foobar");
-					S2.setPosition(1, 2, 3, Style.Units.GU);
+					S2.setPosition(1, 2, 3, Style.Units.GU, false);
 				}
 
 				if (S1 != null)
-					S1.setPosition(0.5f);
+					S1.setPosition(0.5f, false);
 
 				graphic.removeAttribute("ui.EQUIP");
 				graphic.stepBegins(3);
