@@ -307,10 +307,10 @@ public class GraphicSprite extends GraphicElement {
 			mygraph.graphChanged = true;
 			mygraph.boundsChanged = true;
 
-			String prefix = String.format("ui.sprite.%s", getId());
-
-			if(!fromEvent && mygraph.feedbackXYZ)
+			if(!fromEvent && mygraph.feedbackXYZ) {
+				String prefix = String.format("ui.sprite.%s", getId());
 				mygraph.setAttribute(prefix, new Values(this.units, center.x, center.y, center.z));
+			}
 			
 			if(skeleton != null)
 				skeleton.positionChanged();

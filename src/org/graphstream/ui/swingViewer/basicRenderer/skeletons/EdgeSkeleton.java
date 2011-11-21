@@ -462,11 +462,11 @@ public class EdgeSkeleton extends BaseSkeleton {
 			perp.normalize();
 			perp.scalarMult(y);
 
-			pos.x = CubicCurve.eval(p0.x, p1.x, p2.x, p3.x, offset) - perp.data[0];
-			pos.y = CubicCurve.eval(p0.y, p1.y, p2.y, p3.y, offset) - perp.data[1];
+			pos.x = CubicCurve.eval(p0.x, p1.x, p2.x, p3.x, percent) - perp.data[0];
+			pos.y = CubicCurve.eval(p0.y, p1.y, p2.y, p3.y, percent) - perp.data[1];
 		} else {
-			pos.x = CubicCurve.eval(p0.x, p1.x, p2.x, p3.x, offset);
-			pos.y = CubicCurve.eval(p0.y, p1.y, p2.y, p3.y, offset);
+			pos.x = CubicCurve.eval(p0.x, p1.x, p2.x, p3.x, percent);
+			pos.y = CubicCurve.eval(p0.y, p1.y, p2.y, p3.y, percent);
 		}
 		
 		pos.z = 0;
