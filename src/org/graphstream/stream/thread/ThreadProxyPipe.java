@@ -509,121 +509,71 @@ public class ThreadProxyPipe extends SourceBase implements ProxyPipe,
 	// MBoxListener
 
 	public void processMessage(String from, Object[] data) {
-		// System.err.printf( "    %s.msg(%s, %s, %s, %s)%n", from, data[1],
-		// data[2], data[0], data[3] );
-		if (data[0].equals(GraphEvents.ADD_NODE)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String nodeId = (String) data[3];
-
-			sendNodeAdded(graphId, timeId, nodeId);
-		} else if (data[0].equals(GraphEvents.DEL_NODE)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String nodeId = (String) data[3];
-
-			sendNodeRemoved(graphId, timeId, nodeId);
-		} else if (data[0].equals(GraphEvents.ADD_EDGE)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String edgeId = (String) data[3];
-			String fromId = (String) data[4];
-			String toId = (String) data[5];
-			boolean directed = (Boolean) data[6];
-
-			sendEdgeAdded(graphId, timeId, edgeId, fromId, toId, directed);
-		} else if (data[0].equals(GraphEvents.DEL_EDGE)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String edgeId = (String) data[3];
-
-			sendEdgeRemoved(graphId, timeId, edgeId);
-		} else if (data[0].equals(GraphEvents.STEP)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			double step = (Double) data[3];
-
-			sendStepBegins(graphId, timeId, step);
-		} else if (data[0].equals(GraphEvents.ADD_GRAPH_ATTR)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String attribute = (String) data[3];
-			Object value = data[4];
-
-			sendGraphAttributeAdded(graphId, timeId, attribute, value);
-		} else if (data[0].equals(GraphEvents.CHG_GRAPH_ATTR)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String attribute = (String) data[3];
-			Object oldValue = data[4];
-			Object newValue = data[5];
-
-			sendGraphAttributeChanged(graphId, timeId, attribute, oldValue,
-					newValue);
-		} else if (data[0].equals(GraphEvents.DEL_GRAPH_ATTR)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String attribute = (String) data[3];
-
-			sendGraphAttributeRemoved(graphId, timeId, attribute);
-		} else if (data[0].equals(GraphEvents.ADD_EDGE_ATTR)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String edgeId = (String) data[3];
-			String attribute = (String) data[4];
-			Object value = data[5];
-
-			sendEdgeAttributeAdded(graphId, timeId, edgeId, attribute, value);
-		} else if (data[0].equals(GraphEvents.CHG_EDGE_ATTR)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String edgeId = (String) data[3];
-			String attribute = (String) data[4];
-			Object oldValue = data[5];
-			Object newValue = data[6];
-
-			sendEdgeAttributeChanged(graphId, timeId, edgeId, attribute,
-					oldValue, newValue);
-		} else if (data[0].equals(GraphEvents.DEL_EDGE_ATTR)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String edgeId = (String) data[3];
-			String attribute = (String) data[4];
-
-			sendEdgeAttributeRemoved(graphId, timeId, edgeId, attribute);
-		} else if (data[0].equals(GraphEvents.ADD_NODE_ATTR)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String nodeId = (String) data[3];
-			String attribute = (String) data[4];
-			Object value = data[5];
-
-			sendNodeAttributeAdded(graphId, timeId, nodeId, attribute, value);
-		} else if (data[0].equals(GraphEvents.CHG_NODE_ATTR)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String nodeId = (String) data[3];
-			String attribute = (String) data[4];
-			Object oldValue = data[5];
-			Object newValue = data[6];
-
-			sendNodeAttributeChanged(graphId, timeId, nodeId, attribute,
-					oldValue, newValue);
-		} else if (data[0].equals(GraphEvents.DEL_NODE_ATTR)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-			String nodeId = (String) data[3];
-			String attribute = (String) data[4];
-
-			sendNodeAttributeRemoved(graphId, timeId, nodeId, attribute);
-		} else if (data[0].equals(GraphEvents.CLEARED)) {
-			String graphId = (String) data[1];
-			Long timeId = (Long) data[2];
-
-			sendGraphCleared(graphId, timeId);
-		} else {
-			System.err.printf("ThreadProxyFilter : Unknown message %s !!%n",
-					data[0]);
+		GraphEvents event = (GraphEvents)data[0];
+		
+		switch(event) {
+			case ADD_NODE:
+				// graphId, timeId, nodeId
+				sendNodeAdded((String)data[1], (Long)data[2], (String)data[3]);
+				break;
+			case DEL_NODE:
+				// graphId, timeId, nodeId
+				sendNodeRemoved((String)data[1], (Long)data[2], (String)data[3]);
+				break;
+			case ADD_EDGE:
+				// graphId, timeId, edgeId, fromId, toId, directed
+				sendEdgeAdded((String)data[1], (Long)data[2], (String)data[3], (String)data[4], (String)data[5], (Boolean)data[6]);
+				break;
+			case DEL_EDGE:
+				// graphId, timeId, edgeId
+				sendEdgeRemoved((String)data[1], (Long)data[2], (String)data[3]);
+				break;
+			case STEP:
+				// graphId, timeId, step
+				sendStepBegins((String)data[1], (Long)data[2], (Double)data[3]);
+				break;
+			case ADD_GRAPH_ATTR:
+				// graphId, timeId, attribute, value
+				sendGraphAttributeAdded((String)data[1], (Long)data[2], (String)data[3], data[4]);
+				break;
+			case CHG_GRAPH_ATTR:
+				// graphId, timeId, attribute, oldValue, newValue
+				sendGraphAttributeChanged((String)data[1], (Long)data[2], (String)data[3], data[4], data[5]);
+				break;
+			case DEL_GRAPH_ATTR:
+				// graphId, timeId, attribute
+				sendGraphAttributeRemoved((String)data[1], (Long)data[2], (String)data[3]);
+				break;
+			case ADD_EDGE_ATTR:
+				// graphId, timeId, edgeId, attribute, value
+				sendEdgeAttributeAdded((String)data[1], (Long)data[2], (String)data[3], (String)data[4], data[5]);
+				break;
+			case CHG_EDGE_ATTR:
+				// graphId, timeId, edgeId, attribute, oldValue, newValue
+				sendEdgeAttributeChanged((String)data[1], (Long)data[2], (String)data[3], (String)data[4], data[5], data[6]);
+				break;
+			case DEL_EDGE_ATTR:
+				// graphId, timeId, edgeId, attribute
+				sendEdgeAttributeRemoved((String)data[1], (Long)data[2], (String)data[3], (String)data[4]);
+				break;
+			case ADD_NODE_ATTR:
+				// graphId, timeId, nodeId, attribute, value
+				sendNodeAttributeAdded((String)data[1], (Long)data[2], (String)data[3], (String)data[4], data[5]);
+				break;
+			case CHG_NODE_ATTR:
+				// graphId, timeId, nodeId, attribute, oldValue, newValue
+				sendNodeAttributeChanged((String)data[1], (Long)data[2], (String)data[3], (String)data[4], data[5], data[6]);
+				break;
+			case DEL_NODE_ATTR:
+				// graphId, timeId, nodeId, attribute
+				sendNodeAttributeRemoved((String)data[1], (Long)data[2], (String)data[3], (String)data[4]);
+				break;
+			case CLEARED:
+				// graphId, timeId
+				sendGraphCleared((String)data[1], (Long)data[2]);
+				break;
+			default:
+				throw new RuntimeException(String.format("WTF? unknown event %s", data[0]));
 		}
 	}
 }
