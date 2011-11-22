@@ -101,11 +101,11 @@ public class EdgeRenderer extends ElementRenderer {
 
 	@Override
 	protected void renderElement(StyleGroup group, Graphics2D g, Camera camera, GraphicElement element) {
-		EdgeSkeleton skel = (EdgeSkeleton)element.getSkeleton();
 		GraphicEdge edge = (GraphicEdge) element;
+		EdgeSkeleton skel = (EdgeSkeleton)edge.getSkeleton();
 
-		Point3 src = skel.getSourcePoint();
-		Point3 trg = skel.getTargetPoint();
+		Point3 src = edge.from.center;
+		Point3 trg = edge.to.center;
 		
 		switch(skel.getKind(camera)) {
 			case CUBIC_CURVE:
@@ -212,4 +212,5 @@ public class EdgeRenderer extends ElementRenderer {
 
 		return Math.sqrt(dx * dx + dy * dy);
 	}
+
 }
