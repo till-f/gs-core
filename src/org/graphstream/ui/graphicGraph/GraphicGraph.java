@@ -740,7 +740,6 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	}
 
 	public void styleChanged(StyleGroup style) {
-		
 	}
 
 	// Graph interface

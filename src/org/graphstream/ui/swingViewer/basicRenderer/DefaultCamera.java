@@ -46,7 +46,6 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.stylesheet.Style;
-import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.NodeSkeleton;
@@ -213,13 +212,21 @@ public class DefaultCamera implements Camera {
 	}
 	
 	/**
-	 * True if the element should be visible on screen. The method used is to
-	 * transform the center of the element (which is always in graph units)
-	 * using the camera actual transformation to put it in pixel units. Then to
-	 * look in the style sheet the size of the element and to test if its
-	 * enclosing rectangle intersects the view port. For edges, its two nodes
-	 * are used. As a speed-up by default if the camera is in automatic fitting
-	 * mode, all element should be visible, and the test always returns true.
+	 * True if the element should be visible on screen.
+	 * 
+	 * <p>
+	 * The method used is to transform the center of the element (which is always in graph units)
+	 * using the camera actual transformation to put it in pixel units. Then to look in the style
+	 * sheet the size of the element and to test if its enclosing rectangle intersects the view
+	 * port. For edges, its two nodes are used. As a speed-up by default if the camera is in
+	 * automatic fitting mode, all element should be visible, and the test always returns true.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method does not look at the style visibility mode options as the visibility in styles
+	 * is defined for the whole group and not for individual elements, it is far faster to check
+	 * this once before the rendering pass of style groups.
+	 * </p>
 	 * 
 	 * @param element
 	 *            The element to test.
@@ -227,7 +234,7 @@ public class DefaultCamera implements Camera {
 	 */
 	public boolean isVisible(GraphicElement element) {
 		if(autoFit) {
-  	        return ((! element.hidden) && (element.style.getVisibilityMode() != StyleConstants.VisibilityMode.HIDDEN));
+  	        return ((! element.hidden) );// We do the style visibility test in the renderers.
 		} else {
 			switch (element.getSelectorType()) {
 				case NODE:

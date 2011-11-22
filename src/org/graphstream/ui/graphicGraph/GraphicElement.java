@@ -250,7 +250,7 @@ public abstract class GraphicElement extends AbstractElement {
 	 * Do not show.
 	 */
 	public boolean hidden = false;
-
+	
 	/**
 	 * Associated GUI component.
 	 */
@@ -434,10 +434,11 @@ public abstract class GraphicElement extends AbstractElement {
 	 */
 	public void changeStyle(StyleGroup style) {
 		this.style = style;
+		
 		if(skeleton != null)
 			skeleton.styleChanged();
 	}
-
+	
 	/**
 	 * Handle the "ui.class", "label", "ui.style", etc. attributes and call the graphic element
 	 * listener if one is present.

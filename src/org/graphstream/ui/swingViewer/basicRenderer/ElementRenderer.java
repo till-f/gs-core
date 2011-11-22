@@ -44,10 +44,9 @@ import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroup.ElementEvents;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.VisibilityMode;
+import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.BaseSkeleton;
-import org.graphstream.ui.swingViewer.basicRenderer.skeletons.EdgeSkeleton;
-import org.graphstream.ui.swingViewer.basicRenderer.skeletons.NodeSkeleton;
-import org.graphstream.ui.swingViewer.basicRenderer.skeletons.SpriteSkeleton;
 import org.graphstream.ui.swingViewer.util.Camera;
 import org.graphstream.ui.swingViewer.util.FontCache;
 
@@ -118,53 +117,55 @@ public abstract class ElementRenderer {
 	 * Render all the (visible) elements of the group.
 	 */
 	public void render(StyleGroup group, Graphics2D g, Camera camera) {
-		setupRenderingPass(group, g, camera);
-		pushStyle(group, g, camera);
-
-		for (Element e : group.bulkElements()) {
-			GraphicElement ge = (GraphicElement) e;
-
-			if (camera.isVisible(ge))
-				renderElement(group, g, camera, ge);
-			else
-				elementInvisible(group, g, camera, ge);
-		}
-
-		if (group.hasDynamicElements()) {
-			for (Element e : group.dynamicElements()) {
-				GraphicElement ge = (GraphicElement) e;
-
-				if (camera.isVisible(ge)) {
-					if (!group.elementHasEvents(ge)) {
-						pushDynStyle(group, g, camera, ge);
-						renderElement(group, g, camera, ge);
-					}
-				} else {
-					elementInvisible(group, g, camera, ge);
-				}
-			}
-		}
-
-		if (group.hasEventElements()) {
-			for (ElementEvents event : group.elementsEvents()) {
-				GraphicElement ge = (GraphicElement) event.getElement();
+		if(groupIsVisible(group, camera)) {
+			setupRenderingPass(group, g, camera);
+			pushStyle(group, g, camera);
 	
-				if (camera.isVisible(ge)) {
-					event.activate();
-					pushStyle(group, g, camera);
+			for (Element e : group.bulkElements()) {
+				GraphicElement ge = (GraphicElement) e;
+	
+				if (camera.isVisible(ge))
 					renderElement(group, g, camera, ge);
-					event.deactivate();
-				} else {
+				else
 					elementInvisible(group, g, camera, ge);
+			}
+	
+			if (group.hasDynamicElements()) {
+				for (Element e : group.dynamicElements()) {
+					GraphicElement ge = (GraphicElement) e;
+	
+					if (camera.isVisible(ge)) {
+						if (!group.elementHasEvents(ge)) {
+							pushDynStyle(group, g, camera, ge);
+							renderElement(group, g, camera, ge);
+						}
+					} else {
+						elementInvisible(group, g, camera, ge);
+					}
 				}
 			}
-
-			hadEvents = true;
-		} else {
-			hadEvents = false;
-		}
+	
+			if (group.hasEventElements()) {
+				for (ElementEvents event : group.elementsEvents()) {
+					GraphicElement ge = (GraphicElement) event.getElement();
 		
-		textRenderer.renderTexts(group, camera, g);
+					if (camera.isVisible(ge)) {
+						event.activate();
+						pushStyle(group, g, camera);
+						renderElement(group, g, camera, ge);
+						event.deactivate();
+					} else {
+						elementInvisible(group, g, camera, ge);
+					}
+				}
+	
+				hadEvents = true;
+			} else {
+				hadEvents = false;
+			}
+			
+			textRenderer.renderTexts(group, camera, g);
+		}
 	}
 
 	/**
@@ -234,6 +235,53 @@ public abstract class ElementRenderer {
 	protected abstract void elementInvisible(StyleGroup group, Graphics2D g,
 			Camera camera, GraphicElement element);
 
+	/**
+	 * True if the group is visible according of the visibility modes of the style.
+	 * @param group The group to test.
+	 * @param camera The camera (some visibility modes are given according to the current zoom).
+	 * @return True if the group is visible.
+	 */
+	protected boolean groupIsVisible(StyleGroup group, Camera camera) {
+		VisibilityMode vmode = group.getVisibilityMode();
+		
+		double lo, hi;
+		double z = camera.getViewPercent();
+		Values vi = null;
+		
+		switch(vmode) {
+			case HIDDEN:
+				return false;
+			case NORMAL:
+				return true;
+			case AT_ZOOM:
+				vi = group.getVisibility();
+				lo = vi.size() > 0 ? vi.get(0) : z;
+				return (z == lo);
+			case OVER_ZOOM:
+				vi = group.getVisibility();
+				lo = vi.size() > 0 ? vi.get(0) : z;
+				return (z <= lo);
+			case UNDER_ZOOM:
+				vi = group.getVisibility();
+				hi = vi.size() > 0 ? vi.get(0) : z;
+				return (z >= hi);
+			case ZOOM_RANGE:
+				vi = group.getVisibility();
+				lo = vi.size() > 0 ? vi.get(0) : z;
+				hi = vi.size() > 1 ? vi.get(1) : lo;
+				return (z >= lo && z <= hi);
+			case ZOOMS:
+				vi = group.getVisibility();
+				for(int i=0; i<vi.size(); i++) {
+					if(vi.get(i) == z)
+						return true;
+				}
+				return false;
+			default:
+				return true;
+		}
+	}
+	
 	/**
 	 * Specific renderer for text labels.
 	 * 
