@@ -80,6 +80,19 @@ public class Vector3 extends Vector2 {
 		data = new double[3];
 		copy(point);
 	}
+	
+	/**
+	 * New vector defined between to two given points the orientation of the vector goes from
+	 * the source to the target.
+	 * @param source The source point.
+	 * @param target The target point.
+	 */
+	public Vector3(Point3 source, Point3 target) {
+		data = new double[3];
+		data[0] = target.x - source.x;
+		data[1] = target.y - source.y;
+		data[2] = target.z - source.z;
+	}
 
 	// Predicates
 

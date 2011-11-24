@@ -119,6 +119,7 @@ public class FPSLogger {
        if(out != null) {
     	   steps += 1;
     	   long time = T2 - T1;
+    	   time = time > 0 ? time : 1;
     	   double fps  = 1000.0 / time;
     	   sum += fps;
     	   out.printf("%.3f   %d   %.3f%n", fps, time, sum/steps);

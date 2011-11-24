@@ -248,7 +248,6 @@ public class Viewer implements ActionListener {
 		this.graph = graph;
 		this.pumpPipe = ppipe;
 		this.sourceInSameThread = source;
-		this.timer = new Timer(delay, this);
 
 		assert ((ppipe != null && source == null) || (ppipe == null && source != null));
 
@@ -256,6 +255,16 @@ public class Viewer implements ActionListener {
 			pumpPipe.addSink(graph);
 		if (sourceInSameThread != null)
 			sourceInSameThread.addSink(graph);
+
+		pumpPipe.pump();
+		
+		if(graph.hasNumber("ui.fps")) {
+			double fps = graph.getNumber("ui.fps");
+			delay = (int) (1000/fps);
+			graph.removeAttribute("ui.fps");
+		}
+		
+		this.timer = new Timer(delay, this);
 
 		timer.setCoalesce(true);
 		timer.setRepeats(true);
@@ -502,6 +511,8 @@ public class Viewer implements ActionListener {
 			if (layoutPipeIn != null)
 				layoutPipeIn.pump();
 
+			checkFPS();
+			
 			boolean changed = graph.graphChangedFlag();
 
 			if (changed)
@@ -514,6 +525,19 @@ public class Viewer implements ActionListener {
 		}
 	}
 
+	/**
+	 * Check if an "ui.fps" attribute tells which refresh frequency to adopt, and it present use
+	 * it and then remove it.
+	 */
+	protected void checkFPS() {
+		if(graph.hasNumber("ui.fps")) {
+			double fps = graph.getNumber("ui.fps");
+			delay = (int) (1000/fps);
+			timer.setDelay(delay);
+			graph.removeAttribute("ui.fps");
+		}
+	}
+	
 	/**
 	 * Compute the overall bounds of the graphic graph according to the nodes
 	 * and sprites positions. We can only compute the graph bounds from the
