@@ -290,16 +290,14 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 		style = styleGroups.getStyleFor(this);
 	}
 	
-	// Access
-
 	@Override
-	protected String myGraphId() // XXX
+	protected String myGraphId()
 	{
 		return getId();
 	}
 
 	@Override
-	protected long newEvent() // XXX
+	protected long newEvent()
 	{
 		return listeners.newEvent();
 	}
@@ -331,15 +329,6 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	 */
 	public StyleSheet getStyleSheet() {
 		return styleSheet;
-	}
-
-	/**
-	 * The graph style group.
-	 * 
-	 * @return A style group.
-	 */
-	public StyleGroup getStyle() {
-		return style;
 	}
 
 	/**

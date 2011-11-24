@@ -92,6 +92,29 @@ import org.graphstream.ui.graphicGraph.stylesheet.Style;
  * bulk elements. Then for each dynamic element push the dynamic style and draw
  * the element, only if the element has no event.
  * </p>
+ * 
+ * <p>
+ * Internally this class is organized in four main sets. A {@link #elements} set,
+ * that is a hash table on {@link ElementId} elements. A {@link #bulk} array that
+ * contains only bulk elements and allow fast iteration on them. A {@link #dyn}
+ * array that contains only dynamic elements and allow fast iteration on them. And
+ * finally a {@link #ev} array that contains elements having an event occuring on
+ * them.
+ * </p>
+ * 
+ * <p>
+ * The role of the {@link ElementId} is to track an element, if this element is in
+ * the {@link #bulk} or {@link #dyn} sets, its index in these sets and if an element
+ * has events (and its index in the event set). Each {@link AbstractGraphicElement}
+ * inserted in a group has an index (like the ones used in the main graph classes),
+ * but this index is the index in the style group, either in the {@link #bulk} or
+ * {@link #dyn} arrays. Therefore several nodes, edges or sprites may have the same
+ * index. However, as graphic elements reference their style group, this should not
+ * be a problem. The role of this system is to replace the old iterator using hash
+ * maps that was fairly slow (profiling information shown that for very large graph
+ * the iterator used to take up to 15% of the paint operation, it is now closer to
+ * 0.1%).
+ * </p>
  */
 public class StyleGroup extends Style implements Iterable<AbstractGraphicElement> {
 	/**

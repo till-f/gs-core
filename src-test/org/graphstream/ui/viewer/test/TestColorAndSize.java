@@ -1,16 +1,24 @@
 package org.graphstream.ui.viewer.test;
 
+import java.awt.Color;
+
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 
-public class TestColor {
+public class TestColorAndSize {
 	public static void main(String args[]) {
-		(new TestColor()).test();
+		(new TestColorAndSize()).test();
 	}
 	
 	public void test() {
+		System.out.println("You should see:");
+		System.out.println("- A triangle graph.");
+		System.out.println("- A node C whose size smoothly varies with time.");
+		System.out.println("- A node C whose color smoothly varies from grey to red.");
+		System.out.println("- A node B whose color changes between gray and blue.");
+		
 		Graph graph = new SingleGraph("single");
 		
 		Node A = graph.addNode("A");
@@ -44,7 +52,9 @@ public class TestColor {
 			else if(size < 10) { size = 10; sdir = -sdir; }
 			C.addAttribute("ui.color", color);
 			C.addAttribute("ui.size", size, Units.PX);
-			sleep(100);
+			if(color==1) B.setAttribute("ui.color", Color.BLUE);
+			else if(color ==0) B.setAttribute("ui.color", Color.GRAY);
+			sleep(40);
 		}
 	}
 	
@@ -55,6 +65,7 @@ public class TestColor {
 	protected static String styleSheet = 
 		"node { fill-color: #AAA; stroke-mode: plain; stroke-width: 1px; stroke-color: #777; }" +
 		"node#C { fill-color: #AAA, red; fill-mode: dyn-plain; size-mode: dyn-size; }" +
+		"node#B { fill-mode: dyn-plain; }" +
 		"node:clicked { stroke-color: yellow; }" +
 		"node:selected { stroke-color: red; }";
 }
