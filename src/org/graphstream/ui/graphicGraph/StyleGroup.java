@@ -34,7 +34,6 @@ package org.graphstream.ui.graphicGraph;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 
 import org.graphstream.graph.Element;
@@ -72,24 +71,166 @@ import org.graphstream.ui.graphicGraph.stylesheet.Style;
  * The style group provides iterators on each of these categories of elements :
  * <ul>
  * <li>{@link #elements()} allows to browse all elements contained in the group
- * without exception.</li>
- * <li>{@link #dynamicElements()} allows to browse the subset of elements having
- * a attribute that modify their style.</li>
- * <li>{@link #elementsEvents()} allows to browse the subset of elements
- * modified by an event.</li>
+ * without exception. As this operation is less needed than others it is slower
+ * (iterator on a hash map).</li>
  * <li>{@link #bulkElements()} allows to browse all remaining elements that have
- * no dynamic attribute or event.</li>
+ * no dynamic attribute or event. This operation is fast (iteration on an array).</li>
+ * <li>{@link #dynamicElements()} allows to browse the subset of elements having
+ * an attribute that modify their style. This operation is fast (iteration on
+ * an array).</li>
+ * <li>{@link #elementsEvents()} allows to browse the subset of elements
+ * modified by an event. This operation is fast (iteration on an array).</li>
  * </ul>
- * The calling the three last iterators would yield the same elements as calling
- * the first one. When drawing you can optimise the drawing by first pushing the
- * graphic state and then drawing at once all bulk elements. If the dynamic and
- * event subsets are not empty you then must draw such elements modifying the
- * graphic state for each one.
+ * Calling the two bulk and dynamic iterators would yield the same elements at
+ * calling the elements() iterator. Elements are either stored in one or the other
+ * (they are dynamic or bulk but not both). However an element can be in the
+ * event set and still be in the dynamic or bulk set.
+ * </p>
+ * 
+ * <p>
+ * Therefore, when drawing, you can first push the style once and draw all the
+ * bulk elements. Then for each dynamic element push the dynamic style and draw
+ * the element, only if the element has no event.
  * </p>
  */
 public class StyleGroup extends Style implements Iterable<Element> {
-	// Attribute
+	/**
+	 * Identifier for an element, its dynamic status, its events, etc.
+	 */
+	class ElementId {
+		protected ArrayList<Element> where = null;
+		protected int index = -1;
+		protected int eventIndex = -1;
+		protected ElementEvents events = null;
+		
+		/**
+		 * Create the identifier an insert the element in "where".
+		 * @param element The element to identify.
+		 * @param where Where to store the element (either bulk or dyn).
+		 */
+		public ElementId(Element element, ArrayList<Element> where) {
+			addToWhere(element, where);
+		}
+		
+		/**
+		 * The element associated with the identifier.
+		 * @return The element.
+		 */
+		public Element get() {
+			return where.get(index);
+		}
+		
+		/**
+		 * Remove the element.
+		 */
+		public void remove() {
+			if(events != null) {
+				removeFromEvents();
+			}
+		}
+		
+		/**
+		 * Add tot he buld or dyn array.
+		 * @param element The element.
+		 * @param where bulk or dyn.
+		 */
+		protected void addToWhere(Element element, ArrayList<Element> where) {
+			this.where = where;
+			this.index = where.size();
+			((GraphicElement)element).reindex(index);
+			where.add(element);
+		}
+		
+		/**
+		 * Remove from the bulk or dyn array.
+		 * @return The element.
+		 */
+		protected Element removeFromWhere() {
+			Element me = where.get(index);
+			int last = where.size() - 1;
+			
+			// If we did not removed at the end, we swap the end with the free index,
+			// else we merely delete the position.
+			if(index < last) {
+				Element lastElt = where.get(last);
+				where.set(index, lastElt);
+				ElementId lastId = elements.get(lastElt.getId());
+				lastId.where = where;
+				lastId.index = index;
+				((GraphicElement)lastElt).reindex(index);
+			}
 
+			where.remove(last);
+			
+			index = -1;
+			where = null;
+			((GraphicElement)me).reindex(-1);
+			
+			return me;
+		}
+		
+		/**
+		 * Remove from the ev array.
+		 */
+		protected void removeFromEvents() {
+			int last = ev.size()-1;
+			
+			if(eventIndex < last) {
+				ElementId lastId = ev.get(last);
+				ev.set(eventIndex, lastId);
+				lastId.eventIndex = eventIndex;
+			}
+			ev.remove(last);
+			
+			events = null;
+			eventIndex = -1;
+		}
+		
+		/**
+		 * Add an event on the element.
+		 * @param group The element style group.
+		 * @param event The event.
+		 */
+		public void addEvent(StyleGroup group, String event) {
+			if(events == null) {
+				events     = new ElementEvents(get(), group, event);
+				eventIndex = ev.size();
+				
+				ev.add(this);
+			} else {
+				events.pushEvent(event);
+			}
+		}
+		
+		/**
+		 * Remove an event on the element, if this is the last event, the whole set of event is
+		 * cleaned.
+		 * @param event The event to remove.
+		 */
+		public void removeEvent(String event) {
+			if (events != null) {
+				events.popEvent(event);
+
+				if (events.eventCount() == 0)
+					removeFromEvents();
+			}
+		}
+		
+		public void setDynamic() {
+			if(where != dyn) {
+				Element me = removeFromWhere();
+				addToWhere(me, dyn);
+			}
+		}
+		
+		public void unsetDynamic() {
+			if(where == dyn) {
+				Element me = removeFromWhere();
+				addToWhere(me, bulk);
+			}
+		}
+	}
+	
 	/**
 	 * The group unique identifier.
 	 */
@@ -101,27 +242,32 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	protected ArrayList<Rule> rules = new ArrayList<Rule>();
 
 	/**
-	 * Graph elements of this group.
+	 * Graph elements of this group by id.
 	 */
-	protected HashMap<String, Element> elements = new HashMap<String, Element>();
+	protected HashMap<String, ElementId> elements = new HashMap<String, ElementId>();
 
+	/**
+	 * Graph elements of this group by index, excepted the dynamic ones in {@link #dyn}.
+	 * This field is entirely handled by the {@link ElementId} class.
+	 */
+	protected ArrayList<Element> bulk = new ArrayList<Element>();
+	
+	/**
+	 * Dynamic graph elements of this group by index (not the ones in {@link #bulk}).
+	 * This field is entirely handled by the {@link ElementId} class.
+	 */
+	protected ArrayList<Element> dyn = new ArrayList<Element>();
+	
+	/**
+	 * Elements having an event on them, they may also be in {@link #bulk} or {@link #dyn}.
+	 * This field is entirely handled by the {@link ElementId} class.
+b	 */
+	protected ArrayList<ElementId> ev = new ArrayList<ElementId>();
+	
 	/**
 	 * The global events actually occurring.
 	 */
 	protected StyleGroupSet.EventSet eventSet;
-
-	/**
-	 * Set of elements whose style is actually modified individually by an
-	 * event. Such elements must be rendered one by one, not in groups like
-	 * others.
-	 */
-	protected HashMap<Element, ElementEvents> eventsFor;
-
-	/**
-	 * Set of elements that have some dynamic style values. Such elements must
-	 * be rendered one by one, not in groups, like others.
-	 */
-	protected HashSet<Element> dynamicOnes;
 
 	/**
 	 * A set of events actually pushed only for this group.
@@ -129,16 +275,9 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	protected String[] curEvents;
 
 	/**
-	 * The set of bulk elements.
-	 */
-	protected BulkElements bulkElements = new BulkElements();
-
-	/**
 	 * Associated renderers.
 	 */
 	public HashMap<String, SwingElementRenderer> renderers;
-
-	// Construction
 
 	/**
 	 * New style group for a first graph element and the set of style rules that
@@ -157,18 +296,20 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 */
 	public StyleGroup(String identifier, Collection<Rule> rules,
 			Element firstElement, StyleGroupSet.EventSet eventSet) {
-		this.id = identifier;
-		this.rules.addAll(rules);
-		this.elements.put(firstElement.getId(), firstElement);
-		this.values = null; // To avoid consume memory since this style will not
-							// store anything.
+		this.id       = identifier;
+		this.values   = null; // To avoid consume memory since this style will not store anything.
 		this.eventSet = eventSet;
+		this.elements = new HashMap<String, ElementId>();
+		this.bulk     = new ArrayList<Element>();
+		this.dyn      = new ArrayList<Element>();
+		this.ev       = new ArrayList<ElementId>();
+
+		this.rules.addAll(rules);
+		addElement(firstElement);
 
 		for (Rule rule : rules)
 			rule.addGroup(identifier);
 	}
-
-	// Access
 
 	/**
 	 * The group unique identifier.
@@ -197,7 +338,7 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * @return True if one property is dynamic.
 	 */
 	public boolean hasDynamicElements() {
-		return (dynamicOnes != null && dynamicOnes.size() > 0);
+		return(dyn.size() > 0);
 	}
 
 	/**
@@ -208,7 +349,7 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * @return True if the group contains some elements changed by an event.
 	 */
 	public boolean hasEventElements() {
-		return (eventsFor != null && eventsFor.size() > 0);
+		return(ev.size()>0);
 	}
 
 	/**
@@ -219,7 +360,7 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * @return True if the element has actually active events.
 	 */
 	public boolean elementHasEvents(Element element) {
-		return (eventsFor != null && eventsFor.containsKey(element));
+		return (elements.get(element.getId()).events != null);
 	}
 
 	/**
@@ -231,7 +372,7 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * @return True if the element has actually specific style attributes.
 	 */
 	public boolean elementIsDynamic(Element element) {
-		return (dynamicOnes != null && dynamicOnes.contains(element));
+		return ((elements.get(element.getId())).where == dyn);
 	}
 
 	/**
@@ -304,7 +445,12 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * @return The element corresponding to the identifier or null if not found.
 	 */
 	public Element getElement(String id) {
-		return elements.get(id);
+		ElementId eid = elements.get(id);
+		
+		if(eid != null)
+			return eid.get();
+		
+		return null;
 	}
 
 	/**
@@ -315,32 +461,18 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	public int getElementCount() {
 		return elements.size();
 	}
-
-	/**
-	 * Iterator on the set of graph elements of this group.
-	 * 
-	 * @return The elements iterator.
-	 */
-	public Iterator<? extends Element> getElementIterator() {
-		return elements.values().iterator();
-	}
-
-	/**
-	 * Iterable set of elements. This the complete set of elements contained in
-	 * this group without regard to the fact they are modified by an event or
-	 * are dynamic. If you plan to respect events or dynamic elements, you must
-	 * check the elements are not modified by events using
-	 * {@link #elementHasEvents(Element)} and are not dynamic by using
-	 * {@link #elementIsDynamic(Element)} and then draw modified elements using
-	 * {@link #elementsEvents()} and {@link #dynamicElements()}. But the easiest
-	 * way of drawing is to use first {@link #bulkElements()} for all non
-	 * dynamic non event elements, then the {@link #dynamicElements()} and
-	 * {@link #elementsEvents()} to draw all dynamic and event elements.
-	 * 
-	 * @return All the elements in no particular order.
-	 */
+	
 	public Iterable<? extends Element> elements() {
-		return elements.values();
+		return new Iterable<Element>() {
+			public Iterator<Element> iterator() {
+				return new ElementIterator(elements.values().iterator());
+			}
+		};
+	}
+	
+	@SuppressWarnings("all")
+	public Iterator<Element> iterator() {
+		return (Iterator<Element>)elements().iterator();
 	}
 
 	/**
@@ -350,9 +482,9 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * @return The iterable set of bulk elements.
 	 */
 	public Iterable<? extends Element> bulkElements() {
-		return bulkElements;
+		return bulk;
 	}
-
+	
 	/**
 	 * Subset of elements that are actually modified by one or more events. The
 	 * {@link ElementEvents} class contains the element and an array of events
@@ -361,7 +493,11 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * @return The subset of elements modified by one or more events.
 	 */
 	public Iterable<ElementEvents> elementsEvents() {
-		return eventsFor.values();
+		return new Iterable<ElementEvents>() {
+			public Iterator<ElementEvents> iterator() {
+				return new ElementEventsIterator(ev.iterator());
+			}
+		};
 	}
 
 	/**
@@ -374,11 +510,7 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * @return The subset of dynamic elements of the group.
 	 */
 	public Iterable<Element> dynamicElements() {
-		return dynamicOnes;
-	}
-
-	public Iterator<Element> iterator() {
-		return elements.values().iterator();
+		return dyn;
 	}
 
 	/**
@@ -400,23 +532,15 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * @return A set of events or null if none occurring at that time.
 	 */
 	public ElementEvents getEventsFor(Element element) {
-		if (eventsFor != null)
-			return eventsFor.get(element);
-
-		return null;
+		return elements.get(element.getId()).events;
 	}
 
 	/**
 	 * Test if an element is pushed as dynamic.
 	 */
 	public boolean isElementDynamic(Element element) {
-		if (dynamicOnes != null)
-			return dynamicOnes.contains(element);
-
-		return false;
+		return (elements.get(element.getId()).where == dyn);
 	}
-
-	// Command
 
 	/**
 	 * Add a new graph element to the group.
@@ -425,7 +549,11 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 *            The new graph element to add.
 	 */
 	public void addElement(Element element) {
-		elements.put(element.getId(), element);
+		if(element.getIndex() < 0) {
+			elements.put(element.getId(), new ElementId(element, bulk));
+		} else {
+			throw new RuntimeException(String.format("Cannot add element %s to style group, element already as an index %s in another group.", element.getId(), element.getIndex()));
+		}
 	}
 
 	/**
@@ -436,14 +564,13 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * @return The removed element, or null if the element was not found.
 	 */
 	public Element removeElement(Element element) {
-		if (eventsFor != null && eventsFor.containsKey(element))
-			eventsFor.remove(element); // Remove an eventual remaining event.
-
-		if (dynamicOnes != null && dynamicOnes.contains(element))
-			dynamicOnes.remove(element); // Remove an eventual remaining dynamic
-											// information.
-
-		return elements.remove(element.getId());
+		ElementId id = elements.get(element.getId());
+		
+		if(id != null) {
+			id.remove();
+		}
+		
+		return element;
 	}
 
 	/**
@@ -456,18 +583,12 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 *            The event to push.
 	 */
 	protected void pushEventFor(Element element, String event) {
-		if (elements.containsKey(element.getId())) {
-			if (eventsFor == null)
-				eventsFor = new HashMap<Element, ElementEvents>();
-
-			ElementEvents evs = eventsFor.get(element);
-
-			if (evs == null) {
-				evs = new ElementEvents(element, this, event);
-				eventsFor.put(element, evs);
-			} else {
-				evs.pushEvent(event);
-			}
+		ElementId id = elements.get(element.getId());
+		
+		if(id != null) {
+			id.addEvent(this, event);
+		} else {
+			throw new RuntimeException(String.format("cannot push event %s for unknown element %s", event, element.getId()));
 		}
 	}
 
@@ -480,18 +601,10 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 *            The event.
 	 */
 	protected void popEventFor(Element element, String event) {
-		if (elements.containsKey(element.getId())) {
-			ElementEvents evs = eventsFor.get(element);
-
-			if (evs != null) {
-				evs.popEvent(event);
-
-				if (evs.eventCount() == 0)
-					eventsFor.remove(element);
-			}
-
-			if (eventsFor.isEmpty())
-				eventsFor = null;
+		ElementId id = elements.get(element.getId());
+		
+		if(id != null) {
+			id.removeEvent(event);
 		}
 	}
 
@@ -506,10 +619,11 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 *            The element to push events for.
 	 */
 	public void activateEventsFor(Element element) {
-		ElementEvents evs = eventsFor.get(element);
-
-		if (evs != null && curEvents == null)
-			curEvents = evs.events();
+		ElementId id = elements.get(element.getId());
+		
+		if(id.events != null && curEvents == null) {
+			curEvents = id.events.events();
+		}
 	}
 
 	/**
@@ -528,10 +642,13 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 *            The element.
 	 */
 	protected void pushElementAsDynamic(Element element) {
-		if (dynamicOnes == null)
-			dynamicOnes = new HashSet<Element>();
-
-		dynamicOnes.add(element);
+		ElementId id = elements.get(element.getId());
+		
+		if(id != null) {
+			id.setDynamic();
+		} else {
+			throw new RuntimeException(String.format("cannot push unknown element %s as dynamic", element.getId()));
+		}
 	}
 
 	/**
@@ -542,10 +659,11 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 *            The element.
 	 */
 	protected void popElementAsDynamic(Element element) {
-		dynamicOnes.remove(element);
-
-		if (dynamicOnes.isEmpty())
-			dynamicOnes = null;
+		ElementId id = elements.get(element.getId());
+		
+		if(id != null) {
+			id.unsetDynamic();
+		}
 	}
 
 	/**
@@ -557,6 +675,9 @@ public class StyleGroup extends Style implements Iterable<Element> {
 			rule.removeGroup(id);
 
 		elements.clear();
+		bulk.clear();
+		dyn.clear();
+		ev.clear();
 	}
 
 	/**
@@ -611,8 +732,8 @@ public class StyleGroup extends Style implements Iterable<Element> {
 		builder.append(String.format("%s%s%n", prefix, id));
 		builder.append(String.format("%s%sContains : ", prefix, sprefix));
 
-		for (Element element : elements.values()) {
-			builder.append(String.format("%s ", element.getId()));
+		for (ElementId id : elements.values()) {
+			builder.append(String.format("%s ", id.get().getId()));
 		}
 
 		builder.append(String.format("%n%s%sStyle : ", prefix, sprefix));
@@ -633,8 +754,6 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * occurring on it.
 	 */
 	public static class ElementEvents {
-		// Attribute
-
 		/**
 		 * Set of events on the element.
 		 */
@@ -757,76 +876,35 @@ public class StyleGroup extends Style implements Iterable<Element> {
 		}
 	}
 
-	/**
-	 * Virtual set on the elements that have not dynamic style value or event.
-	 */
-	protected class BulkElements implements Iterable<Element> {
-		public Iterator<Element> iterator() {
-			return new BulkIterator(elements.values().iterator());
+	class ElementIterator implements Iterator<Element> {
+		Iterator<ElementId> it;
+		ElementIterator(Iterator<ElementId> it) {
+			this.it = it;
+		}
+		public boolean hasNext() {
+			return it.hasNext();
+		}
+		public Element next() {
+			return it.next().get();
+		}
+		public void remove() {
+			throw new UnsupportedOperationException();
 		}
 	}
-
-	/**
-	 * Iterator on the set of elements that have no event or dynamic style
-	 * values.
-	 */
-	protected class BulkIterator implements Iterator<Element> {
-		/**
-		 * Iterator on the set of all elements.
-		 */
-		protected Iterator<Element> iterator;
-
-		/**
-		 * The next element without event or dynamic style.value.
-		 */
-		Element next;
-
-		/**
-		 * New bulk iterator positioned on the first element with no event or
-		 * dynamic style attribute.
-		 * 
-		 * @param iterator
-		 *            Iterator on the set of all elements.
-		 */
-		public BulkIterator(Iterator<Element> iterator) {
-			this.iterator = iterator;
-			boolean loop = true;
-
-			while (loop && iterator.hasNext()) {
-				next = iterator.next();
-
-				if (!elementHasEvents(next) && !elementIsDynamic(next))
-					loop = false;
-				else
-					next = null;
-			}
+	
+	class ElementEventsIterator implements Iterator<ElementEvents> {
+		Iterator<ElementId> it;
+		ElementEventsIterator(Iterator<ElementId> it) {
+			this.it = it;
 		}
-
 		public boolean hasNext() {
-			return (next != null);
+			return it.hasNext();
 		}
-
-		public Element next() {
-			Element e = next;
-			boolean loop = true;
-
-			next = null;
-
-			while (loop && iterator.hasNext()) {
-				next = iterator.next();
-
-				if (!elementIsDynamic(next) && !elementHasEvents(next))
-					loop = false;
-				else
-					next = null;
-			}
-
-			return e;
+		public ElementEvents next() {
+			return it.next().events;
 		}
-
 		public void remove() {
-			throw new UnsupportedOperationException(
-					"this iterator does not allows removing elements");
+			throw new UnsupportedOperationException();
 		}
 	}
 }

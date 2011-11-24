@@ -305,7 +305,9 @@ public class GraphicSprite extends GraphicElement {
 
 		if (changed) {
 			mygraph.graphChanged = true;
-			mygraph.boundsChanged = true;
+
+			if(attached != null)
+				mygraph.boundsChanged = true;
 
 			if(!fromEvent && mygraph.feedbackXYZ) {
 				String prefix = String.format("ui.sprite.%s", getId());

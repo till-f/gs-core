@@ -280,6 +280,7 @@ public abstract class GraphicElement extends AbstractElement {
 	public GraphicElement(String id, GraphicGraph graph) {
 		super(id);
 		this.mygraph = graph;
+		setIndex(-1);
 	}
 
 	/**
@@ -591,5 +592,10 @@ public abstract class GraphicElement extends AbstractElement {
 	protected void removeAttribute_(String sourceId, long timeId,
 			String attribute) {
 		super.removeAttribute_(sourceId, timeId, attribute);
+	}
+	
+	/* Make this method accessible to this package. */
+	protected void reindex(int newIndex) {
+		setIndex(newIndex);
 	}
 }

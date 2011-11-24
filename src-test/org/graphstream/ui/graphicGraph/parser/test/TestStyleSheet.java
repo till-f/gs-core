@@ -92,15 +92,15 @@ public class TestStyleSheet {
 		AB.addAttribute("ui.class", "foo");
 		BC.addAttribute("ui.class", "foo");
 
-		// B (foo)
-		// _/ \_
-		// _/ \_(foo)
-		// / (foo) \
-		// A C (foo)
-		// \_ _/
-		// \_ _/
-		// \ /
-		// D (bar,foo)
+		//       B (foo)
+		//     _/ \_
+		//   _/     \_(foo)
+		//  / (foo)   \
+		// A           C (foo)
+		//  \_       _/
+		//    \_   _/
+		//      \ /
+		//       D (bar,foo)
 
 		stylesheet = new StyleSheet();
 
@@ -295,6 +295,11 @@ public class TestStyleSheet {
 		StyleGroup sC = sgs.getStyleForElement(C);
 		StyleGroup sD = sgs.getStyleForElement(D);
 
+		assertEquals(1, sA.getElementCount(), 0);
+		assertEquals(1, sB.getElementCount(), 0);
+		assertEquals(1, sC.getElementCount(), 0);
+		assertEquals(1, sD.getElementCount(), 0);
+		
 		assertEquals(1, sA.getStrokeWidth().value, 0);
 		assertEquals(1, sB.getStrokeWidth().value, 0);
 		assertEquals(1, sC.getStrokeWidth().value, 0);

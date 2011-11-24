@@ -384,33 +384,6 @@ public class GraphicGraph extends AbstractElement implements Graph,
 		return lo;
 	}
 
-	/*
-	 * Does the graphic graph publish via attribute changes the XYZ changes on nodes and sprites
-	 * when changed ?. This is disabled by default, and enabled as soon as there is at least one
-	 * listener.
-	public boolean feedbackXYZ() {
-		return feedbackXYZ;
-	}
-	 */
-
-	// Command
-
-	/*
-	 * Should the graphic graph publish via attribute changes the XYZ changes on
-	 * nodes and sprites when changed ?.
-	 * 
-	 * Be very careful with this setting. If some part of the pipeline is already
-	 * in charge of publishing "xyz" attributes (in the sources this graph is sink of), this
-	 * graph will propagate them as usual to its sink, no need to enable feedback). However
-	 * sometimes the nodes are moved directly by a special process (a layout for example) that
-	 * use the "move" methods of the GraphicNode and GraphicSprite classes. In this case, no
-	 * "xyz" attribute never passes in the event stream, so you can enable this flag to allow
-	 * the graph to produce them.
-	public void feedbackXYZ(boolean on) {
-		feedbackXYZ = on;
-	}
-	 */
-
 	/**
 	 * Compute the overall bounds of the graphic graph according to the nodes
 	 * and sprites positions.
@@ -463,7 +436,7 @@ public class GraphicGraph extends AbstractElement implements Graph,
 						&& sprite.getUnits() == StyleConstants.Units.GU) {
 					Point3 pos = sprite.center;
 
-					if(!sprite.hidden) {
+					if(!sprite.hidden && (sprite.attached == null)) {
 						if (pos.x < lo.x)
 							lo.x = pos.x;
 						if (pos.x > hi.x)
