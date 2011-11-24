@@ -93,12 +93,12 @@ import org.graphstream.ui.graphicGraph.stylesheet.Style;
  * the element, only if the element has no event.
  * </p>
  */
-public class StyleGroup extends Style implements Iterable<Element> {
+public class StyleGroup extends Style implements Iterable<AbstractGraphicElement> {
 	/**
 	 * Identifier for an element, its dynamic status, its events, etc.
 	 */
 	class ElementId {
-		protected ArrayList<Element> where = null;
+		protected ArrayList<AbstractGraphicElement> where = null;
 		protected int index = -1;
 		protected int eventIndex = -1;
 		protected ElementEvents events = null;
@@ -108,7 +108,7 @@ public class StyleGroup extends Style implements Iterable<Element> {
 		 * @param element The element to identify.
 		 * @param where Where to store the element (either bulk or dyn).
 		 */
-		public ElementId(Element element, ArrayList<Element> where) {
+		public ElementId(AbstractGraphicElement element, ArrayList<AbstractGraphicElement> where) {
 			addToWhere(element, where);
 		}
 		
@@ -116,7 +116,7 @@ public class StyleGroup extends Style implements Iterable<Element> {
 		 * The element associated with the identifier.
 		 * @return The element.
 		 */
-		public Element get() {
+		public AbstractGraphicElement get() {
 			return where.get(index);
 		}
 		
@@ -127,6 +127,7 @@ public class StyleGroup extends Style implements Iterable<Element> {
 			if(events != null) {
 				removeFromEvents();
 			}
+			removeFromWhere();
 		}
 		
 		/**
@@ -134,10 +135,10 @@ public class StyleGroup extends Style implements Iterable<Element> {
 		 * @param element The element.
 		 * @param where bulk or dyn.
 		 */
-		protected void addToWhere(Element element, ArrayList<Element> where) {
+		protected void addToWhere(AbstractGraphicElement element, ArrayList<AbstractGraphicElement> where) {
 			this.where = where;
 			this.index = where.size();
-			((GraphicElement)element).reindex(index);
+			((AbstractGraphicElement)element).reindex(index);
 			where.add(element);
 		}
 		
@@ -145,26 +146,26 @@ public class StyleGroup extends Style implements Iterable<Element> {
 		 * Remove from the bulk or dyn array.
 		 * @return The element.
 		 */
-		protected Element removeFromWhere() {
-			Element me = where.get(index);
+		protected AbstractGraphicElement removeFromWhere() {
+			AbstractGraphicElement me = where.get(index);
 			int last = where.size() - 1;
 			
 			// If we did not removed at the end, we swap the end with the free index,
 			// else we merely delete the position.
 			if(index < last) {
-				Element lastElt = where.get(last);
+				AbstractGraphicElement lastElt = where.get(last);
 				where.set(index, lastElt);
 				ElementId lastId = elements.get(lastElt.getId());
 				lastId.where = where;
 				lastId.index = index;
-				((GraphicElement)lastElt).reindex(index);
+				lastElt.reindex(index);
 			}
 
 			where.remove(last);
 			
 			index = -1;
 			where = null;
-			((GraphicElement)me).reindex(-1);
+			me.reindex(-1);
 			
 			return me;
 		}
@@ -218,14 +219,14 @@ public class StyleGroup extends Style implements Iterable<Element> {
 		
 		public void setDynamic() {
 			if(where != dyn) {
-				Element me = removeFromWhere();
+				AbstractGraphicElement me = removeFromWhere();
 				addToWhere(me, dyn);
 			}
 		}
 		
 		public void unsetDynamic() {
 			if(where == dyn) {
-				Element me = removeFromWhere();
+				AbstractGraphicElement me = removeFromWhere();
 				addToWhere(me, bulk);
 			}
 		}
@@ -250,13 +251,13 @@ public class StyleGroup extends Style implements Iterable<Element> {
 	 * Graph elements of this group by index, excepted the dynamic ones in {@link #dyn}.
 	 * This field is entirely handled by the {@link ElementId} class.
 	 */
-	protected ArrayList<Element> bulk = new ArrayList<Element>();
+	protected ArrayList<AbstractGraphicElement> bulk = new ArrayList<AbstractGraphicElement>();
 	
 	/**
 	 * Dynamic graph elements of this group by index (not the ones in {@link #bulk}).
 	 * This field is entirely handled by the {@link ElementId} class.
 	 */
-	protected ArrayList<Element> dyn = new ArrayList<Element>();
+	protected ArrayList<AbstractGraphicElement> dyn = new ArrayList<AbstractGraphicElement>();
 	
 	/**
 	 * Elements having an event on them, they may also be in {@link #bulk} or {@link #dyn}.
@@ -295,13 +296,13 @@ b	 */
 	 *            The first element to construct the group.
 	 */
 	public StyleGroup(String identifier, Collection<Rule> rules,
-			Element firstElement, StyleGroupSet.EventSet eventSet) {
+			AbstractGraphicElement firstElement, StyleGroupSet.EventSet eventSet) {
 		this.id       = identifier;
 		this.values   = null; // To avoid consume memory since this style will not store anything.
 		this.eventSet = eventSet;
 		this.elements = new HashMap<String, ElementId>();
-		this.bulk     = new ArrayList<Element>();
-		this.dyn      = new ArrayList<Element>();
+		this.bulk     = new ArrayList<AbstractGraphicElement>();
+		this.dyn      = new ArrayList<AbstractGraphicElement>();
 		this.ev       = new ArrayList<ElementId>();
 
 		this.rules.addAll(rules);
@@ -359,7 +360,7 @@ b	 */
 	 *            The element to test.
 	 * @return True if the element has actually active events.
 	 */
-	public boolean elementHasEvents(Element element) {
+	public boolean elementHasEvents(AbstractGraphicElement element) {
 		return (elements.get(element.getId()).events != null);
 	}
 
@@ -371,7 +372,7 @@ b	 */
 	 *            The element to test.
 	 * @return True if the element has actually specific style attributes.
 	 */
-	public boolean elementIsDynamic(Element element) {
+	public boolean elementIsDynamic(AbstractGraphicElement element) {
 		return ((elements.get(element.getId())).where == dyn);
 	}
 
@@ -433,7 +434,7 @@ b	 */
 	 *            The element to search.
 	 * @return true if the element is in the group.
 	 */
-	public boolean contains(Element element) {
+	public boolean contains(AbstractGraphicElement element) {
 		return elements.containsKey(element.getId());
 	}
 
@@ -444,7 +445,7 @@ b	 */
 	 *            The searched element identifier.
 	 * @return The element corresponding to the identifier or null if not found.
 	 */
-	public Element getElement(String id) {
+	public AbstractGraphicElement getElement(String id) {
 		ElementId eid = elements.get(id);
 		
 		if(eid != null)
@@ -462,17 +463,17 @@ b	 */
 		return elements.size();
 	}
 	
-	public Iterable<? extends Element> elements() {
-		return new Iterable<Element>() {
-			public Iterator<Element> iterator() {
+	public Iterable<? extends AbstractGraphicElement> elements() {
+		return new Iterable<AbstractGraphicElement>() {
+			public Iterator<AbstractGraphicElement> iterator() {
 				return new ElementIterator(elements.values().iterator());
 			}
 		};
 	}
 	
 	@SuppressWarnings("all")
-	public Iterator<Element> iterator() {
-		return (Iterator<Element>)elements().iterator();
+	public Iterator<AbstractGraphicElement> iterator() {
+		return (Iterator<AbstractGraphicElement>)elements().iterator();
 	}
 
 	/**
@@ -509,7 +510,7 @@ b	 */
 	 * 
 	 * @return The subset of dynamic elements of the group.
 	 */
-	public Iterable<Element> dynamicElements() {
+	public Iterable<AbstractGraphicElement> dynamicElements() {
 		return dyn;
 	}
 
@@ -531,14 +532,14 @@ b	 */
 	 * 
 	 * @return A set of events or null if none occurring at that time.
 	 */
-	public ElementEvents getEventsFor(Element element) {
+	public ElementEvents getEventsFor(AbstractGraphicElement element) {
 		return elements.get(element.getId()).events;
 	}
 
 	/**
 	 * Test if an element is pushed as dynamic.
 	 */
-	public boolean isElementDynamic(Element element) {
+	public boolean isElementDynamic(AbstractGraphicElement element) {
 		return (elements.get(element.getId()).where == dyn);
 	}
 
@@ -548,7 +549,7 @@ b	 */
 	 * @param element
 	 *            The new graph element to add.
 	 */
-	public void addElement(Element element) {
+	public void addElement(AbstractGraphicElement element) {
 		if(element.getIndex() < 0) {
 			elements.put(element.getId(), new ElementId(element, bulk));
 		} else {
@@ -563,8 +564,8 @@ b	 */
 	 *            The element to remove.
 	 * @return The removed element, or null if the element was not found.
 	 */
-	public Element removeElement(Element element) {
-		ElementId id = elements.get(element.getId());
+	public AbstractGraphicElement removeElement(AbstractGraphicElement element) {
+		ElementId id = elements.remove(element.getId());
 		
 		if(id != null) {
 			id.remove();
@@ -582,7 +583,7 @@ b	 */
 	 * @param event
 	 *            The event to push.
 	 */
-	protected void pushEventFor(Element element, String event) {
+	protected void pushEventFor(AbstractGraphicElement element, String event) {
 		ElementId id = elements.get(element.getId());
 		
 		if(id != null) {
@@ -600,7 +601,7 @@ b	 */
 	 * @param event
 	 *            The event.
 	 */
-	protected void popEventFor(Element element, String event) {
+	protected void popEventFor(AbstractGraphicElement element, String event) {
 		ElementId id = elements.get(element.getId());
 		
 		if(id != null) {
@@ -612,13 +613,13 @@ b	 */
 	 * Before drawing an element that has events, use this method to activate
 	 * the events, the style values will be modified accordingly. Events for
 	 * this element must have been registered via
-	 * {@link #pushEventFor(Element, String)}. After rendering the
+	 * {@link #pushEventFor(AbstractGraphicElement, String)}. After rendering the
 	 * {@link #deactivateEvents()} MUST be called.
 	 * 
 	 * @param element
 	 *            The element to push events for.
 	 */
-	public void activateEventsFor(Element element) {
+	public void activateEventsFor(AbstractGraphicElement element) {
 		ElementId id = elements.get(element.getId());
 		
 		if(id.events != null && curEvents == null) {
@@ -628,7 +629,7 @@ b	 */
 
 	/**
 	 * De-activate any events activated for an element. This method MUST be
-	 * called if {@link #activateEventsFor(Element)} has been called.
+	 * called if {@link #activateEventsFor(AbstractGraphicElement)} has been called.
 	 */
 	public void deactivateEvents() {
 		curEvents = null;
@@ -641,7 +642,7 @@ b	 */
 	 * @param element
 	 *            The element.
 	 */
-	protected void pushElementAsDynamic(Element element) {
+	protected void pushElementAsDynamic(AbstractGraphicElement element) {
 		ElementId id = elements.get(element.getId());
 		
 		if(id != null) {
@@ -658,7 +659,7 @@ b	 */
 	 * @param element
 	 *            The element.
 	 */
-	protected void popElementAsDynamic(Element element) {
+	protected void popElementAsDynamic(AbstractGraphicElement element) {
 		ElementId id = elements.get(element.getId());
 		
 		if(id != null) {
@@ -674,6 +675,10 @@ b	 */
 		for (Rule rule : rules)
 			rule.removeGroup(id);
 
+		for(ElementId id: elements.values()) {
+			id.remove();
+		}
+		
 		elements.clear();
 		bulk.clear();
 		dyn.clear();
@@ -762,7 +767,7 @@ b	 */
 		/**
 		 * The element.
 		 */
-		protected Element element;
+		protected AbstractGraphicElement element;
 
 		/**
 		 * The group the element pertains to.
@@ -771,7 +776,7 @@ b	 */
 
 		// Construction
 
-		protected ElementEvents(Element element, StyleGroup group, String event) {
+		protected ElementEvents(AbstractGraphicElement element, StyleGroup group, String event) {
 			this.element = element;
 			this.group = group;
 			this.events = new String[1];
@@ -876,7 +881,7 @@ b	 */
 		}
 	}
 
-	class ElementIterator implements Iterator<Element> {
+	class ElementIterator implements Iterator<AbstractGraphicElement> {
 		Iterator<ElementId> it;
 		ElementIterator(Iterator<ElementId> it) {
 			this.it = it;
@@ -884,7 +889,7 @@ b	 */
 		public boolean hasNext() {
 			return it.hasNext();
 		}
-		public Element next() {
+		public AbstractGraphicElement next() {
 			return it.next().get();
 		}
 		public void remove() {

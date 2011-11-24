@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.graphstream.graph.implementations.AbstractElement;
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.stylesheet.Selector;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
@@ -143,7 +142,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
  * {@link GraphicSprite}.
  * </p>
  */
-public abstract class GraphicElement extends AbstractElement {
+public abstract class GraphicElement extends AbstractGraphicElement {
 	/**
 	 * Interface for renderers registered in each style group.
 	 */
@@ -242,11 +241,6 @@ public abstract class GraphicElement extends AbstractElement {
 	public String label;
 
 	/**
-	 * The node style.
-	 */
-	public StyleGroup style;
-	
-	/**
 	 * Do not show.
 	 */
 	public boolean hidden = false;
@@ -311,13 +305,6 @@ public abstract class GraphicElement extends AbstractElement {
 	 * Type of selector for the graphic element (Node, Edge, Sprite ?).
 	 */
 	public abstract Selector.Type getSelectorType();
-
-	/**
-	 * Style group. An style group may reference several elements.
-	 */
-	public StyleGroup getStyle() {
-		return style;
-	}
 
 	/**
 	 * Label or null if not set.
@@ -433,8 +420,9 @@ public abstract class GraphicElement extends AbstractElement {
 	 * Change the style of this graphic element.
 	 * @param style The new style.
 	 */
+	@Override
 	public void changeStyle(StyleGroup style) {
-		this.style = style;
+		super.changeStyle(style);
 		
 		if(skeleton != null)
 			skeleton.styleChanged();
@@ -592,10 +580,5 @@ public abstract class GraphicElement extends AbstractElement {
 	protected void removeAttribute_(String sourceId, long timeId,
 			String attribute) {
 		super.removeAttribute_(sourceId, timeId, attribute);
-	}
-	
-	/* Make this method accessible to this package. */
-	protected void reindex(int newIndex) {
-		setIndex(newIndex);
 	}
 }

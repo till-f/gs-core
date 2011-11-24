@@ -36,11 +36,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import org.graphstream.graph.Edge;
 import org.graphstream.graph.Element;
-import org.graphstream.graph.Graph;
-import org.graphstream.graph.Node;
-import org.graphstream.graph.implementations.DefaultGraph;
+import org.graphstream.ui.graphicGraph.GraphicEdge;
+import org.graphstream.ui.graphicGraph.GraphicGraph;
+import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroupSet;
 import org.graphstream.ui.graphicGraph.StyleGroup.ElementEvents;
@@ -67,14 +66,17 @@ public class TestStyleSheet {
 		tss.testStyleEvents();
 	}
 
-	Graph graph;
-	Node A, B, C, D;
-	Edge AB, BC, CD, DA;
+	GraphicGraph graph;
+	GraphicNode A, B, C, D;
+	GraphicEdge AB, BC, CD, DA;
 	StyleSheet stylesheet;
 
 	@Before
 	public void setUp() {
-		graph = new DefaultGraph("g1");
+		System.err.printf("ICI");
+		graph = new GraphicGraph("g1");
+		
+		System.err.printf("INDEX OF GRAPH %d%n", graph.getIndex());
 
 		A = graph.addNode("A");
 		B = graph.addNode("B");
@@ -102,7 +104,7 @@ public class TestStyleSheet {
 		//      \ /
 		//       D (bar,foo)
 
-		stylesheet = new StyleSheet();
+		stylesheet = graph.getStyleSheet();// new StyleSheet();
 
 		// The main style sheet, other style sheets are "cascaded" in addition
 		// of this one.
@@ -184,30 +186,16 @@ public class TestStyleSheet {
 		System.err.printf("DA %s%n", displayGroup(idDA, rulesDA));
 	}
 
-	protected void populateGroupSet(StyleGroupSet sgs) {
-		sgs.addElement(graph);
-		sgs.addElement(A);
-		sgs.addElement(B);
-		sgs.addElement(C);
-		sgs.addElement(D);
-		sgs.addElement(AB);
-		sgs.addElement(BC);
-		sgs.addElement(CD);
-		sgs.addElement(DA);
-	}
-
 	@Test
 	public void testStyleGroups() {
-		StyleGroupSet sgs = new StyleGroupSet(stylesheet);
-
-		populateGroupSet(sgs);
+		StyleGroupSet sgs = graph.getStyleGroups();
 
 		System.err.printf("There are %d groups !!%n", sgs.getGroupCount());
 		Iterator<? extends StyleGroup> i = sgs.getGroupIterator();
 		while (i.hasNext())
 			System.err.printf("  %s", i.next().toString());
 
-		assertTrue(sgs.getGroupCount() == 6);
+		assertEquals(6, sgs.getGroupCount(), 0);
 
 		System.err.printf("----%n");
 		System.err.printf(sgs.toString());
@@ -286,9 +274,7 @@ public class TestStyleSheet {
 
 	@Test
 	public void testStyleEvents() {
-		StyleGroupSet sgs = new StyleGroupSet(stylesheet);
-
-		populateGroupSet(sgs);
+		StyleGroupSet sgs = graph.getStyleGroups();
 
 		StyleGroup sA = sgs.getStyleForElement(A);
 		StyleGroup sB = sgs.getStyleForElement(B);
@@ -296,8 +282,8 @@ public class TestStyleSheet {
 		StyleGroup sD = sgs.getStyleForElement(D);
 
 		assertEquals(1, sA.getElementCount(), 0);
-		assertEquals(1, sB.getElementCount(), 0);
-		assertEquals(1, sC.getElementCount(), 0);
+		assertEquals(2, sB.getElementCount(), 0);
+		assertEquals(2, sC.getElementCount(), 0);
 		assertEquals(1, sD.getElementCount(), 0);
 		
 		assertEquals(1, sA.getStrokeWidth().value, 0);
@@ -440,9 +426,7 @@ public class TestStyleSheet {
 
 	@Test
 	public void testStyleChange() throws IOException {
-		StyleGroupSet sgs = new StyleGroupSet(stylesheet);
-
-		populateGroupSet(sgs);
+		StyleGroupSet sgs = graph.getStyleGroups();
 
 		assertTrue(sgs.getGroupCount() == 6);
 
@@ -567,9 +551,7 @@ public class TestStyleSheet {
 
 	@Test
 	public void testZIndex() throws IOException {
-		StyleGroupSet sgs = new StyleGroupSet(stylesheet);
-
-		populateGroupSet(sgs);
+		StyleGroupSet sgs = graph.getStyleGroups();
 
 		assertTrue(sgs.getGroupCount() == 6);
 
@@ -753,9 +735,7 @@ public class TestStyleSheet {
 
 	@Test
 	public void testShadow() throws IOException {
-		StyleGroupSet sgs = new StyleGroupSet(stylesheet);
-
-		populateGroupSet(sgs);
+		StyleGroupSet sgs = graph.getStyleGroups();
 
 		// First test with the default style sheet, no shadows.
 
@@ -817,9 +797,7 @@ public class TestStyleSheet {
 			assertFalse(true);
 		}
 
-		StyleGroupSet sgs = new StyleGroupSet(stylesheet);
-
-		populateGroupSet(sgs);
+		StyleGroupSet sgs = graph.getStyleGroups();
 
 		StyleGroup sA = sgs.getStyleForElement(A);
 		StyleGroup sB = sgs.getStyleForElement(B);

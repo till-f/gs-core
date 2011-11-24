@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import org.graphstream.graph.Edge;
-import org.graphstream.graph.Element;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.ui.graphicGraph.stylesheet.Rule;
@@ -287,7 +286,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 *            The kind of element.
 	 * @return The element or null if not found.
 	 */
-	protected Element getElement(String id, HashMap<String, String> elt2grp) {
+	protected AbstractGraphicElement getElement(String id, HashMap<String, String> elt2grp) {
 		String gid = elt2grp.get(id);
 
 		if (gid != null) {
@@ -305,8 +304,8 @@ public class StyleGroupSet implements StyleSheetListener {
 	 *            The node identifier.
 	 * @return The node if it is in this set, else null.
 	 */
-	public Node getNode(String id) {
-		return (Node) getElement(id, byNodeIdGroups);
+	public GraphicNode getNode(String id) {
+		return (GraphicNode) getElement(id, byNodeIdGroups);
 	}
 
 	/**
@@ -316,8 +315,8 @@ public class StyleGroupSet implements StyleSheetListener {
 	 *            The edge identifier.
 	 * @return The edge if it is in this set, else null.
 	 */
-	public Edge getEdge(String id) {
-		return (Edge) getElement(id, byEdgeIdGroups);
+	public GraphicEdge getEdge(String id) {
+		return (GraphicEdge) getElement(id, byEdgeIdGroups);
 	}
 
 	/**
@@ -374,8 +373,8 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * 
 	 * @return An iterator on all node elements contained in style groups.
 	 */
-	public Iterator<? extends Node> getNodeIterator() {
-		return new ElementIterator<Node>(byNodeIdGroups);
+	public Iterator<? extends GraphicNode> getNodeIterator() {
+		return new ElementIterator<GraphicNode>(byNodeIdGroups);
 	}
 
 	/**
@@ -383,8 +382,8 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * 
 	 * @return An iterator on all graph elements contained in style groups.
 	 */
-	public Iterator<? extends Graph> getGraphIterator() {
-		return new ElementIterator<Graph>(byGraphIdGroups);
+	public Iterator<? extends GraphicGraph> getGraphIterator() {
+		return new ElementIterator<GraphicGraph>(byGraphIdGroups);
 	}
 
 	/**
@@ -392,7 +391,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * 
 	 * @return The set of all nodes.
 	 */
-	public Iterable<? extends Node> nodes() {
+	public Iterable<? extends GraphicNode> nodes() {
 		return nodeSet;
 	}
 
@@ -401,7 +400,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * 
 	 * @return The set of all graphs.
 	 */
-	public Iterable<? extends Graph> graphs() {
+	public Iterable<? extends GraphicGraph> graphs() {
 		return graphSet;
 	}
 
@@ -410,8 +409,8 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * 
 	 * @return An iterator on all edge elements contained in style groups.
 	 */
-	public Iterator<? extends Edge> getEdgeIterator() {
-		return new ElementIterator<Edge>(byEdgeIdGroups);
+	public Iterator<? extends GraphicEdge> getEdgeIterator() {
+		return new ElementIterator<GraphicEdge>(byEdgeIdGroups);
 	}
 
 	/**
@@ -419,7 +418,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * 
 	 * @return The set of all edges.
 	 */
-	public Iterable<? extends Edge> edges() {
+	public Iterable<? extends GraphicEdge> edges() {
 		return edgeSet;
 	}
 
@@ -449,7 +448,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 *            The element to search for.
 	 * @return Identifier of the group containing the element.
 	 */
-	public String getElementGroup(Element element) {
+	public String getElementGroup(AbstractGraphicElement element) {
 		if (element instanceof Node) {
 			return byNodeIdGroups.get(element.getId());
 		} else if (element instanceof Edge) {
@@ -470,7 +469,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 *            The element to search for.
 	 * @return The style group of the element (which is also a style).
 	 */
-	public StyleGroup getStyleForElement(Element element) {
+	public StyleGroup getStyleForElement(AbstractGraphicElement element) {
 		String gid = getElementGroup(element);
 
 		return groups.get(gid);
@@ -572,6 +571,11 @@ public class StyleGroupSet implements StyleSheetListener {
 		byNodeIdGroups.clear();
 		bySpriteIdGroups.clear();
 		byGraphIdGroups.clear();
+		
+		for(StyleGroup group: groups.values()) {
+			group.release();
+		}
+		
 		groups.clear();
 		zIndex.clear();
 		shadow.clear();
@@ -601,7 +605,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	}
 
 	protected StyleGroup addGroup(String id, ArrayList<Rule> rules,
-			Element firstElement) {
+			AbstractGraphicElement firstElement) {
 		StyleGroup group = new StyleGroup(id, rules, firstElement, eventSet);
 
 		groups.put(id, group);
@@ -626,7 +630,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 *            The element to add.
 	 * @return The style group where the element was added.
 	 */
-	public StyleGroup addElement(Element element) {
+	public StyleGroup addElement(AbstractGraphicElement element) {
 		StyleGroup group = addElement_(element);
 
 		for (StyleGroupListener listener : listeners)
@@ -635,7 +639,7 @@ public class StyleGroupSet implements StyleSheetListener {
 		return group;
 	}
 
-	protected StyleGroup addElement_(Element element) {
+	protected StyleGroup addElement_(AbstractGraphicElement element) {
 		ArrayList<Rule> rules = stylesheet.getRulesFor(element);
 		String gid = stylesheet.getStyleGroupIdFor(element, rules);
 		StyleGroup group = groups.get(gid);
@@ -660,7 +664,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * @param element
 	 *            The element to remove.
 	 */
-	public void removeElement(Element element) {
+	public void removeElement(AbstractGraphicElement element) {
 		String gid = getElementGroup(element);
 		StyleGroup group = groups.get(gid);
 
@@ -685,8 +689,8 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * 
 	 * <p>
 	 * Explanation of this method : checking the style of an element may be done
-	 * by removing it ({@link #removeElement(Element)}) and then re-adding it (
-	 * {@link #addElement(Element)}). This must be done by the element since it
+	 * by removing it ({@link #removeElement(AbstractGraphicElement)}) and then re-adding it (
+	 * {@link #addElement(AbstractGraphicElement)}). This must be done by the element since it
 	 * knows when to check this. However you cannot only remove and add, since
 	 * the style group inside which the element is can have events occurring on
 	 * it, and these events must be passed from its old style to its new style.
@@ -696,7 +700,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * @param element
 	 *            The element to move.
 	 */
-	public void checkElementStyleGroup(Element element) {
+	public void checkElementStyleGroup(AbstractGraphicElement element) {
 		StyleGroup oldGroup = getGroup(getElementGroup(element));
 
 		// Get the old element "dynamic" status.
@@ -734,7 +738,7 @@ public class StyleGroupSet implements StyleSheetListener {
 			newGroup.pushElementAsDynamic(element);
 	}
 
-	protected void addElementToReverseSearch(Element element, String groupId) {
+	protected void addElementToReverseSearch(AbstractGraphicElement element, String groupId) {
 		if (element instanceof Node) {
 			byNodeIdGroups.put(element.getId(), groupId);
 		} else if (element instanceof Edge) {
@@ -748,7 +752,7 @@ public class StyleGroupSet implements StyleSheetListener {
 		}
 	}
 
-	protected void removeElementFromReverseSearch(Element element) {
+	protected void removeElementFromReverseSearch(AbstractGraphicElement element) {
 		if (element instanceof Node) {
 			byNodeIdGroups.remove(element.getId());
 		} else if (element instanceof Edge) {
@@ -784,7 +788,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * @param event
 	 *            The event to push.
 	 */
-	public void pushEventFor(Element element, String event) {
+	public void pushEventFor(AbstractGraphicElement element, String event) {
 		StyleGroup group = getGroup(getElementGroup(element));
 
 		if (group != null)
@@ -810,7 +814,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * @param event
 	 *            The event to pop.
 	 */
-	public void popEventFor(Element element, String event) {
+	public void popEventFor(AbstractGraphicElement element, String event) {
 		StyleGroup group = getGroup(getElementGroup(element));
 
 		if (group != null)
@@ -824,7 +828,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * @param element
 	 *            The element to add to the dynamic subset.
 	 */
-	public void pushElementAsDynamic(Element element) {
+	public void pushElementAsDynamic(AbstractGraphicElement element) {
 		StyleGroup group = getGroup(getElementGroup(element));
 
 		if (group != null)
@@ -839,7 +843,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * @param element
 	 *            The element to remove from the dynamic subset.
 	 */
-	public void popElementAsDynamic(Element element) {
+	public void popElementAsDynamic(AbstractGraphicElement element) {
 		StyleGroup group = getGroup(getElementGroup(element));
 
 		if (group != null)
@@ -894,26 +898,26 @@ public class StyleGroupSet implements StyleSheetListener {
 	}
 
 	public void styleSheetCleared() {
-		ArrayList<Element> elements = new ArrayList<Element>();
+		ArrayList<AbstractGraphicElement> elements = new ArrayList<AbstractGraphicElement>();
 
-		for (Element element : graphs())
+		for (AbstractGraphicElement element : graphs())
 			elements.add(element);
 
-		for (Element element : nodes())
+		for (AbstractGraphicElement element : nodes())
 			elements.add(element);
 
-		for (Element element : edges())
+		for (AbstractGraphicElement element : edges())
 			elements.add(element);
 
-		for (Element element : sprites())
+		for (AbstractGraphicElement element : sprites())
 			elements.add(element);
 
 		clear();
 
-		for (Element element : elements)
+		for (AbstractGraphicElement element : elements)
 			removeElement(element);
 
-		for (Element element : elements)
+		for (AbstractGraphicElement element : elements)
 			addElement(element);
 	}
 
@@ -1016,7 +1020,7 @@ public class StyleGroupSet implements StyleSheetListener {
 			HashMap<String, String> elt2grp) {
 		// There is only one element that matches the identifier.
 
-		Element element = getElement(newRule.selector.getId(), elt2grp);
+		AbstractGraphicElement element = getElement(newRule.selector.getId(), elt2grp);
 
 		if (element != null) {
 			checkElementStyleGroup(element);
@@ -1038,12 +1042,12 @@ public class StyleGroupSet implements StyleSheetListener {
 	 */
 	protected void checkForNewStyle(Rule newRule,
 			HashMap<String, String> elt2grp) {
-		ArrayList<Element> elementsToCheck = new ArrayList<Element>();
+		ArrayList<AbstractGraphicElement> elementsToCheck = new ArrayList<AbstractGraphicElement>();
 
 		for (String eltId : elt2grp.keySet())
 			elementsToCheck.add(getElement(eltId, elt2grp));
 
-		for (Element element : elementsToCheck) {
+		for (AbstractGraphicElement element : elementsToCheck) {
 			checkElementStyleGroup(element);
 			// removeElement( element );
 			// addElement( element );
@@ -1386,7 +1390,7 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * @param <E>
 	 *            The kind of graph element.
 	 */
-	protected class ElementIterator<E extends Element> implements Iterator<E> {
+	protected class ElementIterator<E extends AbstractGraphicElement> implements Iterator<E> {
 		protected HashMap<String, String> elt2grp;
 
 		protected Iterator<String> elts;
@@ -1418,20 +1422,20 @@ public class StyleGroupSet implements StyleSheetListener {
 	/**
 	 * Dummy set of nodes.
 	 */
-	protected class NodeSet implements Iterable<Node> {
+	protected class NodeSet implements Iterable<GraphicNode> {
 		@SuppressWarnings("unchecked")
-		public Iterator<Node> iterator() {
-			return (Iterator<Node>) getNodeIterator();
+		public Iterator<GraphicNode> iterator() {
+			return (Iterator<GraphicNode>) getNodeIterator();
 		}
 	}
 
 	/**
 	 * Dummy set of edges.
 	 */
-	protected class EdgeSet implements Iterable<Edge> {
+	protected class EdgeSet implements Iterable<GraphicEdge> {
 		@SuppressWarnings("unchecked")
-		public Iterator<Edge> iterator() {
-			return (Iterator<Edge>) getEdgeIterator();
+		public Iterator<GraphicEdge> iterator() {
+			return (Iterator<GraphicEdge>) getEdgeIterator();
 		}
 	}
 

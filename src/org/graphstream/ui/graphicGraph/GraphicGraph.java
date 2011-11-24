@@ -48,7 +48,6 @@ import org.graphstream.graph.Node;
 import org.graphstream.graph.NodeFactory;
 import org.graphstream.graph.ElementNotFoundException;
 import org.graphstream.graph.IdAlreadyInUseException;
-import org.graphstream.graph.implementations.AbstractElement;
 import org.graphstream.stream.AttributeSink;
 import org.graphstream.stream.ElementSink;
 import org.graphstream.stream.Sink;
@@ -172,7 +171,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  * {@link GraphicElement#getSkeleton()} method is called for the first time.
  * </p>
  */
-public class GraphicGraph extends AbstractElement implements Graph,
+public class GraphicGraph extends AbstractGraphicElement implements Graph,
 		StyleGroupListener {
 	/**
 	 * Set of styles.
@@ -189,11 +188,6 @@ public class GraphicGraph extends AbstractElement implements Graph,
 	 * by node. For each node an array of edges lists the connectivity.
 	 */
 	protected HashMap<GraphicNode, ArrayList<GraphicEdge>> connectivity;
-
-	/**
-	 * The style of this graph. Shortcut to avoid searching it in the style sheet.
-	 */
-	protected StyleGroup style;
 
 	/**
 	 * Memorize the step events.
@@ -287,13 +281,15 @@ public class GraphicGraph extends AbstractElement implements Graph,
 		styleSheet = new StyleSheet();
 		styleGroups = new StyleGroupSet(styleSheet);
 		connectivity = new HashMap<GraphicNode, ArrayList<GraphicEdge>>();
+		
+		setIndex(-1);
 
 		styleGroups.addListener(this);
 		styleGroups.addElement(this); // Add style to this graph.
 
 		style = styleGroups.getStyleFor(this);
 	}
-
+	
 	// Access
 
 	@Override
