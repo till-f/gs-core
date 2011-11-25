@@ -82,7 +82,7 @@ import org.graphstream.ui.swingViewer.util.GraphMetrics;
  * changed since this flag was last checked.
  * </p>
  */
-public class DefaultCamera implements Camera {
+public class BasicCamera implements Camera {
 	/**
 	 * Information on the graph overall dimension and position.
 	 */
@@ -149,7 +149,7 @@ public class DefaultCamera implements Camera {
 	/**
 	 * New camera with default settings.
 	 */
-	public DefaultCamera() {
+	public BasicCamera() {
 	}
 
 	public Point3 getViewCenter() {
@@ -315,6 +315,8 @@ public class DefaultCamera implements Camera {
 	 */
 	public GraphicElement findNodeOrSpriteAt(GraphicGraph graph, double x,
 			double y) {
+		System.err.printf("find(%f, %f)...", x, y);
+		
 		for (Node n : graph) {
 			GraphicNode node = (GraphicNode) n;
 

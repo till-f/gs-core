@@ -43,11 +43,9 @@ import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.swingViewer.View;
 
 /**
- * A global behaviour for all mouse events on graphic elements.
+ * A global behavior for all mouse events on graphic elements.
  */
 public class MouseManager implements MouseInputListener {
-	// Attribute
-
 	/**
 	 * The view this manager operates upon.
 	 */
@@ -57,8 +55,6 @@ public class MouseManager implements MouseInputListener {
 	 * The graph to modify according to the view actions.
 	 */
 	protected GraphicGraph graph;
-
-	// Construction
 
 	/**
 	 * New mouse manager on the given view.
@@ -123,7 +119,7 @@ public class MouseManager implements MouseInputListener {
 
 	protected GraphicElement curElement;
 
-	protected float x1, y1;
+	protected double x1, y1;
 
 	public void mouseClicked(MouseEvent event) {
 		// NOP
@@ -155,9 +151,9 @@ public class MouseManager implements MouseInputListener {
 			mouseButtonReleaseOffElement(curElement, event);
 			curElement = null;
 		} else {
-			float x2 = event.getX();
-			float y2 = event.getY();
-			float t;
+			double x2 = event.getX();
+			double y2 = event.getY();
+			double t;
 
 			if (x1 > x2) {
 				t = x1;

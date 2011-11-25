@@ -79,14 +79,17 @@ public class NodeSkeleton extends BaseSkeleton {
 		
 		Point3 pos = getPosition(camera, Units.GU);
 		Point3 p   = new Point3(x, y, 0);
-		
+
 		if(units == Units.PX)
 			p = camera.transformPxToGu(p);
 		
-		if (x < (pos.x - size.x/2)) return false;
-		if (y < (pos.y - size.y/2)) return false;
-		if (x > (pos.x + size.x/2)) return false;
-		if (y > (pos.y + size.y/2)) return false;
+		double sx = size.x/2;
+		double sy = size.y/2;
+
+		if (p.x < (pos.x - sx)) return false;
+		if (p.y < (pos.y - sy)) return false;
+		if (p.x > (pos.x + sx)) return false;
+		if (p.y > (pos.y + sy)) return false;
 
 		return true;
 	}

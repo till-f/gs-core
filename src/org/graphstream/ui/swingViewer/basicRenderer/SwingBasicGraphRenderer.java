@@ -83,7 +83,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	/**
 	 * Set the view on the view port defined by the metrics.
 	 */
-	protected DefaultCamera camera = new DefaultCamera();
+	protected BasicCamera camera = new BasicCamera();
 
 	/**
 	 * Specific renderer for nodes.
