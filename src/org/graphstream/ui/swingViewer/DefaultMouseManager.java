@@ -29,23 +29,20 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
  */
-package org.graphstream.ui.swingViewer.util;
+
+package org.graphstream.ui.swingViewer;
 
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
-
-import javax.swing.event.MouseInputListener;
 
 import org.graphstream.graph.Node;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.graphicGraph.GraphicSprite;
-import org.graphstream.ui.swingViewer.View;
+import org.graphstream.ui.swingViewer.util.Camera;
 
-/**
- * A global behavior for all mouse events on graphic elements.
- */
-public class MouseManager implements MouseInputListener {
+public class DefaultMouseManager implements MouseManager {
 	/**
 	 * The view this manager operates upon.
 	 */
@@ -64,7 +61,7 @@ public class MouseManager implements MouseInputListener {
 	 * @param view
 	 *            The view to control.
 	 */
-	public MouseManager(GraphicGraph graph, View view) {
+	public DefaultMouseManager(GraphicGraph graph, View view) {
 		this.view = view;
 		this.graph = graph;
 	}
@@ -115,6 +112,13 @@ public class MouseManager implements MouseInputListener {
 			element.removeAttribute("ui.clicked");
 	}
 
+	protected void wheelRotated(int r) {
+		Camera camera = view.getCamera();
+		double p = camera.getViewPercent();
+		
+		camera.setViewPercent(p+(r*0.01));
+	}
+	
 	// Mouse Listener
 
 	protected GraphicElement curElement;
@@ -180,5 +184,9 @@ public class MouseManager implements MouseInputListener {
 	}
 
 	public void mouseMoved(MouseEvent e) {
+	}
+
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		wheelRotated(e.getWheelRotation());
 	}
 }

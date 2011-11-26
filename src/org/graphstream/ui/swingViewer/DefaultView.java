@@ -45,8 +45,6 @@ import javax.swing.JFrame;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.swingViewer.util.Camera;
-import org.graphstream.ui.swingViewer.util.MouseManager;
-import org.graphstream.ui.swingViewer.util.ShortcutManager;
 
 /**
  * Base for constructing views.
@@ -163,19 +161,12 @@ public class DefaultView extends View implements ComponentListener,
 		this.viewer = viewer;
 		this.graph = viewer.getGraphicGraph();
 		this.renderer = renderer;
-		shortcuts = new ShortcutManager(this);
-		mouseClicks = new MouseManager(this.graph, this);
 
 		addComponentListener(this);
-		addKeyListener(shortcuts);
-		addMouseListener(mouseClicks);
-		addMouseMotionListener(mouseClicks);
+		setShortcutManager(new DefaultShortcutManager(this));
+		setMouseManager(new DefaultMouseManager(this.graph, this));
 		renderer.open(graph, this);
 	}
-
-	// Access
-
-	// Command
 
 	@Override
 	public Camera getCamera() {
@@ -386,5 +377,45 @@ public class DefaultView extends View implements ComponentListener,
 	public void setForeLayoutRenderer(LayerRenderer renderer) {
 		this.renderer.setForeLayoutRenderer(renderer);
 		canvasChanged = true;
+	}
+	
+	@Override
+	public MouseManager getMouseManager() {
+		return mouseClicks;
+	}
+	
+	@Override
+	public void setMouseManager(MouseManager mouseManager) {
+		if(mouseClicks != null) {
+			removeMouseListener(mouseClicks);
+			removeMouseMotionListener(mouseClicks);
+			removeMouseWheelListener(mouseClicks);
+		}
+		
+		mouseClicks = mouseManager;
+		
+		if(mouseClicks != null) {
+			addMouseListener(mouseClicks);
+			addMouseMotionListener(mouseClicks);
+			addMouseWheelListener(mouseClicks);
+		}
+	}
+	
+	@Override
+	public ShortcutManager getShortcutManager() {
+		return shortcuts;
+	}
+	
+	@Override
+	public void setShortcutManager(ShortcutManager shortcutManager) {
+		if(shortcuts != null) {
+			removeKeyListener(shortcuts);
+		}
+		
+		shortcuts = shortcutManager;
+		
+		if(shortcuts != null) {
+			addKeyListener(shortcuts);
+		}
 	}
 }

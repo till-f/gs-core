@@ -315,7 +315,6 @@ public class BasicCamera implements Camera {
 	 */
 	public GraphicElement findNodeOrSpriteAt(GraphicGraph graph, double x,
 			double y) {
-		System.err.printf("find(%f, %f)...", x, y);
 		
 		for (Node n : graph) {
 			GraphicNode node = (GraphicNode) n;

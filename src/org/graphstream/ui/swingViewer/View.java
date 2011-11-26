@@ -211,4 +211,32 @@ public abstract class View extends JPanel {
 	 *            The renderer (or null to remove it).
 	 */
 	public abstract void setForeLayoutRenderer(LayerRenderer renderer);
+	
+	/**
+	 * The actual manager for mouse event. The mouse manager calls the view
+	 * method and tells what to do when the user interacts with the view using
+	 * the mouse.
+	 * @return The actual mouse manager.
+	 */
+	public abstract MouseManager getMouseManager();
+	
+	/**
+	 * Change the mouse manager.
+	 * @param mouseManager The new mouse manager.
+	 */
+	public abstract void setMouseManager(MouseManager mouseManager);
+	
+	/**
+	 * The actual shortcut and keyboard manager. The shortcut manager calls the
+	 * view methods and tells what to do when the user interacts with the view
+	 * using the keyboard.
+	 * @return The actual shortcut manager.
+	 */
+	public abstract ShortcutManager getShortcutManager();
+	
+	/**
+	 * Change the shortcut and keyboard manager.
+	 * @param shortcutManager The new shortcut manager.
+	 */
+	public abstract void setShortcutManager(ShortcutManager shortcutManager);
 }
