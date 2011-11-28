@@ -48,9 +48,9 @@ import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.stylesheet.Style;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+import org.graphstream.ui.swingViewer.Camera;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.NodeSkeleton;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.SpriteSkeleton;
-import org.graphstream.ui.swingViewer.util.Camera;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 /**

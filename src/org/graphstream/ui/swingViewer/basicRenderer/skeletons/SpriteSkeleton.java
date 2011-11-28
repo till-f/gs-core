@@ -37,7 +37,7 @@ import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
-import org.graphstream.ui.swingViewer.util.Camera;
+import org.graphstream.ui.swingViewer.Camera;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 /**

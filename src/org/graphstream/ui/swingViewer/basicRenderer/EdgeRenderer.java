@@ -45,9 +45,9 @@ import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.ArrowShape;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
+import org.graphstream.ui.swingViewer.Camera;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.BaseSkeleton;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.EdgeSkeleton;
-import org.graphstream.ui.swingViewer.util.Camera;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 public class EdgeRenderer extends ElementRenderer {

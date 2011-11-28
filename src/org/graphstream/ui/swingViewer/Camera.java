@@ -29,10 +29,11 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
  */
-package org.graphstream.ui.swingViewer.util;
+package org.graphstream.ui.swingViewer;
 
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
+import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 /**
  * Define how the graph is viewed, what part is visible, etc.

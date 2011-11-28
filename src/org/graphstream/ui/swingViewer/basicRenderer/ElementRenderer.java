@@ -46,8 +46,8 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.VisibilityMode;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
+import org.graphstream.ui.swingViewer.Camera;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.BaseSkeleton;
-import org.graphstream.ui.swingViewer.util.Camera;
 import org.graphstream.ui.swingViewer.util.FontCache;
 
 /**

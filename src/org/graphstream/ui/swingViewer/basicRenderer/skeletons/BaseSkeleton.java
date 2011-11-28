@@ -40,7 +40,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
-import org.graphstream.ui.swingViewer.util.Camera;
+import org.graphstream.ui.swingViewer.Camera;
 
 /**
  * Base skeleton for nodes, edges and sprites.

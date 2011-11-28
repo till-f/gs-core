@@ -37,7 +37,6 @@ import javax.swing.JPanel;
 
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
-import org.graphstream.ui.swingViewer.util.Camera;
 
 /**
  * A view on a graphic graph.

@@ -38,7 +38,7 @@ import org.graphstream.ui.geom.Vector2;
 import org.graphstream.ui.graphicGraph.GraphicEdge;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
-import org.graphstream.ui.swingViewer.util.Camera;
+import org.graphstream.ui.swingViewer.Camera;
 import org.graphstream.ui.swingViewer.util.CubicCurve;
 
 /**

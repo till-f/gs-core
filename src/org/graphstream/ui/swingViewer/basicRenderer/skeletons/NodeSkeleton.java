@@ -33,7 +33,7 @@ package org.graphstream.ui.swingViewer.basicRenderer.skeletons;
 
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
-import org.graphstream.ui.swingViewer.util.Camera;
+import org.graphstream.ui.swingViewer.Camera;
 
 /**
  * Skeleton for nodes (and a base for sprites).

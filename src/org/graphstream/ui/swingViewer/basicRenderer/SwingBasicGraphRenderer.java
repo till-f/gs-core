@@ -56,12 +56,12 @@ import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.StyleGroupSet;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
+import org.graphstream.ui.swingViewer.Camera;
 import org.graphstream.ui.swingViewer.GraphRendererBase;
 import org.graphstream.ui.swingViewer.LayerRenderer;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.EdgeSkeleton;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.NodeSkeleton;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.SpriteSkeleton;
-import org.graphstream.ui.swingViewer.util.Camera;
 import org.graphstream.ui.swingViewer.util.FPSLogger;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
 

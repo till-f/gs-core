@@ -44,7 +44,6 @@ import javax.swing.JFrame;
 
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
-import org.graphstream.ui.swingViewer.util.Camera;
 
 /**
  * Base for constructing views.

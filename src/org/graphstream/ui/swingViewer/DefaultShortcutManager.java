@@ -35,7 +35,6 @@ package org.graphstream.ui.swingViewer;
 import java.awt.event.KeyEvent;
 
 import org.graphstream.ui.geom.Point3;
-import org.graphstream.ui.swingViewer.util.Camera;
 
 public class DefaultShortcutManager implements ShortcutManager {
 	// Attributes

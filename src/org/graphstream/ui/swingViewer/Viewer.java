@@ -256,7 +256,8 @@ public class Viewer implements ActionListener {
 		if (sourceInSameThread != null)
 			sourceInSameThread.addSink(graph);
 
-		pumpPipe.pump();
+		if(pumpPipe != null)
+			pumpPipe.pump();
 		
 		if(graph.hasNumber("ui.fps")) {
 			double fps = graph.getNumber("ui.fps");

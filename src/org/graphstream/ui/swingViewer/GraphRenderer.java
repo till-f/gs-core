@@ -37,7 +37,6 @@ import java.util.ArrayList;
 
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
-import org.graphstream.ui.swingViewer.util.Camera;
 
 /**
  * Interface for classes that draw a GraphicGraph in a swing component.
