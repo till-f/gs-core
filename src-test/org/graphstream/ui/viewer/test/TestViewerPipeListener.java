@@ -33,28 +33,24 @@ package org.graphstream.ui.viewer.test;
 
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
-import org.graphstream.graph.implementations.MultiGraph;
+import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.swingViewer.ViewerPipeListener;
 import org.graphstream.ui.swingViewer.ViewerPipe;
 
 /**
- * Test the viewer.
+ * Test the viewer pipe listener mechanism.
  */
-public class TestViewerColorInterpolation implements ViewerPipeListener {
+public class TestViewerPipeListener implements ViewerPipeListener {
 	public static void main(String args[]) {
-		// System.setProperty( "gs.ui.renderer",
-		// "org.graphstream.ui.j2dviewer.J2DGraphRenderer" );
-
-		new TestViewerColorInterpolation();
+		new TestViewerPipeListener();
 	}
 
 	protected boolean loop = true;
 
-	public TestViewerColorInterpolation() {
-		Graph graph = new MultiGraph("main graph");
+	public TestViewerPipeListener() {
+		Graph graph = new SingleGraph("main graph");
 		ViewerPipe pipe = graph.display(false).newViewerPipe();
 
-		// graph.addAttribute( "ui.quality" );
 		graph.addAttribute("ui.antialias");
 
 		pipe.addViewerListener(this);
@@ -77,12 +73,7 @@ public class TestViewerColorInterpolation implements ViewerPipeListener {
 		float dir = 0.01f;
 
 		while (loop) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-
+			sleep(100);
 			pipe.pump();
 
 			color += dir;
@@ -101,6 +92,14 @@ public class TestViewerColorInterpolation implements ViewerPipeListener {
 
 		System.out.printf("Bye bye ...%n");
 		System.exit(0);
+	}
+	
+	protected void sleep(long ms) {
+		try {
+			Thread.sleep(ms);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected void showSelection(Graph graph) {
@@ -125,15 +124,27 @@ public class TestViewerColorInterpolation implements ViewerPipeListener {
 			System.err.printf("selection = %s%n", sb.toString());
 	}
 
-	protected static String styleSheet = "graph         { padding: 20px; stroke-width: 0px; }"
+	protected static String styleSheet =
+		      "graph         { padding: 20px; stroke-width: 0px; }"
 			+ "node:selected { fill-color: red;  fill-mode: plain; }"
 			+ "node:clicked  { fill-color: blue; fill-mode: plain; }"
 			+ "node#A        { fill-color: green, yellow, purple; fill-mode: dyn-plain; }";
 
-	public void nodeClicked(String id) { System.err.printf("node %s clicke"); }
-	public void nodeReleased(String id) {}
-	public void nodeSelected(String id) {}
-	public void nodeUnselected(String id) {}
+	public void nodeClicked(String id) {
+		System.err.printf("node %s clicked%n", id);
+	}
+
+	public void nodeReleased(String id) {
+		System.err.printf("node %s released%n", id);		
+	}
+
+	public void nodeSelected(String id) {
+		System.err.printf("node %s selected%n", id);
+	}
+
+	public void nodeUnselected(String id) {
+		System.err.printf("node %s unselected%n", id);
+	}
 
 	public void viewClosed(String viewName) {
 		loop = false;

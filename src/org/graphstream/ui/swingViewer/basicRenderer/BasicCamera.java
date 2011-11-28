@@ -298,8 +298,6 @@ public class BasicCamera implements Camera {
 					nodeInvisible.add(node.getId());
 			}
 		}
-		
-		System.err.printf("%d nodes invisible...%n", nodeInvisible.size());
 	}
 
 	/**

@@ -54,8 +54,9 @@ import org.graphstream.stream.SourceBase;
  * </p>
  */
 public class ViewerPipe extends SourceBase implements ProxyPipe {
-	// Attribute
-
+	/**
+	 * Identifier for the event source.
+	 */
 	private String id;
 
 	/**
@@ -66,9 +67,7 @@ public class ViewerPipe extends SourceBase implements ProxyPipe {
 	/**
 	 * Listeners on the viewer specific events.
 	 */
-	protected HashSet<ViewerListener> viewerListeners = new HashSet<ViewerListener>();
-
-	// Construction
+	protected HashSet<ViewerPipeListener> viewerListeners = new HashSet<ViewerPipeListener>();
 
 	/**
 	 * A shell around a pipe coming from a viewer in another thread.
@@ -79,13 +78,9 @@ public class ViewerPipe extends SourceBase implements ProxyPipe {
 		pipeIn.addSink(this);
 	}
 
-	// Access
-
 	public String getId() {
 		return id;
 	}
-
-	// Commands
 
 	/**
 	 * Pump events from the pipe.
@@ -94,11 +89,11 @@ public class ViewerPipe extends SourceBase implements ProxyPipe {
 		pipeIn.pump();
 	}
 
-	public void addViewerListener(ViewerListener listener) {
+	public void addViewerListener(ViewerPipeListener listener) {
 		viewerListeners.add(listener);
 	}
 
-	public void removeViewerListener(ViewerListener listener) {
+	public void removeViewerListener(ViewerPipeListener listener) {
 		viewerListeners.remove(listener);
 	}
 
@@ -125,13 +120,14 @@ public class ViewerPipe extends SourceBase implements ProxyPipe {
 		sendGraphAttributeAdded(sourceId, timeId, attribute, value);
 
 		if (attribute.equals("ui.viewClosed") && value instanceof String) {
-			for (ViewerListener listener : viewerListeners)
+			for (ViewerPipeListener listener : viewerListeners)
 				listener.viewClosed((String) value);
 
 			sendGraphAttributeRemoved(id, attribute);
 		} else if (attribute.equals("ui.clicked") && value instanceof String) {
-			for (ViewerListener listener : viewerListeners)
-				listener.buttonPushed((String) value);
+//			for (ViewerPipeListener listener : viewerListeners)
+//				listener.buttonPushed((String) value);
+			System.err.printf("ui.clicked on %s%n", value);
 
 			sendGraphAttributeRemoved(id, attribute);
 		}
@@ -153,8 +149,12 @@ public class ViewerPipe extends SourceBase implements ProxyPipe {
 		sendNodeAttributeAdded(sourceId, timeId, nodeId, attribute, value);
 
 		if(attribute.equals("ui.clicked")) {
-			for(ViewerListener listener: viewerListeners)
-				listener.buttonPushed(nodeId);
+			for(ViewerPipeListener listener: viewerListeners)
+				listener.nodeClicked(nodeId);
+		}
+		if(attribute.equals("ui.selected")) {
+			for(ViewerPipeListener listener: viewerListeners)
+				listener.nodeSelected(nodeId);
 		}
 	}
 
@@ -169,8 +169,12 @@ public class ViewerPipe extends SourceBase implements ProxyPipe {
 		sendNodeAttributeRemoved(sourceId, timeId, nodeId, attribute);
 
 		if(attribute.equals("ui.clicked")) {
-			for(ViewerListener listener: viewerListeners)
-				listener.buttonReleased(nodeId);
+			for(ViewerPipeListener listener: viewerListeners)
+				listener.nodeReleased(nodeId);
+		}
+		if(attribute.equals("ui.selected")) {
+			for(ViewerPipeListener listener: viewerListeners)
+				listener.nodeUnselected(nodeId);
 		}
 	}
 

@@ -34,10 +34,34 @@ package org.graphstream.ui.swingViewer;
 /**
  * Listener for specific viewer events.
  */
-public interface ViewerListener {
+public interface ViewerPipeListener {
+	/**
+	 * The view 'viewName' was closed.
+	 * @param viewName The identifier of the view.
+	 */
 	void viewClosed(String viewName);
-
-	void buttonPushed(String id);
-
-	void buttonReleased(String id);
+	
+	/**
+	 * The mouse button was pressed on node 'id'.
+	 * @param id The node identifier.
+	 */
+	void nodeClicked(String id);
+	
+	/**
+	 * The mouse button has been released on node 'id'.
+	 * @param id The node identifier.
+	 */
+	void nodeReleased(String id);
+	
+	/**
+	 * The node 'id' was marked as selected. 
+	 * @param id The node identifier.
+	 */
+	void nodeSelected(String id);
+	
+	/**
+	 * The node 'id' was marked as unselected. 
+	 * @param id The node identifier.
+	 */
+	void nodeUnselected(String id);
 }
