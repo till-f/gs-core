@@ -74,13 +74,23 @@ public class DefaultMouseManager implements MouseManager {
 
 		if (!event.isShiftDown()) {
 			for (Node node : graph) {
-				if (node.hasAttribute("ui.selected"))
+				if (node.hasAttribute("ui.selected")) {
 					node.removeAttribute("ui.selected");
+
+					for(ViewerListener listener: view.getViewer().listeners) {
+						listener.elementUnselected(view, node);
+					}
+				}
 			}
 
 			for (GraphicSprite sprite : graph.spriteSet()) {
-				if (sprite.hasAttribute("ui.selected"))
+				if (sprite.hasAttribute("ui.selected")) {
 					sprite.removeAttribute("ui.selected");
+
+					for(ViewerListener listener: view.getViewer().listeners) {
+						listener.elementUnselected(view, sprite);
+					}
+				}
 			}
 		}
 	}
@@ -88,17 +98,28 @@ public class DefaultMouseManager implements MouseManager {
 	protected void mouseButtonRelease(MouseEvent event,
 			ArrayList<GraphicElement> elementsInArea) {
 		for (GraphicElement element : elementsInArea) {
-			if (!element.hasAttribute("ui.selected"))
+			if (!element.hasAttribute("ui.selected")) {
 				element.addAttribute("ui.selected");
+				for(ViewerListener listener: view.getViewer().listeners) {
+					listener.elementSelected(view, element);
+				}
+			}
 		}
 	}
 
 	protected void mouseButtonPressOnElement(GraphicElement element,
 			MouseEvent event) {
-		if (event.getButton() == 3)
+		if (event.getButton() == 3) {
 			element.addAttribute("ui.selected");
-		else
+			for(ViewerListener listener: view.getViewer().listeners) {
+				listener.elementSelected(view, element);
+			}
+		} else {
 			element.addAttribute("ui.clicked");
+			for(ViewerListener listener: view.getViewer().listeners) {
+				listener.elementClicked(view, element, event.getButton());
+			}
+		}
 	}
 
 	protected void elementMoving(GraphicElement element, MouseEvent event) {
@@ -107,8 +128,12 @@ public class DefaultMouseManager implements MouseManager {
 
 	protected void mouseButtonReleaseOffElement(GraphicElement element,
 			MouseEvent event) {
-		if (event.getButton() != 3)
+		if (event.getButton() != 3) {
 			element.removeAttribute("ui.clicked");
+			for(ViewerListener listener: view.getViewer().listeners) {
+				listener.elementReleased(view, element, event.getButton());
+			}
+		}
 	}
 
 	protected void wheelRotated(int r) {

@@ -50,6 +50,11 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
 public abstract class View extends JPanel {
 	private static final long serialVersionUID = 4372240131578395549L;
 	/**
+	 * Parent viewer.
+	 */
+	protected Viewer viewer;
+
+	/**
 	 * The view identifier.
 	 */
 	private String id;
@@ -60,8 +65,9 @@ public abstract class View extends JPanel {
 	 * @param identifier
 	 *            The view unique identifier.
 	 */
-	public View(String identifier) {
-		id = identifier;
+	public View(String identifier, Viewer viewer) {
+		this.id = identifier;
+		this.viewer = viewer;
 	}
 
 	/**
@@ -69,6 +75,13 @@ public abstract class View extends JPanel {
 	 */
 	public String getId() {
 		return id;
+	}
+	
+	/**
+	 * The parent viewer.
+	 */
+	public Viewer getViewer() {
+		return viewer;
 	}
 
 	/**

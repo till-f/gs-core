@@ -109,11 +109,6 @@ public class DefaultView extends View implements ComponentListener,
 		WindowListener {
 	private static final long serialVersionUID = - 4489484861592064398L;
 	/**
-	 * Parent viewer.
-	 */
-	protected Viewer viewer;
-
-	/**
 	 * The graph to render, shortcut to the viewers reference.
 	 */
 	protected GraphicGraph graph;
@@ -155,9 +150,8 @@ public class DefaultView extends View implements ComponentListener,
 	 * @param renderer The view renderer.
 	 */
 	public DefaultView(Viewer viewer, String identifier, GraphRenderer renderer) {
-		super(identifier);
+		super(identifier, viewer);
 
-		this.viewer = viewer;
 		this.graph = viewer.getGraphicGraph();
 		this.renderer = renderer;
 

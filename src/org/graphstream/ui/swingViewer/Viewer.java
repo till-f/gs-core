@@ -33,6 +33,7 @@ package org.graphstream.ui.swingViewer;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.swing.Timer;
@@ -163,6 +164,11 @@ public class Viewer implements ActionListener {
 	 * If there is a layout in another thread, this is the pipe coming from it.
 	 */
 	protected ProxyPipe layoutPipeIn = null;
+	
+	/**
+	 * Set of listeners for events like node click, node selection, etc.
+	 */
+	protected ArrayList<ViewerListener> listeners;
 
 	// Construction
 
@@ -628,6 +634,37 @@ public class Viewer implements ActionListener {
 				optLayout.release();
 				optLayout = null;
 			}
+		}
+	}
+	
+	/**
+	 * Add a listener for events on the views, occurring in the Swing thread.
+	 * 
+	 * <p>
+	 * Be very careful: this listener is to be used when you watch events in the Swing
+	 * thread, and all your program runs in the Swing thread (for example you are coding
+	 * a GUI). If you use the viewer in the main java thread (if you do not know what thread
+	 * you use, you are in the main thread), you should use the {@link ViewerPipe} and
+	 * the {@link ViewerPipeListener}. Use the {@link Viewer#newViewerPipe()} method to
+	 * create a pipe, optionally add your graph as a sink of the pipe, and you can then
+	 * register a {@link ViewerPipeListener} in it.
+	 * </p>
+	 * 
+	 * @param listener The listener to register.
+	 */
+	public void addViewerListener(ViewerListener listener) {
+		listeners.add(listener);
+	}
+	
+	/**
+	 * Remove a listener for events on the views.
+	 * @param listener The listener to remove.
+	 */
+	public void removeViewerListener(ViewerListener listener) {
+		int pos = listeners.lastIndexOf(listener);
+		
+		if(pos >= 0) {
+			listeners.remove(pos);
 		}
 	}
 }
