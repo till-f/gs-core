@@ -51,6 +51,8 @@ public class TestVisibility extends JFrame {
 		Viewer viewer = new Viewer(graph);
 		View view = viewer.addDefaultView(false);
 		
+		graph.addAttribute("ui.stylesheet", styleSheet);
+		
 		GraphicNode A = graph.addNode("A");
 		GraphicNode B = graph.addNode("B");
 		GraphicNode C = graph.addNode("C");
@@ -82,8 +84,16 @@ public class TestVisibility extends JFrame {
 		G.addAttribute("xy", 3, 0); G.addAttribute("ui.label", "G");
 		H.addAttribute("xy", 3, 1); H.addAttribute("ui.label", "H");
 		
+		D.addAttribute("ui.hide");
+		
 		add(view, BorderLayout.CENTER);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(800, 600);
 		setVisible(true);
+
+		view.getCamera().setViewPercent(0.75);
 	}
+	
+	public static String styleSheet =
+		"node#E { visibility-mode: hidden; }";
 }

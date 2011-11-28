@@ -298,6 +298,8 @@ public class BasicCamera implements Camera {
 					nodeInvisible.add(node.getId());
 			}
 		}
+		
+		System.err.printf("%d nodes invisible...%n", nodeInvisible.size());
 	}
 
 	/**
@@ -643,6 +645,10 @@ public class BasicCamera implements Camera {
 
 	/**
 	 * Check if an edge is visible in the current view port.
+	 * 
+	 * This method tests the visibility of nodes. If the two nodes are invisible, the edge is
+	 * considered invisible. This is not completely exact, since an edge can still be visible if
+	 * its two nodes are out of view. However it has the advantage of speed.
 	 * 
 	 * @param edge
 	 *            The edge to check.
