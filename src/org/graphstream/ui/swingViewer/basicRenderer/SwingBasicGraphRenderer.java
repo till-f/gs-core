@@ -64,6 +64,7 @@ import org.graphstream.ui.swingViewer.basicRenderer.skeletons.NodeSkeleton;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.SpriteSkeleton;
 import org.graphstream.ui.swingViewer.util.FPSLogger;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
+import org.graphstream.ui.swingViewer.util.Graphics2DOutput;
 
 /**
  * A very simple view of the graph that respect only a subset of CSS.
@@ -380,38 +381,43 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 
 	public void screenshot(String filename, int width, int height) {
 		if (graph != null) {
-			if (filename.toLowerCase().endsWith("png")) {
-				BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-				renderGraph(img.createGraphics());
-
-				File file = new File(filename);
-				try {
+			try {
+				if (filename.toLowerCase().endsWith("png")) {
+					BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+					renderGraph(img.createGraphics());
+	
+					File file = new File(filename);
 					ImageIO.write(img, "png", file);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			} else if (filename.toLowerCase().endsWith("bmp")) {
-				BufferedImage img = new BufferedImage(width, height,
-						BufferedImage.TYPE_INT_RGB);
-				renderGraph(img.createGraphics());
-
-				File file = new File(filename);
-				try {
+				} else if (filename.toLowerCase().endsWith("bmp")) {
+					BufferedImage img = new BufferedImage(width, height,
+							BufferedImage.TYPE_INT_RGB);
+					renderGraph(img.createGraphics());
+	
+					File file = new File(filename);
 					ImageIO.write(img, "bmp", file);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			} else {// if (filename.toLowerCase().endsWith("jpg") || filename.toLowerCase().endsWith("jpeg")) {
-				BufferedImage img = new BufferedImage(width, height,
-						BufferedImage.TYPE_INT_RGB);
-				renderGraph(img.createGraphics());
-
-				File file = new File(filename);
-				try {
+				} else if(filename.toLowerCase().endsWith("svg")) {
+					String plugin = "org.graphstream.ui.batik.BatikGraphics2D";
+					Class<?> c = Class.forName(plugin);
+					Object o = c.newInstance();
+					if(o instanceof Graphics2DOutput) {
+						Graphics2DOutput out = (Graphics2DOutput) o;
+						Graphics2D g2 = out.getGraphics();
+						render(g2, (int)camera.metrics.viewport.data[0], (int)camera.metrics.viewport.data[1]);
+						out.outputTo(filename);
+					} else {
+						System.err.printf("plugin %s is not an instance of Graphics2DOutput (%s)%n", plugin, o.getClass().getName());
+					}
+				} else {// if (filename.toLowerCase().endsWith("jpg") || filename.toLowerCase().endsWith("jpeg")) {
+					BufferedImage img = new BufferedImage(width, height,
+							BufferedImage.TYPE_INT_RGB);
+					renderGraph(img.createGraphics());
+	
+					File file = new File(filename);
 					ImageIO.write(img, "jpg", file);
-				} catch (Exception e) {
-					e.printStackTrace();
 				}
+			} catch(Exception e) {
+				e.printStackTrace();
+				// XXX a better error handling ?
 			}
 		}
 	}
