@@ -168,7 +168,7 @@ public class Viewer implements ActionListener {
 	/**
 	 * Set of listeners for events like node click, node selection, etc.
 	 */
-	protected ArrayList<ViewerListener> listeners;
+	protected ArrayList<ViewerListener> listeners = new ArrayList<ViewerListener>();
 
 	// Construction
 

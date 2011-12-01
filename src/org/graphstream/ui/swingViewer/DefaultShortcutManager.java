@@ -127,6 +127,8 @@ public class DefaultShortcutManager implements ShortcutManager {
 
 			Point3 p = camera.getViewCenter();
 			camera.setViewCenter(p.x, p.y - delta, 0);
+		} else if(event.getKeyCode() == KeyEvent.VK_HOME || event.getKeyCode() == KeyEvent.VK_ESCAPE) {
+			view.getCamera().resetView();			
 		}
 	}
 

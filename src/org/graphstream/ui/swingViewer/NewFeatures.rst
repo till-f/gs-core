@@ -16,3 +16,10 @@ New Features In the "Gobelin" version of UI
 * New support for node and sprite plain strokes.
 * New support for MouseManager and ShortcutManager classes allowing to tell the View what to do when the user interacts with it.
 * The viewer now by default (default MouseManager) zooms using the mouse scroll wheel.
+* The MouseManager and KeyboardManager shortcuts.
+    * Shift-R, Home and Escape to reset the camera to defaults.
+    * Click-Drag anywhere to move the view.
+    * Shift-Click-Drag pour sélection-box.
+    * Click on node to activate it or drag it.
+    * Shift-Click on node to select or unselect it individually.
+    * Double-click anywhere will zoom.

@@ -40,10 +40,15 @@ import java.io.IOException;
  *
  * <p>
  * Several external libraries use to replace the {@link Graphics2D} of AWT in
- * order to produce a file or on a printer in a given format. However it is not possible to
- * link such libraries in the gs-core module of GraphStream. To avoid this
- * problem, this interface defines a plug-in that must implement be able to
- * yield a {@link Graphics2D} usable instead of the default one. 
+ * order to produce a file in a given format or to send data to a printer
+ * for example. However it is not possible to link such libraries in the
+ * gs-core module of GraphStream, both because of the space needed, and
+ * because we may add several such renderers in the future. To avoid this
+ * problem, this interface defines a plug-in structure allowing to
+ * yield a {@link Graphics2D} usable instead of the default one. It also
+ * defined an output method to call just after having done some painting
+ * with the Graphics2D that should output the result or send it to a given
+ * destination.
  * </p>
  */
 public interface Graphics2DOutput {

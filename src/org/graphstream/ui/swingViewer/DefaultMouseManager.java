@@ -37,9 +37,11 @@ import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
 
 import org.graphstream.graph.Node;
+import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.graphicGraph.GraphicSprite;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 
 public class DefaultMouseManager implements MouseManager {
 	/**
@@ -52,6 +54,11 @@ public class DefaultMouseManager implements MouseManager {
 	 */
 	protected GraphicGraph graph;
 
+	/**
+	 * Size of a zoom step.
+	 */
+	protected double zoomStep = 0.01;
+	
 	/**
 	 * New mouse manager on the given view.
 	 * 
@@ -68,34 +75,20 @@ public class DefaultMouseManager implements MouseManager {
 	// Command
 
 	protected void mouseButtonPress(MouseEvent event) {
+		if(event.getClickCount() == 2) {
+			zoom(-10);
+		}
+	}
+	
+	protected void mouseButtonPressInSelection(MouseEvent event) {
 		view.requestFocus();
 
-		// Unselect all.
-
 		if (!event.isShiftDown()) {
-			for (Node node : graph) {
-				if (node.hasAttribute("ui.selected")) {
-					node.removeAttribute("ui.selected");
-
-					for(ViewerListener listener: view.getViewer().listeners) {
-						listener.elementUnselected(view, node);
-					}
-				}
-			}
-
-			for (GraphicSprite sprite : graph.spriteSet()) {
-				if (sprite.hasAttribute("ui.selected")) {
-					sprite.removeAttribute("ui.selected");
-
-					for(ViewerListener listener: view.getViewer().listeners) {
-						listener.elementUnselected(view, sprite);
-					}
-				}
-			}
+			unselectAll();
 		}
 	}
 
-	protected void mouseButtonRelease(MouseEvent event,
+	protected void mouseButtonReleaseInSelection(MouseEvent event,
 			ArrayList<GraphicElement> elementsInArea) {
 		for (GraphicElement element : elementsInArea) {
 			if (!element.hasAttribute("ui.selected")) {
@@ -109,10 +102,17 @@ public class DefaultMouseManager implements MouseManager {
 
 	protected void mouseButtonPressOnElement(GraphicElement element,
 			MouseEvent event) {
-		if (event.getButton() == 3) {
-			element.addAttribute("ui.selected");
-			for(ViewerListener listener: view.getViewer().listeners) {
-				listener.elementSelected(view, element);
+		if (event.isShiftDown()) {
+			if(element.hasAttribute("ui.selected")) {
+				element.removeAttribute("ui.selected");
+				for(ViewerListener listener: view.getViewer().listeners) {
+					listener.elementUnselected(view, element);
+				}
+			} else {
+				element.addAttribute("ui.selected");
+				for(ViewerListener listener: view.getViewer().listeners) {
+					listener.elementSelected(view, element);
+				}
 			}
 		} else {
 			element.addAttribute("ui.clicked");
@@ -128,7 +128,7 @@ public class DefaultMouseManager implements MouseManager {
 
 	protected void mouseButtonReleaseOffElement(GraphicElement element,
 			MouseEvent event) {
-		if (event.getButton() != 3) {
+		if (! event.isShiftDown()) {
 			element.removeAttribute("ui.clicked");
 			for(ViewerListener listener: view.getViewer().listeners) {
 				listener.elementReleased(view, element, event.getButton());
@@ -137,10 +137,29 @@ public class DefaultMouseManager implements MouseManager {
 	}
 
 	protected void wheelRotated(int r) {
+		zoom(r);
+	}
+	
+	protected void mouseDragBegin(MouseEvent event, double x1, double y1) {
+		unselectAll();
+	}
+	
+	protected void mouseDrag(MouseEvent event, double x1, double y1, double x2, double y2) {
 		Camera camera = view.getCamera();
-		double p = camera.getViewPercent();
+		Point3 p = camera.getViewCenter();
+		double dx = camera.getMetrics().lengthToGu(x1-x2, Units.PX);
+		double dy = camera.getMetrics().lengthToGu(y2-y1, Units.PX);
 		
-		camera.setViewPercent(p+(r*0.01));
+		camera.setViewCenter(p.x + dx, p.y + dy, p.z);
+	}
+	
+	protected void mouseDragEnd(MouseEvent event, double x1, double y1, double x2, double y2) {
+		Camera camera = view.getCamera();
+		Point3 p = camera.getViewCenter();
+		double dx = camera.getMetrics().lengthToGu(x1-x2, Units.PX);
+		double dy = camera.getMetrics().lengthToGu(y2-y1, Units.PX);
+	
+		camera.setViewCenter(p.x + dx, p.y + dy, p.z);		
 	}
 	
 	// Mouse Listener
@@ -150,7 +169,11 @@ public class DefaultMouseManager implements MouseManager {
 	protected double x1, y1;
 
 	public void mouseClicked(MouseEvent event) {
-		// NOP
+		GraphicElement e = view.findNodeOrSpriteAt(event.getX(), event.getY());
+		
+		if(e == null) {
+			mouseButtonPress(event);
+		}
 	}
 
 	public void mousePressed(MouseEvent event) {
@@ -161,8 +184,12 @@ public class DefaultMouseManager implements MouseManager {
 		} else {
 			x1 = event.getX();
 			y1 = event.getY();
-			mouseButtonPress(event);
-			view.beginSelectionAt(x1, y1);
+			if(event.isShiftDown()) {
+				mouseButtonPressInSelection(event);
+				view.beginSelectionAt(x1, y1);
+			} else {
+				mouseDragBegin(event, x1, y1);
+			}
 		}
 	}
 
@@ -170,7 +197,15 @@ public class DefaultMouseManager implements MouseManager {
 		if (curElement != null) {
 			elementMoving(curElement, event);
 		} else {
-			view.selectionGrowsAt(event.getX(), event.getY());
+			if(event.isShiftDown()) {
+				view.selectionGrowsAt(event.getX(), event.getY());
+			} else {
+				double x2 = event.getX();
+				double y2 = event.getY();
+				mouseDrag(event, x1, y1, x2, y2);
+				x1 = x2;
+				y1 = y2;
+			}
 		}
 	}
 
@@ -181,21 +216,25 @@ public class DefaultMouseManager implements MouseManager {
 		} else {
 			double x2 = event.getX();
 			double y2 = event.getY();
-			double t;
+			if(event.isShiftDown()) {
+				double t;
 
-			if (x1 > x2) {
-				t = x1;
-				x1 = x2;
-				x2 = t;
+				if (x1 > x2) {
+					t = x1;
+					x1 = x2;
+					x2 = t;
+				}
+				if (y1 > y2) {
+					t = y1;
+					y1 = y2;
+					y2 = t;
+				}
+				
+				mouseButtonReleaseInSelection(event, view.allNodesOrSpritesIn(x1, y1, x2, y2));
+				view.endSelectionAt(x2, y2);
+			} else {
+				mouseDragEnd(event, x1, y1, x2, y2);
 			}
-			if (y1 > y2) {
-				t = y1;
-				y1 = y2;
-				y2 = t;
-			}
-
-			mouseButtonRelease(event, view.allNodesOrSpritesIn(x1, y1, x2, y2));
-			view.endSelectionAt(x2, y2);
 		}
 	}
 
@@ -212,5 +251,37 @@ public class DefaultMouseManager implements MouseManager {
 
 	public void mouseWheelMoved(MouseWheelEvent e) {
 		wheelRotated(e.getWheelRotation());
+	}
+	
+	protected void unselectAll() {
+		for (Node node : graph) {
+			if (node.hasAttribute("ui.selected")) {
+				node.removeAttribute("ui.selected");
+
+				for(ViewerListener listener: view.getViewer().listeners) {
+					listener.elementUnselected(view, node);
+				}
+			}
+		}
+
+		for (GraphicSprite sprite : graph.spriteSet()) {
+			if (sprite.hasAttribute("ui.selected")) {
+				sprite.removeAttribute("ui.selected");
+
+				for(ViewerListener listener: view.getViewer().listeners) {
+					listener.elementUnselected(view, sprite);
+				}
+			}
+		}
+	}
+	
+	protected void zoom(int of) {
+		Camera camera = view.getCamera();
+		double p = camera.getViewPercent();
+		p += of * zoomStep;
+	
+		if(p > 0) {
+			camera.setViewPercent(p+(of*zoomStep));
+		}
 	}
 }
