@@ -170,7 +170,7 @@ public class DefaultView extends View implements ComponentListener,
 	public void display(GraphicGraph graph, boolean graphChanged) {
 		this.graphChanged = graphChanged;
 		
-		Camera camera = renderer.getCamera();
+		BaseCamera camera = (BaseCamera)renderer.getCamera();
 		
 		if (graphChanged || canvasChanged || camera.cameraChangedFlag()) {
 			repaint();
@@ -187,7 +187,7 @@ public class DefaultView extends View implements ComponentListener,
 		// super.paint( g );	// No need to call this, we fill the entire area.
 		render(g2);
 		paintChildren(g2);
-		renderer.getCamera().resetCameraChangedFlag();
+		((BaseCamera)renderer.getCamera()).resetCameraChangedFlag();
 	}
 
 	protected void checkTitle() {

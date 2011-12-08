@@ -155,7 +155,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 				displayNothingToDo(g, width, height);
 			} else {
 				camera.setPadding(graph);
-				camera.setViewport(width, height);
+				camera.setSurfaceSize(width, height);
 				renderGraph(g);
 				renderSelection(g);
 			}
@@ -245,8 +245,8 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 
 		g.setColor(group.getFillColor(0));
 		g.fillRect(0, 0,
-				(int) camera.getMetrics().viewport.data[0],
-				(int) camera.getMetrics().viewport.data[1]);
+				(int) camera.getMetrics().surfaceSize.data[0],
+				(int) camera.getMetrics().surfaceSize.data[1]);
 	}
 
 	/**
@@ -296,14 +296,14 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	}
 
 	protected void renderSelection(Graphics2D g) {
-		if (selection != null && selection.x1 != selection.x2 && selection.y1 != selection.y2) {
+		if (selection.active && selection.lo.x != selection.lo.x && selection.hi.y != selection.hi.y) {
 			double t;
-			double x1 = selection.x1;
-			double y1 = selection.y1;
-			double x2 = selection.x2;
-			double y2 = selection.y2;
-			double w  = camera.getMetrics().viewport.data[0];
-			double h  = camera.getMetrics().viewport.data[1];
+			double x1 = selection.lo.x;
+			double y1 = selection.lo.y;
+			double x2 = selection.lo.x;
+			double y2 = selection.lo.y;
+			double w  = camera.getMetrics().surfaceSize.data[0];
+			double h  = camera.getMetrics().surfaceSize.data[1];
 
 			if (x1 > x2) {
 				t  = x1;
@@ -344,7 +344,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		GraphMetrics metrics = camera.getMetrics();
 
 		renderer.render(g, graph, metrics.ratioPx2Gu,
-				(int) metrics.viewport.data[0], (int) metrics.viewport.data[1],
+				(int) metrics.surfaceSize.data[0], (int) metrics.surfaceSize.data[1],
 				metrics.loVisible.x, metrics.loVisible.y, metrics.hiVisible.x,
 				metrics.hiVisible.y);
 	}
@@ -401,7 +401,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 					if(o instanceof Graphics2DOutput) {
 						Graphics2DOutput out = (Graphics2DOutput) o;
 						Graphics2D g2 = out.getGraphics();
-						render(g2, (int)camera.metrics.viewport.data[0], (int)camera.metrics.viewport.data[1]);
+						render(g2, (int)camera.getMetrics().surfaceSize.data[0], (int)camera.getMetrics().surfaceSize.data[1]);
 						out.outputTo(filename);
 					} else {
 						System.err.printf("plugin %s is not an instance of Graphics2DOutput (%s)%n", plugin, o.getClass().getName());

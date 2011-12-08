@@ -85,6 +85,7 @@ public abstract class GraphRendererBase implements GraphRenderer,
 		this.renderingSurface = renderingSurface;
 
 		this.graph.getStyleGroups().addListener(this);
+		selection = new Selection();
 	}
 
 	/**
@@ -106,22 +107,20 @@ public abstract class GraphRendererBase implements GraphRenderer,
 	// Selection
 
 	public void beginSelectionAt(double x1, double y1) {
-		if (selection == null)
-			selection = new Selection();
-
-		selection.x1 = x1;
-		selection.y1 = y1;
-		selection.x2 = x1;
-		selection.y2 = y1;
+		selection.active = true;
+		selection.lo.x = x1;
+		selection.lo.y = y1;
+		selection.hi.x = x1;
+		selection.hi.y = y1;
 	}
 
 	public void selectionGrowsAt(double x, double y) {
-		selection.x2 = x;
-		selection.y2 = y;
+		selection.hi.x = x;
+		selection.hi.y = y;
 	}
 
 	public void endSelectionAt(double x2, double y2) {
-		selection = null;
+		selection.active = false;
 	}
 
 	/**

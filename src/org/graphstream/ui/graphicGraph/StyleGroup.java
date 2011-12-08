@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import org.graphstream.graph.Element;
-import org.graphstream.ui.graphicGraph.GraphicElement.SwingElementRenderer;
+import org.graphstream.ui.graphicGraph.GraphicElement.GraphicElementRenderer;
 import org.graphstream.ui.graphicGraph.stylesheet.Rule;
 import org.graphstream.ui.graphicGraph.stylesheet.Selector;
 import org.graphstream.ui.graphicGraph.stylesheet.Style;
@@ -301,7 +301,7 @@ b	 */
 	/**
 	 * Associated renderers.
 	 */
-	public HashMap<String, SwingElementRenderer> renderers;
+	public HashMap<String, GraphicElementRenderer> renderers;
 
 	/**
 	 * New style group for a first graph element and the set of style rules that
@@ -542,7 +542,7 @@ b	 */
 	 * 
 	 * @return A renderer or null if not found.
 	 */
-	public SwingElementRenderer getRenderer(String id) {
+	public GraphicElementRenderer getRenderer(String id) {
 		if (renderers != null)
 			return renderers.get(id);
 
@@ -725,9 +725,9 @@ b	 */
 	 * @param renderer
 	 *            The renderer.
 	 */
-	public void addRenderer(String id, SwingElementRenderer renderer) {
+	public void addRenderer(String id, GraphicElementRenderer renderer) {
 		if (renderers == null)
-			renderers = new HashMap<String, SwingElementRenderer>();
+			renderers = new HashMap<String, GraphicElementRenderer>();
 
 		renderers.put(id, renderer);
 	}
@@ -739,7 +739,7 @@ b	 */
 	 *            The renderer identifier.
 	 * @return The removed renderer or null if not found.
 	 */
-	public SwingElementRenderer removeRenderer(String id) {
+	public GraphicElementRenderer removeRenderer(String id) {
 		return renderers.remove(id);
 	}
 

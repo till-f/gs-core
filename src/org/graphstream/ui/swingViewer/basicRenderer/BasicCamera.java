@@ -35,74 +35,34 @@ import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.HashSet;
 
-import org.graphstream.graph.Node;
 import org.graphstream.ui.geom.Point3;
-import org.graphstream.ui.graphicGraph.GraphicEdge;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.graphicGraph.GraphicNode;
 import org.graphstream.ui.graphicGraph.GraphicSprite;
 import org.graphstream.ui.graphicGraph.stylesheet.Style;
-import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
-import org.graphstream.ui.swingViewer.Camera;
+import org.graphstream.ui.swingViewer.BaseCamera;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.NodeSkeleton;
 import org.graphstream.ui.swingViewer.basicRenderer.skeletons.SpriteSkeleton;
-import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 /**
  * Define how the graph is viewed.
  * 
  * <p>
- * The camera is in charge of projecting the graph spaces in graph units (GU)
- * into user spaces (often in pixels). It defines the transformation (an affine
- * matrix) to passe from the first to the second (an the inverse to do the
- * reverse transformation, often useful). It also contains the graph
- * metrics, a set of values that give the overall dimensions of the graph in
- * graph units, as well as the view port, the area on the screen (or any
- * rendering surface) that will receive the results in pixels (or rendering
- * units).
+ * In addition to the {@link BaseCamera}, this implementation defines how to pass from GU to PX and
+ * the reverse using Java2D AffineTransform matrices. It is also in charge of modifying the
+ * Graphics2D to setup the actual transform according to the camera settings
+ * ({@link #pushView(GraphicGraph, Graphics2D)} then {@link #autoFitView(Graphics2D)} or
+ * {@link #userView(Graphics2D)} and finally {@link #popView(Graphics2D)}).
  * </p>
  * 
  * <p>
- * The camera defines a center at which it always points. It can zoom on the
- * graph, pan in any direction and rotate along two axes.
- * </p>
- * 
- * <p>
- * The camera is also in charge of doing the visibility test. This test is made
- * automatically, when not in auto-fit mode (else all is by definition visible).
- * </p>
- * 
- * <p>
- * It contains a {@link #cameraChanged} flag telling if the settings of the camera
- * changed since this flag was last checked.
+ * It defines the visibility tests using the element skeletons.
  * </p>
  */
-public class BasicCamera implements Camera {
-	/**
-	 * Information on the graph overall dimension and position.
-	 */
-	protected GraphMetrics metrics = new GraphMetrics();
-
-	/**
-	 * Automatic centering of the view.
-	 */
-	protected boolean autoFit = true;
-
-	/**
-	 * The camera center of view.
-	 */
-	protected Point3 center = new Point3();
-
-	/**
-	 * The camera zoom.
-	 */
-	protected double zoom;
-
+public class BasicCamera extends BaseCamera {
 	/**
 	 * The graph-space -> pixel-space transformation.
 	 */
@@ -118,149 +78,21 @@ public class BasicCamera implements Camera {
 	 */
 	protected AffineTransform oldTx;
 
-	/**
-	 * The rotation angle.
-	 */
-	protected double rotation;
-
-	/**
-	 * Padding around the graph.
-	 */
-	protected Values padding = new Values(Style.Units.GU, 0, 0, 0);
-
-	/**
-	 * Which node is visible. This allows to mark invisible nodes to fasten
-	 * visibility tests for nodes, attached sprites and edges.
-	 */
-	protected HashSet<String> nodeInvisible = new HashSet<String>();
-
-	/**
-	 * The graph view port, if any. The graph view port is a view inside the
-	 * graph space. It allows to compute the view according to a specified area
-	 * of the graph space instead of the graph dimensions.
-	 */
-	protected double gviewport[] = null;
-	
-	/**
-	 * A dirty flag that tells if the camera was changed during the last frame.
-	 */
-	protected boolean cameraChanged = true;
-	
-	/**
-	 * New camera with default settings.
-	 */
-	public BasicCamera() {
-	}
-
-	public Point3 getViewCenter() {
-		return center;
-	}
-
-	public void setViewCenter(double x, double y, double z) {
-		setAutoFitView(false);
-		center.set(x, y, z);
-	}
-	
-	public void setViewCenter(double x, double y) {
-		setViewCenter(x, y, 0);
-	}
-
-	public double getViewPercent() {
-		return zoom;
-	}
-	
-	public void setViewPercent(double percent) {
-		setAutoFitView(false);
-		setZoom(percent);
-	}
-
-	public double getViewRotation() {
-		return rotation;
-	}
-
-	public GraphMetrics getMetrics() {
-		return metrics;
-	}
-
 	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder(String.format("Camera :%n"));
-
-		builder.append(String.format("    autoFit  = %b%n", autoFit));
-		builder.append(String.format("    center   = %s%n", center));
-		builder.append(String.format("    rotation = %f%n", rotation));
-		builder.append(String.format("    zoom     = %f%n", zoom));
-		builder.append(String.format("    padding  = %s%n", padding));
-		builder.append(String.format("    metrics  = %s%n", metrics));
-
-		return builder.toString();
-	}
-
-	public void resetView() {
-		setAutoFitView(true);
-		setViewRotation(0);
-	}
-	
-	public void setBounds(double minx, double miny, double minz, double maxx,
-			double maxy, double maxz) {
-		metrics.setBounds(minx, miny, minz, maxx, maxy, maxz);
-		cameraChanged = true;
-	}
-
-	public double getGraphDimension() {
-		return metrics.diagonal;
-	}
-	
-	/**
-	 * True if the element should be visible on screen.
-	 * 
-	 * <p>
-	 * The method used is to transform the center of the element (which is always in graph units)
-	 * using the camera actual transformation to put it in pixel units. Then to look in the style
-	 * sheet the size of the element and to test if its enclosing rectangle intersects the view
-	 * port. For edges, its two nodes are used. As a speed-up by default if the camera is in
-	 * automatic fitting mode, all element should be visible, and the test always returns true.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method does not look at the style visibility mode options as the visibility in styles
-	 * is defined for the whole group and not for individual elements, it is far faster to check
-	 * this once before the rendering pass of style groups.
-	 * </p>
-	 * 
-	 * @param element
-	 *            The element to test.
-	 * @return True if the element is visible and therefore must be rendered.
-	 */
-	public boolean isVisible(GraphicElement element) {
-		if(autoFit) {
-  	        return ((! element.hidden) );// We do the style visibility test in the renderers.
-		} else {
-			switch (element.getSelectorType()) {
-				case NODE:
-					return !nodeInvisible.contains(element.getId());
-				case EDGE:
-					return isEdgeVisible((GraphicEdge) element);
-				case SPRITE:
-					return isSpriteVisible((GraphicSprite) element);
-				default:
-					return false;
-			}
-		}
-	}
-
 	public Point3 transformPxToGu(double x, double y) {
 		Point2D.Double p = new Point2D.Double(x, y);
 		xT.transform(p, p);
 		return new Point3(p.x, p.y, 0);
 	}
 
+	@Override
 	public Point3 transformGuToPx(double x, double y, double z) {
 		Point2D.Double p = new Point2D.Double(x, y);
 		Tx.transform(p, p);
 		return new Point3(p.x, p.y, 0);
 	}
 
+	@Override
 	public Point3 transformPxToGu(Point3 p) {
 		Point2D.Double pp = new Point2D.Double(p.x, p.y);
 		xT.transform(pp, pp);
@@ -269,6 +101,7 @@ public class BasicCamera implements Camera {
 		return p;
 	}
 
+	@Override
 	public Point3 transformGuToPx(Point3 p) {
 		Point2D.Double pp = new Point2D.Double(p.x, p.y);
 		Tx.transform(pp, pp);
@@ -278,116 +111,7 @@ public class BasicCamera implements Camera {
 	}
 
 	/**
-	 * Process each node to check if it is in the actual view port, and mark
-	 * invisible nodes. This method allows for fast node, sprite and edge
-	 * visibility checking when drawing. This must be called before each
-	 * rendering (if the view port changed).
-	 */
-	public void checkVisibility(GraphicGraph graph) {
-		if(! autoFit) {
-			double W = metrics.viewport.data[0];
-			double H = metrics.viewport.data[1];
-	
-			nodeInvisible.clear();
-	
-			for (Node node : graph) {
-				GraphicNode gnode = (GraphicNode) node;
-				boolean visible =  (!gnode.hidden) && gnode.positioned && isNodeVisibleIn((GraphicNode) node, 0, 0, W, H);
-	
-				if (!visible)
-					nodeInvisible.add(node.getId());
-			}
-		}
-	}
-
-	/**
-	 * Search for the first node or sprite (in that order) that contains the
-	 * point at coordinates (x, y).
-	 * 
-	 * @param graph
-	 *            The graph to search for.
-	 * @param x
-	 *            The point abscissa.
-	 * @param y
-	 *            The point ordinate.
-	 * @return The first node or sprite at the given coordinates or null if
-	 *         nothing found.
-	 */
-	public GraphicElement findNodeOrSpriteAt(GraphicGraph graph, double x,
-			double y) {
-		
-		for (Node n : graph) {
-			GraphicNode node = (GraphicNode) n;
-
-			if (nodeContains(node, x, y))
-				return node;
-		}
-
-		for (GraphicSprite sprite : graph.spriteSet()) {
-			if (spriteContains(sprite, x, y))
-				return sprite;
-		}
-
-		return null;
-	}
-
-	/**
-	 * Search for all the nodes and sprites contained inside the rectangle
-	 * (x1,y1)-(x2,y2).
-	 * 
-	 * @param graph
-	 *            The graph to search for.
-	 * @param x1
-	 *            The rectangle lowest point abscissa.
-	 * @param y1
-	 *            The rectangle lowest point ordinate.
-	 * @param x2
-	 *            The rectangle highest point abscissa.
-	 * @param y2
-	 *            The rectangle highest point ordinate.
-	 * @return The set of sprites and nodes in the given rectangle.
-	 */
-	public ArrayList<GraphicElement> allNodesOrSpritesIn(GraphicGraph graph,
-			double x1, double y1, double x2, double y2) {
-		ArrayList<GraphicElement> elts = new ArrayList<GraphicElement>();
-
-		for (Node node : graph) {
-			if (isNodeVisibleIn((GraphicNode) node, x1, y1, x2, y2))
-				elts.add((GraphicNode) node);
-		}
-
-		for (GraphicSprite sprite : graph.spriteSet()) {
-			if (isSpriteVisibleIn(sprite, x1, y1, x2, y2))
-				elts.add(sprite);
-		}
-
-		return elts;
-	}
-
-	public double[] getGraphViewport() {
-		return gviewport;
-	}
-
-	public void setGraphViewport(double minx, double miny, double maxx, double maxy) {
-		setAutoFitView(false);
-		setViewCenter(minx + (maxx - minx), miny + (maxy - miny));
-		
-		gviewport = new double[4];
-		gviewport[0] = minx;
-		gviewport[1] = miny;
-		gviewport[2] = maxx;
-		gviewport[3] = maxy;
-		
-		setZoom(1);
-	}
-
-	public void removeGraphViewport() {
-		gviewport = null;
-		resetView();
-	}
-
-	/**
-	 * Set the camera view in the given graphics and backup the previous
+	 * Set the camera view in the and backup the previous
 	 * transform of the graphics. Call {@link #popView(Graphics2D)} to restore
 	 * the saved transform. You can only push one time the view.
 	 * 
@@ -399,9 +123,9 @@ public class BasicCamera implements Camera {
 			oldTx = g2.getTransform();
 
 			if (autoFit)
-				Tx = autoFitView(g2, Tx);
+				autoFitView(g2);
 			else
-				Tx = userView(g2, Tx);
+				userView(g2);
 
 			g2.setTransform(Tx);
 		}
@@ -429,11 +153,8 @@ public class BasicCamera implements Camera {
 	 * 
 	 * @param g2
 	 *            The Swing graphics.
-	 * @param Tx
-	 *            The transformation to modify.
-	 * @return The transformation modified.
 	 */
-	protected AffineTransform autoFitView(Graphics2D g2, AffineTransform Tx) {
+	protected void autoFitView(Graphics2D g2) {
 		double sx, sy;
 		double tx, ty;
 		double padXgu = getPaddingXgu() * 2;
@@ -441,8 +162,8 @@ public class BasicCamera implements Camera {
 		double padXpx = getPaddingXpx() * 2;
 		double padYpx = getPaddingYpx() * 2;
 
-		sx = (metrics.viewport.data[0] - padXpx) / (metrics.size.data[0] + padXgu); // Ratio along X
-		sy = (metrics.viewport.data[1] - padYpx) / (metrics.size.data[1] + padYgu); // Ratio along Y
+		sx = (metrics.surfaceSize.data[0] - padXpx) / (metrics.size.data[0] + padXgu); // Ratio along X
+		sy = (metrics.surfaceSize.data[1] - padYpx) / (metrics.size.data[1] + padYgu); // Ratio along Y
 		tx = metrics.lo.x + (metrics.size.data[0] / 2); // Center of graph in X
 		ty = metrics.lo.y + (metrics.size.data[1] / 2); // Center of graph in Y
 
@@ -452,7 +173,7 @@ public class BasicCamera implements Camera {
 			sy = sx;
 
 		Tx.setToIdentity();
-		Tx.translate(metrics.viewport.data[0] / 2, metrics.viewport.data[1] / 2);
+		Tx.translate(metrics.surfaceSize.data[0] / 2, metrics.surfaceSize.data[1] / 2);
 		if (rotation != 0)
 			Tx.rotate(rotation / (180 / Math.PI));
 		Tx.scale(sx, -sy);
@@ -471,8 +192,6 @@ public class BasicCamera implements Camera {
 		metrics.setRatioPx2Gu(sx);
 		metrics.loVisible.copy(metrics.lo);
 		metrics.hiVisible.copy(metrics.hi);
-
-		return Tx;
 	}
 
 	/**
@@ -482,11 +201,8 @@ public class BasicCamera implements Camera {
 	 * 
 	 * @param g2
 	 *            The Swing graphics.
-	 * @param Tx
-	 *            The transformation to modify.
-	 * @return The transformation modified.
 	 */
-	protected AffineTransform userView(Graphics2D g2, AffineTransform Tx) {
+	protected void userView(Graphics2D g2) {
 		double sx, sy;
 		double tx, ty;
 		double padXgu = getPaddingXgu() * 2;
@@ -498,8 +214,8 @@ public class BasicCamera implements Camera {
 		double gh = gviewport != null ? gviewport[3] - gviewport[1]
 				: metrics.size.data[1];
 
-		sx = (metrics.viewport.data[0] - padXpx) / ((gw + padXgu) * zoom);
-		sy = (metrics.viewport.data[1] - padYpx) / ((gh + padYgu) * zoom);
+		sx = (metrics.surfaceSize.data[0] - padXpx) / ((gw + padXgu) * zoom);
+		sy = (metrics.surfaceSize.data[1] - padYpx) / ((gh + padYgu) * zoom);
 		tx = center.x;
 		ty = center.y;
 
@@ -509,7 +225,7 @@ public class BasicCamera implements Camera {
 			sy = sx;
 
 		Tx.setToIdentity();
-		Tx.translate(metrics.viewport.data[0] / 2, metrics.viewport.data[1] / 2); 
+		Tx.translate(metrics.surfaceSize.data[0] / 2, metrics.surfaceSize.data[1] / 2); 
 		if (rotation != 0)
 			Tx.rotate(rotation / (180 / Math.PI));
 		Tx.scale(sx, -sy);
@@ -524,165 +240,14 @@ public class BasicCamera implements Camera {
 
 		metrics.setRatioPx2Gu(sx);
 
-		double w2 = (metrics.viewport.data[0] / sx) / 2;
-		double h2 = (metrics.viewport.data[1] / sx) / 2;
+		double w2 = (metrics.surfaceSize.data[0] / sx) / 2;
+		double h2 = (metrics.surfaceSize.data[1] / sx) / 2;
 
 		metrics.loVisible.set(center.x - w2, center.y - h2);
 		metrics.hiVisible.set(center.x + w2, center.y + h2);
-
-		return Tx;
 	}
 
-	/**
-	 * Enable or disable automatic adjustment of the view to see the entire
-	 * graph.
-	 * 
-	 * @param on
-	 *            If true, automatic adjustment is enabled.
-	 */
-	public void setAutoFitView(boolean on) {
-		if (autoFit && (!on)) {
-			// We go from autoFit to user view, ensure the current center is at
-			// the middle of the graph, and the zoom is at one.
-
-			zoom = 1;
-			center.set(metrics.lo.x + (metrics.size.data[0] / 2), metrics.lo.y
-					+ (metrics.size.data[1] / 2), 0);
-		}
-
-		autoFit = on;
-		cameraChanged = true;
-	}
-
-	/**
-	 * Set the zoom (or percent of the graph visible), 1 means the graph is
-	 * fully visible.
-	 * 
-	 * @param z
-	 *            The zoom.
-	 */
-	public void setZoom(double z) {
-		zoom = z;
-		cameraChanged = true;
-	}
-
-	/**
-	 * Set the rotation angle around the centre.
-	 * 
-	 * @param theta
-	 *            The rotation angle in degrees.
-	 */
-	public void setViewRotation(double theta) {
-		rotation = theta;
-		cameraChanged = true;
-	}
-
-	/**
-	 * Set the output view port size in pixels.
-	 * 
-	 * @param viewportWidth
-	 *            The width in pixels of the view port.
-	 * @param viewportHeight
-	 *            The width in pixels of the view port.
-	 */
-	public void setViewport(double viewportWidth, double viewportHeight) {
-		metrics.setViewport(viewportWidth, viewportHeight);
-		cameraChanged = true;
-	}
-
-	/**
-	 * Set the graph padding.
-	 * 
-	 * @param graph
-	 *            The graphic graph.
-	 */
-	public void setPadding(GraphicGraph graph) {
-		padding.copy(graph.getStyle().getPadding());
-		cameraChanged = true;
-	}
-
-	protected double getPaddingXgu() {
-		if (padding.units == Style.Units.GU && padding.size() > 0)
-			return padding.get(0);
-
-		return 0;
-	}
-
-	protected double getPaddingYgu() {
-		if (padding.units == Style.Units.GU && padding.size() > 1)
-			return padding.get(1);
-
-		return getPaddingXgu();
-	}
-
-	protected double getPaddingXpx() {
-		if (padding.units == Style.Units.PX && padding.size() > 0)
-			return padding.get(0);
-
-		return 0;
-	}
-
-	protected double getPaddingYpx() {
-		if (padding.units == Style.Units.PX && padding.size() > 1)
-			return padding.get(1);
-
-		return getPaddingXpx();
-	}
-
-	/**
-	 * Check if a sprite is visible in the current view port.
-	 * 
-	 * @param sprite
-	 *            The sprite to check.
-	 * @return True if visible.
-	 */
-	protected boolean isSpriteVisible(GraphicSprite sprite) {
-		return isSpriteVisibleIn(sprite, 0, 0, metrics.viewport.data[0],
-				metrics.viewport.data[1]);
-	}
-
-	/**
-	 * Check if an edge is visible in the current view port.
-	 * 
-	 * This method tests the visibility of nodes. If the two nodes are invisible, the edge is
-	 * considered invisible. This is not completely exact, since an edge can still be visible if
-	 * its two nodes are out of view. However it has the advantage of speed.
-	 * 
-	 * @param edge
-	 *            The edge to check.
-	 * @return True if visible.
-	 */
-	protected boolean isEdgeVisible(GraphicEdge edge) {
-		GraphicNode node0 = edge.getNode0();
-		GraphicNode node1 = edge.getNode1();
-		
-		if(edge.hidden)
-			return false;
-		
-		if((!node1.positioned) || (!node0.positioned))
-			return false;
-		
-		boolean node0Invis = nodeInvisible.contains(node0.getId());
-		boolean node1Invis = nodeInvisible.contains(node1.getId());
-
-		return !(node0Invis && node1Invis);
-	}
-
-	/**
-	 * Is the given node visible in the given area in pixels.
-	 * 
-	 * @param node
-	 *            The node to check.
-	 * @param X1
-	 *            The min abscissa of the area.
-	 * @param Y1
-	 *            The min ordinate of the area.
-	 * @param X2
-	 *            The max abscissa of the area.
-	 * @param Y2
-	 *            The max ordinate of the area.
-	 * @return True if the node lies in the given area.
-	 */
+	@Override
 	protected boolean isNodeVisibleIn(GraphicNode node, double X1, double Y1, double X2, double Y2) {
 		NodeSkeleton nskel = (NodeSkeleton) node.getSkeleton();
 		
@@ -694,21 +259,7 @@ public class BasicCamera implements Camera {
 		return nskel.visibleIn(this, X1, Y1, X2, Y2, Units.PX);
 	}
 
-	/**
-	 * Is the given sprite visible in the given area in pixels.
-	 * 
-	 * @param sprite
-	 *            The sprite to check.
-	 * @param X1
-	 *            The min abscissa of the area.
-	 * @param Y1
-	 *            The min ordinate of the area.
-	 * @param X2
-	 *            The max abscissa of the area.
-	 * @param Y2
-	 *            The max ordinate of the area.
-	 * @return True if the node lies in the given area.
-	 */
+	@Override
 	protected boolean isSpriteVisibleIn(GraphicSprite sprite, double X1, double Y1,
 			double X2, double Y2) {
 		if (sprite.isAttachedToNode() && nodeInvisible.contains(sprite.getNodeAttachment().getId())) {
@@ -726,17 +277,7 @@ public class BasicCamera implements Camera {
 		}
 	}
 
-	/**
-	 * Check if a node contains the given point (x,y) in pixels.
-	 * 
-	 * @param elt
-	 *            The node.
-	 * @param x
-	 *            The point abscissa.
-	 * @param y
-	 *            The point ordinate.
-	 * @return True if (x,y) is in the given element.
-	 */
+	@Override
 	protected boolean nodeContains(GraphicElement elt, double x, double y) {
 		NodeSkeleton skel = (NodeSkeleton) elt.getSkeleton();
 		
@@ -747,21 +288,12 @@ public class BasicCamera implements Camera {
 		return false;
 	}
 	
+	@Override
 	protected boolean edgeContains(GraphicElement elt, double x, double y) {
 		return false;
 	}
 
-	/**
-	 * Check if a sprite contains the given point (x,y) in pixels.
-	 * 
-	 * @param elt
-	 *            The sprite.
-	 * @param x
-	 *            The point abscissa.
-	 * @param y
-	 *            The point ordinate.
-	 * @return True if (x,y) is in the given element.
-	 */
+	@Override
 	protected boolean spriteContains(GraphicElement elt, double x, double y) {
 		SpriteSkeleton skel = (SpriteSkeleton) elt.getSkeleton();
 		
@@ -772,11 +304,33 @@ public class BasicCamera implements Camera {
 		return false;
 	}
 	
-	public boolean cameraChangedFlag() {
-		return cameraChanged;
+// Utility
+	
+	protected double getPaddingXgu() {
+		if (padding.units == Style.Units.GU && padding.size() > 0)
+			return padding.get(0);
+	
+		return 0;
 	}
 	
-	public void resetCameraChangedFlag() {
-		cameraChanged = false;
+	protected double getPaddingYgu() {
+		if (padding.units == Style.Units.GU && padding.size() > 1)
+			return padding.get(1);
+	
+		return getPaddingXgu();
+	}
+	
+	protected double getPaddingXpx() {
+		if (padding.units == Style.Units.PX && padding.size() > 0)
+			return padding.get(0);
+	
+		return 0;
+	}
+	
+	protected double getPaddingYpx() {
+		if (padding.units == Style.Units.PX && padding.size() > 1)
+			return padding.get(1);
+	
+		return getPaddingXpx();
 	}
 }

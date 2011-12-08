@@ -40,22 +40,52 @@ import org.graphstream.ui.swingViewer.util.GraphMetrics;
  * 
  * <p>
  * The camera is in charge of projecting coordinates in graph units (GU)
- * into user spaces (often in pixels, PX). It defines the transformation (an affine
- * matrix) to pass from the first to the second. It also contains the graph
+ * into user spaces (often in pixels, PX). It defines the transformation
+ *  to pass from the first to the second. It also contains the graph
  * metrics, a set of values that give the overall dimensions of the graph in
- * graph units, as well as the view port, the area on the screen (or any
- * rendering surface) that will receive the results in pixels (or rendering
- * units), and various conversion method to pass from GU to PX and the reverse. 
+ * graph units, as well as the view port in pixels (the area on the screen (or any
+ * rendering surface) that will receive the results in pixels), and various
+ * conversion method to pass from GU to PX and the reverse. However the main
+ * convertion methods are in this class: {@link #transformGuToPx(Point3)} and
+ * {@link #transformPxToGu(Point3)}. 
  * </p>
  * 
  * <p>
- * The camera defines a center at which it always points. It can zoom on the
- * graph, pan in any direction and rotate along two axes.
+ * The camera defines a center at which it always points ({@link #getViewCenter()}). This center is
+ * at the center of the view (indeed). The camera can then zoom on the graph by specifying the
+ * percent of the view visible ({@link #setViewPercent(double)}, this is very comparable to the
+ * aperture, the camera is not becoming closer to the center point with the zoom, you can
+ * also use the {@link #setGraphViewport(double, double, double, double)} and to remove it us
+ * {@link #removeGraphViewport()}). It can also pan
+ * in any direction by moving the center point ({@link #setViewCenter(double, double, double)}).
+ * Finally, it can also rotate along two axes ({@link #setViewRotation(double)}) in 3D or one axe
+ * in 2D.
+ * </p>
+ * 
+ * <p>
+ * The camera has two modes: The first is called "auto-fit". In this mode the camera
+ * uses the graph bounds to adapt the view so that the whole graph is always visible.
+ * The settings of the camera are changed automatically to do this.
+ * The other mode is the user mode. It is activated as soon as the user change the view
+ * zoom, moves the center, or rotate the view ({@link #setViewCenter(double, double, double)},
+ * {@link #setViewPercent(double)}, {@link #setViewRotation(double)}). In this mode the settings
+ * of the camera are never automatically changed. Once in user mode, you can switch back to auto-fit
+ * mode with {@link #setAutoFitView(boolean)}. 
  * </p>
  * 
  * <p>
  * Knowing the transformation also allows to provide services like "what element
- * is visible ?" (in the camera view).
+ * is visible ?" (in the camera view). The camera plays a great role in determining
+ * which element of the view is effectively in view. This allows renderers to process
+ * the element to draw faster. If the camera is in auto-fit mode, all elements are always
+ * visible. Else, the camera can check witch element are visible and maintains a cache
+ * of these elements until the next change in the view or in the graph. See the
+ * {@link #isVisible(GraphicElement)} method.
+ * </p>
+ * 
+ * <p>
+ * The {@link #resetView()} method allows to switch back the camera in auto-fit mode and
+ * additionally reset all settings to their defaults.
  * </p>
  */
 public interface Camera {
@@ -147,25 +177,6 @@ public interface Camera {
 	void resetView();
 
 	/**
-	 * Set the bounds of the graphic graph in GU. Called by the Viewer.
-	 * 
-	 * @param minx
-	 *            Lowest abscissa.
-	 * @param miny
-	 *            Lowest ordinate.
-	 * @param minz
-	 *            Lowest depth.
-	 * @param maxx
-	 *            Highest abscissa.
-	 * @param maxy
-	 *            Highest ordinate.
-	 * @param maxz
-	 *            Highest depth.
-	 */
-	void setBounds(double minx, double miny, double minz, double maxx,
-			double maxy, double maxz);
-
-	/**
 	 * Get the {@link GraphMetrics} object linked to this Camera. It can be used
 	 * to convert pixels to graphic units and vice versa.
 	 * 
@@ -241,16 +252,4 @@ public interface Camera {
 	 * @return True if the element is visible and therefore must be rendered.
 	 */
 	boolean isVisible(GraphicElement element);
-
-	/**
-	 * A flag set to true if something changed in the camera settings
-	 * {@link #resetCameraChangedFlag()} was last called.
-	 */
-	boolean cameraChangedFlag();
-	
-	/**
-	 * Reset the "camera changed" flag to false. This should only be used in the
-	 * view or viewer that handle the camera.
-	 */
-	void resetCameraChangedFlag();
 }

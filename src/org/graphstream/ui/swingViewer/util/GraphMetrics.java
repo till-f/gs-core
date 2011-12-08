@@ -36,56 +36,53 @@ import org.graphstream.ui.geom.Vector3;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
+import org.graphstream.ui.swingViewer.Camera;
 
 /**
  * Various geometric informations on the graphic graph.
  * 
  * <p>
- * This class extends the GraphMetrics to provide not only metrics on the
- * graphic graph but also on the rendering canvas, and allows to convert from
- * graph metrics to canvas metrics and the reverse.
- * </p>
- * 
- * <p>
- * Here we call the canvas "view port" since this class allows to place a view
- * port inside the graph in order to zoom and pan the view.
+ * This class provides not only metrics on the graphic graph (size in graph units) but also on the
+ * rendering surface (size in pixels), and allows to convert from graph units (GU) to surface units
+ * (PX) and the reverse. However, if you have a point in GU and want to convert it in PX it is
+ * better to use the {@link Camera#transformGuToPx(Point3)} method.
  * </p>
  */
 public class GraphMetrics {
 	/**
-	 * Graph lower position (bottom,left,front).
+	 * Graph lower position (bottom,left,front) in GU.
 	 */
 	public Point3 lo = new Point3();
 
 	/**
-	 * Graph higher position (top,right,back).
+	 * Graph higher position (top,right,back) in GU.
 	 */
 	public Point3 hi = new Point3();
 
 	/**
-	 * The lowest visible point.
+	 * The lowest visible point in GU (the graph view port).
 	 */
 	public Point3 loVisible = new Point3();
 
 	/**
-	 * The highest visible point.
+	 * The highest visible point in GU (the graph viewport).
 	 */
 	public Point3 hiVisible = new Point3();
 
 	/**
-	 * Graph dimension.
+	 * Graph dimension in GU.
 	 */
 	public Vector3 size = new Vector3();
 
 	/**
-	 * The graph diagonal.
+	 * The graph diagonal in GU.
 	 */
 	public double diagonal = 1;
 
 	/**
-	 * The view port size.
+	 * The view port size, in PX.
 	 */
-	public Vector3 viewport = new Vector3();
+	public Vector3 surfaceSize = new Vector3();
 
 	/**
 	 * The scaling factor to pass from graph units to pixels.
@@ -93,7 +90,8 @@ public class GraphMetrics {
 	public double ratioPx2Gu;
 
 	/**
-	 * The length for one pixel, according to the current transformation.
+	 * The length for one pixel, according to the current transformation, that is the length of
+	 * one pixel in GU.
 	 */
 	public double px1;
 
@@ -119,50 +117,50 @@ public class GraphMetrics {
 	}
 
 	/**
-	 * The graph diagonal (either in 2D or 3D, from the lowest point to the highest).
+	 * The graph diagonal (either in 2D or 3D, from the lowest point to the highest) in GU.
 	 * 
-	 * @return The diagonal.
+	 * @return The diagonal in GU.
 	 */
 	public double getDiagonal() {
 		return diagonal;
 	}
 
 	/**
-	 * The graph bounds.
+	 * The graph bounds in GU.
 	 * 
-	 * @return The size.
+	 * @return The size in GU.
 	 */
 	public Vector3 getSize() {
 		return size;
 	}
 
 	/**
-	 * The graph lowest (bottom,left,front) point.
+	 * The graph lowest (bottom,left,front) point in GU.
 	 * 
-	 * @return The lowest point.
+	 * @return The lowest point in GU.
 	 */
 	public Point3 getLowPoint() {
 		return lo;
 	}
 
 	/**
-	 * The graph highest (top,right,back) point.
+	 * The graph highest (top,right,back) point in GU.
 	 * 
-	 * @return The highest point.
+	 * @return The highest point in GU.
 	 */
 	public Point3 getHighPoint() {
 		return hi;
 	}
 
 	/**
-	 * The graph width in graph units.
+	 * The graph width in GU.
 	 */
 	public double graphWidthGU() {
 		return hi.x - lo.x;
 	}
 
 	/**
-	 * The graph height in graph units.
+	 * The graph height in GU.
 	 * @return
 	 */
 	public double graphHeightGU() {
@@ -170,7 +168,7 @@ public class GraphMetrics {
 	}
 
 	/**
-	 * The graph depth in graph units.
+	 * The graph depth in GU.
 	 */
 	public double graphDepthGU() {
 		return hi.z - lo.z;
@@ -198,7 +196,14 @@ public class GraphMetrics {
 	}
 
 	/**
-	 * Convert a value in a given units to graph units.
+	 * Convert a value in a given units to GU.
+	 * 
+	 * <p>
+	 * Be very careful, a length is not the same as a position. You cannot find a point expressed
+	 * in pixels from to abscissa and ordinate in GU converted with this method. For example the
+	 * GU space has its Y axis inverted compared to the pixel space. Use the {@link Camera#transformGuToPx(Point3)}
+	 * for this.
+	 * </p>
 	 * 
 	 * @param value
 	 *            The value to convert (it contains its own units).
@@ -209,6 +214,13 @@ public class GraphMetrics {
 
 	/**
 	 * Convert one of the given values in a given units to graph units.
+	 * 
+	 * <p>
+	 * Be very careful, a length is not the same as a position. You cannot find a point expressed
+	 * in pixels from to abscissa and ordinate in GU converted with this method. For example the
+	 * GU space has its Y axis inverted compared to the pixel space. Use the {@link Camera#transformGuToPx(Point3)}
+	 * for this.
+	 * </p>
 	 * 
 	 * @param values
 	 *            The values set containing the value to convert (it contains
@@ -222,6 +234,13 @@ public class GraphMetrics {
 
 	/**
 	 * Convert a value in a given units to pixels.
+	 * 
+	 * <p>
+	 * Be very careful, a length is not the same as a position. You cannot find a point expressed
+	 * in GU from to abscissa and ordinate in PX converted with this method. For example the
+	 * GU space has its Y axis inverted compared to the pixel space. Use the {@link Camera#transformGuToPx(Point3)}
+	 * for this.
+	 * </p>
 	 * 
 	 * @param value
 	 *            The value to convert.
@@ -244,6 +263,13 @@ public class GraphMetrics {
 	/**
 	 * Convert a value in a given units to pixels.
 	 * 
+	 * <p>
+	 * Be very careful, a length is not the same as a position. You cannot find a point expressed
+	 * in GU from to abscissa and ordinate in PX converted with this method. For example the
+	 * GU space has its Y axis inverted compared to the pixel space. Use the {@link Camera#transformGuToPx(Point3)}
+	 * for this.
+	 * </p>
+	 * 
 	 * @param value
 	 *            The value to convert (it contains its own units).
 	 */
@@ -253,6 +279,13 @@ public class GraphMetrics {
 
 	/**
 	 * Convert one of the given values in a given units pixels.
+	 * 
+	 * <p>
+	 * Be very careful, a length is not the same as a position. You cannot find a point expressed
+	 * in GU from to abscissa and ordinate in PX converted with this method. For example the
+	 * GU space has its Y axis inverted compared to the pixel space. Use the {@link Camera#transformGuToPx(Point3)}
+	 * for this.
+	 * </p>
 	 * 
 	 * @param values
 	 *            The values set containing the value to convert (it contains
@@ -266,6 +299,13 @@ public class GraphMetrics {
 
 	/**
 	 * Convert a value in given units to percents of the diagonal of the graph.
+	 * 
+	 * <p>
+	 * Be very careful, a length is not the same as a position. You cannot find a point expressed
+	 * in GU from to abscissa and ordinate in percents converted with this method. For example the
+	 * GU space has its Y axis inverted compared to the pixel space. Use the {@link Camera#transformGuToPx(Point3)}
+	 * for this.
+	 * </p>
 	 * 
 	 * @param value
 	 *            The value to convert.
@@ -288,6 +328,13 @@ public class GraphMetrics {
 	/**
 	 * Convert a value in a given units to percents of the diagonal of the graph.
 	 * 
+	 * <p>
+	 * Be very careful, a length is not the same as a position. You cannot find a point expressed
+	 * in GU from to abscissa and ordinate in percents converted with this method. For example the
+	 * GU space has its Y axis inverted compared to the pixel space. Use the {@link Camera#transformGuToPx(Point3)}
+	 * for this.
+	 * </p>
+	 * 
 	 * @param value
 	 *            The value to convert (it contains its own units).
 	 */
@@ -297,6 +344,13 @@ public class GraphMetrics {
 
 	/**
 	 * Convert one of the given values in a given units to percents of the diagonal of the graph.
+	 * 
+	 * <p>
+	 * Be very careful, a length is not the same as a position. You cannot find a point expressed
+	 * in GU from to abscissa and ordinate in percents converted with this method. For example the
+	 * GU space has its Y axis inverted compared to the pixel space. Use the {@link Camera#transformGuToPx(Point3)}
+	 * for this.
+	 * </p>
 	 * 
 	 * @param values
 	 *            The values set containing the value to convert (it contains
@@ -319,7 +373,7 @@ public class GraphMetrics {
 		builder.append(String.format("        visible hi = %s%n", hiVisible));
 		builder.append(String.format("        size       = %s%n", size));
 		builder.append(String.format("        diag       = %f%n", diagonal));
-		builder.append(String.format("        viewport   = %s%n", viewport));
+		builder.append(String.format("        viewport   = %s%n", surfaceSize));
 		builder.append(String.format("        ratio      = %fpx = 1gu%n",
 				ratioPx2Gu));
 
@@ -327,22 +381,37 @@ public class GraphMetrics {
 	}
 
 	/**
-	 * Set the output view port size in pixels. This is the size of the rendering
-	 * surface, it need to be set each time the rendering surface is changed.
+	 * Set the rendering surface size in PX.
 	 * 
-	 * @param viewportWidth
+	 * <p>
+	 * This is the size of the rendering
+	 * canvas, it need to be set each time the rendering surface is changed.
+	 * </p>
+	 *
+	 * <p>
+	 * This is done by the camera automatically.
+	 * </p>
+	 * 
+	 * @param surfaceWidth
 	 *            The width in pixels of the view port.
-	 * @param viewportHeight
+	 * @param surfaceHeight
 	 *            The width in pixels of the view port.
 	 */
-	public void setViewport(double viewportWidth, double viewportHeight) {
-		viewport.set(viewportWidth, viewportHeight, 0);
+	public void setSurfaceSize(double surfaceWidth, double surfaceHeight) {
+		surfaceSize.set(surfaceWidth, surfaceHeight, 0);
 	}
 
 	/**
-	 * The ratio to pass by multiplication from pixels to graph units. This
+	 * The ratio to pass by multiplication from pixels to graph units.
+	 * 
+	 * <p>This
 	 * ratio must be larger than zero, else it is not taken into account by
 	 * this method.
+	 * </p>
+	 *
+	 * <p>
+	 * This is done by the camera automatically.
+	 * </p>
 	 * 
 	 * @param ratio
 	 *            The ratio.
@@ -355,7 +424,11 @@ public class GraphMetrics {
 	}
 
 	/**
-	 * Set the graphic graph bounds (the lowest and highest points).
+	 * Set the graphic graph bounds (the lowest and highest points) in GU.
+	 *
+	 * <p>
+	 * This is done by the camera automatically.
+	 * </p>
 	 * 
 	 * @param minx
 	 *            Lowest abscissa.
@@ -384,7 +457,5 @@ public class GraphMetrics {
 		size.data[2] = hi.z - lo.z;
 		diagonal =  Math.sqrt(size.data[0] * size.data[0] + size.data[1]
 				* size.data[1] + size.data[2] * size.data[2]);
-
-		// System.err.printf( "lo=%s hi=%s%n", lo, hi );
 	}
 }

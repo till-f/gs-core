@@ -31,6 +31,8 @@
  */
 package org.graphstream.ui.swingViewer;
 
+import org.graphstream.ui.geom.Point3;
+
 /**
  * A representation of the coordinates of the selection zone.
  * 
@@ -39,5 +41,7 @@ package org.graphstream.ui.swingViewer;
  * </p>
  */
 public class Selection {
-	public double x1, y1, x2, y2;
+	public boolean active = false;
+	public Point3 lo = new Point3();
+	public Point3 hi = new Point3();
 }

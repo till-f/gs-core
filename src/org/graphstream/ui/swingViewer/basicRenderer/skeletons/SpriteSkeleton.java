@@ -164,8 +164,8 @@ public class SpriteSkeleton extends NodeSkeleton {
 			pos.z = 0;
 		} else if (units == Units.PX && sprite.getUnits() == Units.PERCENTS) {
 			GraphMetrics metrics = camera.getMetrics();
-			pos.x = (sprite.center.x / 100f) * metrics.viewport.data[0];
-			pos.y = (sprite.center.y / 100f) * metrics.viewport.data[1];
+			pos.x = (sprite.center.x / 100f) * metrics.surfaceSize.data[0];
+			pos.y = (sprite.center.y / 100f) * metrics.surfaceSize.data[1];
 			pos.z = 0;
 		} else {
 			throw new RuntimeException("Unhandled yet sprite positioning.");

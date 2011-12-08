@@ -98,7 +98,8 @@ import org.graphstream.ui.swingViewer.util.FontCache;
  * </p>
  * 
  * <p>
- * This class is completely generic and not dependent of any real drawing operations.
+ * This class is completely generic and not dependent of any real drawing operations. It can serve
+ * as a base class for other renderers that need to equip a style group with a renderer.
  * </p>
  */
 public abstract class ElementRenderer {
@@ -111,7 +112,7 @@ public abstract class ElementRenderer {
 	 * The set of elements that need a text label. The rendering of text is done in a
 	 * separate pass, to avoid continually changing the graphics context.
 	 */
-	protected TextRenderer textRenderer = new TextRenderer();
+	protected TextRenderer textRenderer = createTextRenderer();
 	
 	/**
 	 * Render all the (visible) elements of the group.
@@ -283,6 +284,19 @@ public abstract class ElementRenderer {
 	}
 	
 	/**
+	 * Create a new text renderer.
+	 * 
+	 * <p>
+	 * This method allows an descendant class to replace the default text renderer by another one.
+	 * </p>
+	 * 
+	 * @return The new text renderer.
+	 */
+	protected TextRenderer createTextRenderer() {
+		return new BasicTextRenderer();
+	}
+	
+	/**
 	 * Specific renderer for text labels.
 	 * 
 	 * <p>
@@ -293,26 +307,11 @@ public abstract class ElementRenderer {
 	 * done using the {@link #renderTexts(StyleGroup, Camera, Graphics2D)} method. 
 	 * </p>
 	 */
-	public static class TextRenderer {
+	public static abstract class TextRenderer {
 		/**
 		 * The set of elements that need a text label.
 		 */
 		protected ArrayList<GraphicElement> needTextRenderPass = new ArrayList<GraphicElement>();
-
-		/**
-		 * The actual text font.
-		 */
-		protected Font textFont;
-
-		/**
-		 * The actual text color.
-		 */
-		protected Color textColor;
-
-		/**
-		 * the Actual text size in points.
-		 */
-		protected int textSize;
 
 		/**
 		 * Register an element as needing to render a text when the text rendering pass will
@@ -329,6 +328,36 @@ public abstract class ElementRenderer {
 		 * @param camera The camera.
 		 * @param g2 The graphics.
 		 */
+		public abstract void renderTexts(StyleGroup group, Camera camera, Graphics2D g2);
+
+		/**
+		 * Clear all the queued elements, preparing the text renderer for the next pass.
+		 */
+		protected void clear() {
+			needTextRenderPass.clear();
+		}
+	}
+	
+	/**
+	 * Very simple implementation of the text renderer.
+	 */
+	public static class BasicTextRenderer extends TextRenderer {
+		/**
+		 * The actual text font.
+		 */
+		protected Font textFont;
+
+		/**
+		 * The actual text color.
+		 */
+		protected Color textColor;
+
+		/**
+		 * the Actual text size in points.
+		 */
+		protected int textSize;
+		
+		@Override
 		public void renderTexts(StyleGroup group, Camera camera, Graphics2D g2) {
 			AffineTransform Tx = g2.getTransform();
 			configureText(group, camera, g2);
@@ -336,8 +365,8 @@ public abstract class ElementRenderer {
 			for(GraphicElement element: needTextRenderPass) {
 				renderText(group, g2, camera, element);
 			}
-			
-			needTextRenderPass.clear();
+		
+			clear();
 			g2.setTransform(Tx);
 		}
 		

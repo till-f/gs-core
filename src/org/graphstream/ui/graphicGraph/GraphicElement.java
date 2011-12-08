@@ -146,7 +146,7 @@ public abstract class GraphicElement extends AbstractGraphicElement {
 	/**
 	 * Interface for renderers registered in each style group.
 	 */
-	public interface SwingElementRenderer {}
+	public interface GraphicElementRenderer {}
 
 	/**
 	 * Skeleton of a graphic element.

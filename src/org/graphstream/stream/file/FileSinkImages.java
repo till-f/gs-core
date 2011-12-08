@@ -58,6 +58,7 @@ import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.layout.LayoutListener;
 import org.graphstream.ui.layout.LayoutRunner;
 import org.graphstream.ui.layout.Layouts;
+import org.graphstream.ui.swingViewer.BaseCamera;
 import org.graphstream.ui.swingViewer.GraphRenderer;
 
 /**
@@ -608,7 +609,7 @@ public class FileSinkImages implements FileSink, LayoutListener {
 			Point3 lo = gg.getMinPos();
 			Point3 hi = gg.getMaxPos();
 
-			renderer.getCamera().setBounds(lo.x, lo.y, lo.z, hi.x, hi.y, hi.z);
+			((BaseCamera)renderer.getCamera()).setBounds(lo.x, lo.y, lo.z, hi.x, hi.y, hi.z);
 			renderer.render(g2d, resolution.getWidth(), resolution.getHeight());
 		}
 
