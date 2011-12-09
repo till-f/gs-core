@@ -49,6 +49,12 @@ import org.graphstream.ui.swingViewer.util.GraphMetrics;
  * Base implementation of a Camera.
  * 
  * <p>
+ * This implementation is made to be used by the rendering classes. It defines new methods that
+ * are useful only for them in addition of the user methods defined in the {@link Camera}
+ * interface.
+ * </p>
+ * 
+ * <p>
  * This camera defines a {@link #setBounds(double, double, double, double, double, double)}
  * method allowing the viewer to set the graph bounds it computed (once per frame) so that the
  * metrics are up to date. This is generally done by the {@link View} class.
