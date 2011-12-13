@@ -309,8 +309,7 @@ public class Viewer implements ActionListener {
 	 * renderer class is given by the "gs.ui.renderer" system property. If the
 	 * class indicated by this property is not usable (not in the class path,
 	 * not of the correct type, etc.) or if the property is not present a
-	 * SwingBasicGraphRenderer is returned. This method is not protected from
-	 * concurrent accesses.
+	 * SwingBasicGraphRenderer is returned.
 	 */
 	public static GraphRenderer newGraphRenderer() {
 		String rendererClassName = System.getProperty("gs.ui.renderer");
@@ -507,8 +506,20 @@ public class Viewer implements ActionListener {
 	}
 
 	/**
+	 * This method is called by the Viewer timer to redraw automatically the views
+	 * at a given frame rate (by default 25 fps).
+	 * 
+	 * <p>
+	 * This is the main redrawing method of
+	 * the viewer. Each view is also a Swing component whose repaint() method can be
+	 * called to redraw it at any time. Basically the {@link View#display(GraphicGraph, boolean)}
+	 * method only call the JComponent.repaint() method.
+	 * </p>
+	 * 
+	 * <p>
 	 * Never call this method explicitly, it is public only because the ActionListener interface
 	 * forces this.
+	 * </p>
 	 */
 	public void actionPerformed(ActionEvent e) {
 		synchronized (views) {
@@ -525,8 +536,14 @@ public class Viewer implements ActionListener {
 			if (changed)
 				computeGraphMetrics();
 
-			for (View view : views.values())
-				view.display(graph, changed);
+			for (View view : views.values()) {
+				BaseCamera camera = (BaseCamera)view.getCamera();
+				
+				if(camera.cameraChangedFlag() || changed) {
+					view.display(graph, changed);
+					camera.resetCameraChangedFlag();
+				}
+			}
 			
 			graph.resetGraphChangedFlag();
 		}
@@ -577,24 +594,6 @@ public class Viewer implements ActionListener {
 	}
 
 	// Optional layout algorithm
-
-	/*
-	 * Enable or disable the "xyz" attribute change when a node is moved in the
-	 * views. By default the "xyz" attribute is changed.
-	 * 
-	 * By default, each time a node of the graphic graph is moved, its "xyz" attribute is reset
-	 * to follow the node position. This is useful only if someone listen at the graphic graph
-	 * or use the graphic graph directly. But this operation is quite costly. Therefore by default
-	 * if this viewer runs in its own thread, and the main graph is in another thread, xyz attribute
-	 * change will be disabled until a listener is added.
-	 * 
-	 * When the viewer is created to be used only in the swing thread, this feature is always on.
-	public void enableXYZfeedback(boolean on) {
-		synchronized(views) {
-			graph.feedbackXYZ(on);
-		}
-	}
-	 */
 
 	/**
 	 * Launch an automatic layout process that will position nodes in the

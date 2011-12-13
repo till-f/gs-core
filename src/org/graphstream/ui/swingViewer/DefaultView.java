@@ -34,8 +34,6 @@ package org.graphstream.ui.swingViewer;
 import java.awt.BorderLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
@@ -66,20 +64,18 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
  * 
  * <p>
  * This mechanism pushes a repaint query each time the viewer asks us to
- * repaint. Two flags are provided to know what to repaint :
- * {@link #graphChanged} allows to know when the graph needs to be rendered anew
- * because its structure changed and {@link #canvasChanged} allows to know one
- * must repaint because the rendering canvas was resized, shown, etc.
+ * repaint. There are two repaint mechanisms. The first one is the repaints
+ * triggered by the Swing event system (each time the panel is moved, resized,
+ * etc.). It calls directly repaint() that will in turn call paintComponent().
+ * The second is the one triggered by the viewer. The viewer will call
+ * {@link #display(GraphicGraph, boolean)} (that only calls repaint()) on a
+ * regular basis (by default 25 frames per second), excepted if the graph did not
+ * changed, in which case no redrawing is needed, and the CPU cycles can be saved.
  * </p>
  * 
  * <p>
  * The main method to implement is {@link #render(Graphics2D)}. This method is
  * called each time the graph needs to be rendered anew in the canvas.
- * </p>
- * 
- * <p>
- * The {@link #render(Graphics2D)} is called only when a repainting is really
- * needed.
  * </p>
  * 
  * <p>
@@ -105,9 +101,10 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
  * graph attribute is the identifier of the view.
  * </p>
  */
-public class DefaultView extends View implements ComponentListener,
-		WindowListener {
+public class DefaultView extends View implements WindowListener {
+
 	private static final long serialVersionUID = - 4489484861592064398L;
+
 	/**
 	 * The graph to render, shortcut to the viewers reference.
 	 */
@@ -139,11 +136,6 @@ public class DefaultView extends View implements ComponentListener,
 	protected GraphRenderer renderer;
 
 	/**
-	 * Set to true each time the drawing canvas changed.
-	 */
-	protected boolean canvasChanged = true;
-
-	/**
 	 * New view.
 	 * @param viewer The parent viewer.
 	 * @param identifier The view unique identifier.
@@ -155,11 +147,11 @@ public class DefaultView extends View implements ComponentListener,
 		this.graph = viewer.getGraphicGraph();
 		this.renderer = renderer;
 
-		addComponentListener(this);
+		setOpaque(true);
+		setDoubleBuffered(true);
 		setShortcutManager(new DefaultShortcutManager(this));
 		setMouseManager(new DefaultMouseManager(this.graph, this));
 		renderer.open(graph, this);
-		setOpaque(false);
 	}
 
 	@Override
@@ -169,25 +161,15 @@ public class DefaultView extends View implements ComponentListener,
 	
 	@Override
 	public void display(GraphicGraph graph, boolean graphChanged) {
-		this.graphChanged = graphChanged;
-		
-		BaseCamera camera = (BaseCamera)renderer.getCamera();
-		
-		if (graphChanged || canvasChanged || camera.cameraChangedFlag()) {
-			repaint();
-			this.graphChanged = canvasChanged = false;
-		}
+		repaint();
 	}
 
 	@Override
 	public void paintComponent(Graphics g) {
+		// super.paintComponent(g);	// We do not want any background. We handle it.
 		checkTitle();
-
 		Graphics2D g2 = (Graphics2D) g;
-
-		// super.paint( g );	// No need to call this, we fill the entire area.
 		render(g2);
-		//paintChildren(g2);
 		((BaseCamera)renderer.getCamera()).resetCameraChangedFlag();
 	}
 
@@ -211,7 +193,6 @@ public class DefaultView extends View implements ComponentListener,
 	public void close(GraphicGraph graph) {
 		renderer.close();
 		graph.addAttribute("ui.viewClosed", getId());
-		removeComponentListener(this);
 		removeKeyListener(shortcuts);
 		removeMouseListener(mouseClicks);
 		removeMouseMotionListener(mouseClicks);
@@ -267,42 +248,24 @@ public class DefaultView extends View implements ComponentListener,
 	@Override
 	public void beginSelectionAt(double x1, double y1) {
 		renderer.beginSelectionAt(x1, y1);
-		canvasChanged = true;
+		repaint();
 	}
 
 	@Override
 	public void selectionGrowsAt(double x, double y) {
 		renderer.selectionGrowsAt(x, y);
-		canvasChanged = true;
+		repaint();
 	}
 
 	@Override
 	public void endSelectionAt(double x2, double y2) {
 		renderer.endSelectionAt(x2, y2);
-		canvasChanged = true;
-	}
-
-	// Component listener
-
-	public void componentShown(ComponentEvent e) {
-		canvasChanged = true;
-	}
-
-	public void componentHidden(ComponentEvent e) {
-	}
-
-	public void componentMoved(ComponentEvent e) {
-		canvasChanged = true;
-	}
-
-	public void componentResized(ComponentEvent e) {
-		canvasChanged = true;
+		repaint();
 	}
 
 	// Window Listener
 
 	public void windowActivated(WindowEvent e) {
-		canvasChanged = true;
 	}
 
 	public void windowClosed(WindowEvent e) {
@@ -330,11 +293,9 @@ public class DefaultView extends View implements ComponentListener,
 	}
 
 	public void windowDeactivated(WindowEvent e) {
-		canvasChanged = true;
 	}
 
 	public void windowDeiconified(WindowEvent e) {
-		canvasChanged = true;
 	}
 
 	public void windowIconified(WindowEvent e) {
@@ -342,7 +303,6 @@ public class DefaultView extends View implements ComponentListener,
 
 	public void windowOpened(WindowEvent e) {
 		graph.removeAttribute("ui.viewClosed");
-		canvasChanged = true;
 	}
 
 	// Methods deferred to the renderer
@@ -366,13 +326,13 @@ public class DefaultView extends View implements ComponentListener,
 	@Override
 	public void setBackLayerRenderer(LayerRenderer renderer) {
 		this.renderer.setBackLayerRenderer(renderer);
-		canvasChanged = true;
+		repaint();
 	}
 
 	@Override
 	public void setForeLayoutRenderer(LayerRenderer renderer) {
 		this.renderer.setForeLayoutRenderer(renderer);
-		canvasChanged = true;
+		repaint();
 	}
 	
 	@Override

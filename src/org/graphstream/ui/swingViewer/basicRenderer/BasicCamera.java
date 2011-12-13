@@ -120,14 +120,13 @@ public class BasicCamera extends BaseCamera {
 	 */
 	public void pushView(GraphicGraph graph, Graphics2D g2) {
 		if (oldTx == null) {
-			oldTx = g2.getTransform();
+			oldTx = g2.getTransform();	// Save the Swing transform to reset it later.
 
 			if (autoFit)
-				autoFitView(g2);
-			else
-				userView(g2);
+			     autoFitView(g2);
+			else userView(g2);
 
-			g2.setTransform(Tx);
+			g2.setTransform(Tx);		// Set the composition of the old Swing transform and our own new space.
 		}
 		
 		checkVisibility(graph);
@@ -142,7 +141,7 @@ public class BasicCamera extends BaseCamera {
 	 */
 	public void popView(Graphics2D g2) {
 		if (oldTx != null) {
-			g2.setTransform(oldTx);
+			g2.setTransform(oldTx);	// Restore the old Swing settings.
 			oldTx = null;
 		}
 	}
@@ -172,7 +171,7 @@ public class BasicCamera extends BaseCamera {
 		else
 			sy = sx;
 
-		Tx.setToIdentity();
+		Tx = g2.getTransform();	// Get of copy of the Swing transforms.
 		Tx.translate(metrics.surfaceSize.data[0] / 2, metrics.surfaceSize.data[1] / 2);
 		if (rotation != 0)
 			Tx.rotate(rotation / (180 / Math.PI));
@@ -224,7 +223,7 @@ public class BasicCamera extends BaseCamera {
 		else
 			sy = sx;
 
-		Tx.setToIdentity();
+		Tx = g2.getTransform();	// Get of copy of the Swing transforms.
 		Tx.translate(metrics.surfaceSize.data[0] / 2, metrics.surfaceSize.data[1] / 2); 
 		if (rotation != 0)
 			Tx.rotate(rotation / (180 / Math.PI));
