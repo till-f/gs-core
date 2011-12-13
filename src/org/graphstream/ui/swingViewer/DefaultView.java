@@ -159,6 +159,7 @@ public class DefaultView extends View implements ComponentListener,
 		setShortcutManager(new DefaultShortcutManager(this));
 		setMouseManager(new DefaultMouseManager(this.graph, this));
 		renderer.open(graph, this);
+		setOpaque(false);
 	}
 
 	@Override
@@ -179,14 +180,14 @@ public class DefaultView extends View implements ComponentListener,
 	}
 
 	@Override
-	public void paint(Graphics g) {
+	public void paintComponent(Graphics g) {
 		checkTitle();
 
 		Graphics2D g2 = (Graphics2D) g;
 
 		// super.paint( g );	// No need to call this, we fill the entire area.
 		render(g2);
-		paintChildren(g2);
+		//paintChildren(g2);
 		((BaseCamera)renderer.getCamera()).resetCameraChangedFlag();
 	}
 
@@ -291,6 +292,7 @@ public class DefaultView extends View implements ComponentListener,
 	}
 
 	public void componentMoved(ComponentEvent e) {
+		canvasChanged = true;
 	}
 
 	public void componentResized(ComponentEvent e) {
@@ -328,6 +330,7 @@ public class DefaultView extends View implements ComponentListener,
 	}
 
 	public void windowDeactivated(WindowEvent e) {
+		canvasChanged = true;
 	}
 
 	public void windowDeiconified(WindowEvent e) {
