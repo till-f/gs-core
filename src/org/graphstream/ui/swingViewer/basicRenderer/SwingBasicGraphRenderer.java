@@ -41,7 +41,6 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashSet;
 
 import javax.imageio.ImageIO;
@@ -83,7 +82,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	/**
 	 * Set the view on the view port defined by the metrics.
 	 */
-	protected BasicCamera camera = new BasicCamera();
+	protected BasicCamera camera = null;
 
 	/**
 	 * Specific renderer for nodes.
@@ -117,6 +116,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	
 	@Override
 	public void open(GraphicGraph graph, Container renderingSurface) {
+		camera = new BasicCamera(graph);
 		super.open(graph, renderingSurface);
 		graph.setSkeletonFactory(new SwingBasicSkeletonFactory());
 	}
@@ -130,22 +130,14 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		
 		graph.setSkeletonFactory(null);
 		super.close();
+		camera = null;
 	}
 
 	public Camera getCamera() {
 		return camera;
 	}
 
-	public ArrayList<GraphicElement> allNodesOrSpritesIn(double x1, double y1,
-			double x2, double y2) {
-		return camera.allNodesOrSpritesIn(graph, x1, y1, x2, y2);
-	}
-
-	public GraphicElement findNodeOrSpriteAt(double x, double y) {
-		return camera.findNodeOrSpriteAt(graph, x, y);
-	}
-
-	public void render(Graphics2D g, int width, int height) {
+	public void render(Graphics2D g, int x, int y, int width, int height) {
 		if (graph != null) {
 			beginFrame();
 			
@@ -154,9 +146,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 			 && (graph.getNodeCount() == 0 && graph.getSpriteCount() == 0)) {
 				displayNothingToDo(g, width, height);
 			} else {
-				camera.setPadding(graph);
-				camera.setSurfaceSize(width, height);
-				renderGraph(g);
+				renderGraph(g, x, y, width, height);
 				renderSelection(g);
 			}
 			
@@ -201,15 +191,17 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	/**
 	 * Render the whole graph.
 	 */
-	protected void renderGraph(Graphics2D g) {
+	protected void renderGraph(Graphics2D g, double x, double y, double width, double height) {
 		setupGraphics(g);
 		renderGraphBackground(g);
-		renderBackLayer(g);
-		camera.pushView(graph, g);
+		renderBackLayer(g, true);
+		camera.pushView(g, x, y, width, height);
+		renderBackLayer(g, false);
 		renderGraphElements(g);
 		renderGraphForeground(g);
+		renderForeLayer(g, false);
 		camera.popView(g);
-		renderForeLayer(g);
+		renderForeLayer(g, true);
 	}
 
 	protected void setupGraphics(Graphics2D g) {
@@ -245,8 +237,8 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 
 		g.setColor(group.getFillColor(0));
 		g.fillRect(0, 0,
-				(int) camera.getMetrics().surfaceSize.data[0],
-				(int) camera.getMetrics().surfaceSize.data[1]);
+				(int) camera.getMetrics().surfaceViewport[2],
+				(int) camera.getMetrics().surfaceViewport[3]);
 	}
 
 	/**
@@ -302,8 +294,8 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 			double y1 = selection.lo.y;
 			double x2 = selection.lo.x;
 			double y2 = selection.lo.y;
-			double w  = camera.getMetrics().surfaceSize.data[0];
-			double h  = camera.getMetrics().surfaceSize.data[1];
+			double w  = camera.getMetrics().surfaceViewport[2];
+			double h  = camera.getMetrics().surfaceViewport[3];
 
 			if (x1 > x2) {
 				t  = x1;
@@ -330,23 +322,22 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		}
 	}
 
-	protected void renderBackLayer(Graphics2D g) {
-		if (backRenderer != null)
-			renderLayer(g, backRenderer);
+	protected void renderBackLayer(Graphics2D g, boolean inPixels) {
+		if (backRenderer != null) {
+			renderLayer(g, backRenderer, inPixels);
+		}
 	}
 
-	protected void renderForeLayer(Graphics2D g) {
-		if (foreRenderer != null)
-			renderLayer(g, foreRenderer);
+	protected void renderForeLayer(Graphics2D g, boolean inPixels) {
+		if (foreRenderer != null) {
+			renderLayer(g, foreRenderer, inPixels);
+		}
 	}
 
-	protected void renderLayer(Graphics2D g, LayerRenderer renderer) {
-		GraphMetrics metrics = camera.getMetrics();
-
-		renderer.render(g, graph, metrics.ratioPx2Gu,
-				(int) metrics.surfaceSize.data[0], (int) metrics.surfaceSize.data[1],
-				metrics.loVisible.x, metrics.loVisible.y, metrics.hiVisible.x,
-				metrics.hiVisible.y);
+	protected void renderLayer(Graphics2D g, LayerRenderer renderer, boolean inPixels) {
+		if(inPixels == renderer.rendersInPX()) {
+			renderer.render(g, graph, camera);
+		}
 	}
 
 	/**
@@ -383,14 +374,14 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 			try {
 				if (filename.toLowerCase().endsWith("png")) {
 					BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-					renderGraph(img.createGraphics());
+					renderGraph(img.createGraphics(), 0, 0, width, height);
 	
 					File file = new File(filename);
 					ImageIO.write(img, "png", file);
 				} else if (filename.toLowerCase().endsWith("bmp")) {
 					BufferedImage img = new BufferedImage(width, height,
 							BufferedImage.TYPE_INT_RGB);
-					renderGraph(img.createGraphics());
+					renderGraph(img.createGraphics(), 0, 0, width, height);
 	
 					File file = new File(filename);
 					ImageIO.write(img, "bmp", file);
@@ -401,7 +392,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 					if(o instanceof Graphics2DOutput) {
 						Graphics2DOutput out = (Graphics2DOutput) o;
 						Graphics2D g2 = out.getGraphics();
-						render(g2, (int)camera.getMetrics().surfaceSize.data[0], (int)camera.getMetrics().surfaceSize.data[1]);
+						render(g2, 0, 0, width, height);
 						out.outputTo(filename);
 					} else {
 						System.err.printf("plugin %s is not an instance of Graphics2DOutput (%s)%n", plugin, o.getClass().getName());
@@ -409,7 +400,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 				} else {// if (filename.toLowerCase().endsWith("jpg") || filename.toLowerCase().endsWith("jpeg")) {
 					BufferedImage img = new BufferedImage(width, height,
 							BufferedImage.TYPE_INT_RGB);
-					renderGraph(img.createGraphics());
+					renderGraph(img.createGraphics(), 0, 0, width, height);
 	
 					File file = new File(filename);
 					ImageIO.write(img, "jpg", file);

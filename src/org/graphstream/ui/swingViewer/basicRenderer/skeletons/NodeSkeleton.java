@@ -111,6 +111,9 @@ public class NodeSkeleton extends BaseSkeleton {
 		double h2 = s.y;
 		Point3 p  = getPosition(camera, null, Units.PX);
 
+		X2 -= X1; Y2-=Y1;
+		X1 = 0; Y1 = 0;
+		
 		double x1 = p.x - w2;
 		double x2 = p.x + w2;
 		double y1 = p.y - h2;

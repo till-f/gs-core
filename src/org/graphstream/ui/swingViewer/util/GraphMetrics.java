@@ -60,12 +60,12 @@ public class GraphMetrics {
 	public Point3 hi = new Point3();
 
 	/**
-	 * The lowest visible point in GU (the graph view port).
+	 * The lowest visible point in GU (the graph view-port).
 	 */
 	public Point3 loVisible = new Point3();
 
 	/**
-	 * The highest visible point in GU (the graph viewport).
+	 * The highest visible point in GU (the graph view-port).
 	 */
 	public Point3 hiVisible = new Point3();
 
@@ -80,9 +80,11 @@ public class GraphMetrics {
 	public double diagonal = 1;
 
 	/**
-	 * The view port size, in PX.
+	 * The view port position and size, in PX. The first two cells store the abscissa and
+	 * ordinate of the view-port, the two last cells store the width and height of the
+	 * view-port, in pixels.
 	 */
-	public Vector3 surfaceSize = new Vector3();
+	public double surfaceViewport[] = new double[4];
 
 	/**
 	 * The scaling factor to pass from graph units to pixels.
@@ -373,9 +375,8 @@ public class GraphMetrics {
 		builder.append(String.format("        visible hi = %s%n", hiVisible));
 		builder.append(String.format("        size       = %s%n", size));
 		builder.append(String.format("        diag       = %f%n", diagonal));
-		builder.append(String.format("        viewport   = %s%n", surfaceSize));
-		builder.append(String.format("        ratio      = %fpx = 1gu%n",
-				ratioPx2Gu));
+		builder.append(String.format("        viewport   = x=%f y=%f width=%f height=%f%n", surfaceViewport[0], surfaceViewport[1], surfaceViewport[2], surfaceViewport[3]));
+		builder.append(String.format("        ratio      = %fpx = 1gu%n", ratioPx2Gu));
 
 		return builder.toString();
 	}
@@ -392,13 +393,16 @@ public class GraphMetrics {
 	 * This is done by the camera automatically.
 	 * </p>
 	 * 
-	 * @param surfaceWidth
-	 *            The width in pixels of the view port.
-	 * @param surfaceHeight
-	 *            The width in pixels of the view port.
+	 * @param x The abscissa of the surface view-port in pixels.
+	 * @param y The ordinate of the surface view-port in pixels.
+	 * @param width The width in pixels of the surface view port.
+	 * @param height The height in pixels of the surface view port.
 	 */
-	public void setSurfaceSize(double surfaceWidth, double surfaceHeight) {
-		surfaceSize.set(surfaceWidth, surfaceHeight, 0);
+	public void setSurfaceViewport(double x, double y, double width, double height) {
+		surfaceViewport[0] = x;
+		surfaceViewport[1] = y;
+		surfaceViewport[2] = width;
+		surfaceViewport[3] = height;
 	}
 
 	/**

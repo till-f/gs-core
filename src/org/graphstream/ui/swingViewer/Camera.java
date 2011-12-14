@@ -31,6 +31,8 @@
  */
 package org.graphstream.ui.swingViewer;
 
+import java.util.ArrayList;
+
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.swingViewer.util.GraphMetrics;
@@ -178,7 +180,10 @@ public interface Camera {
 
 	/**
 	 * Get the {@link GraphMetrics} object linked to this Camera. It can be used
-	 * to convert pixels to graphic units and vice versa.
+	 * to convert pixels to graphic units and vice versa, as well as knowing the
+	 * size of the rendering surface in pixels, the overall size of the graph in
+	 * graph units, the lowest and highest points in graph units, the center,
+	 * etc. 
 	 * 
 	 * @return a GraphMetrics instance
 	 */
@@ -252,4 +257,46 @@ public interface Camera {
 	 * @return True if the element is visible and therefore must be rendered.
 	 */
 	boolean isVisible(GraphicElement element);
+
+	/**
+	 * Search for the first node or sprite (in that order) that contains the
+	 * point at coordinates (x, y).
+	 * 
+	 * <p>
+	 * If several elements contains the point, an arbitrary one is returned.
+	 * </p>
+	 * 
+	 * @param x
+	 *            The point abscissa.
+	 * @param y
+	 *            The point ordinate.
+	 * @return The first node or sprite containing the given coordinates or null if
+	 *         nothing found.
+	 */
+	public abstract GraphicElement findNodeOrSpriteAt(double x, double y);
+
+	/**
+	 * Search for all the nodes and sprites contained inside the rectangle
+	 * (x1,y1)-(x2,y2).
+	 * 
+	 * @param x1
+	 *            The rectangle lowest point abscissa.
+	 * @param y1
+	 *            The rectangle lowest point ordinate.
+	 * @param x2
+	 *            The rectangle highest point abscissa.
+	 * @param y2
+	 *            The rectangle highest point ordinate.
+	 * @return The set of sprites and nodes in the given rectangle.
+	 */
+	public abstract ArrayList<GraphicElement> allNodesOrSpritesIn(double x1,
+			double y1, double x2, double y2);
+	
+	/**
+	 * Tells if the camera changed since the last rendering of the graph. The resetting
+	 * of this flag is up to individual camera implementations that know when a frame
+	 * has been rendered.
+	 * @return True if the camera settings changed since the last rendering.
+	 */
+	public boolean cameraChangedFlag();
 }

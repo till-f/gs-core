@@ -31,6 +31,7 @@
  */
 package org.graphstream.ui.swingViewer;
 
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -49,37 +50,54 @@ import org.graphstream.ui.swingViewer.util.GraphMetrics;
  * Base implementation of a Camera.
  * 
  * <p>
- * This implementation is made to be used by the rendering classes. It defines new methods that
- * are useful only for them in addition of the user methods defined in the {@link Camera}
- * interface.
+ * This implementation is made to be used by the rendering classes. In addition of the user
+ * methods that allow only to control the view, it defines methods useful to the renderer.
  * </p>
  * 
  * <p>
- * This camera defines a {@link #setBounds(double, double, double, double, double, double)}
- * method allowing the viewer to set the graph bounds it computed (once per frame) so that the
- * metrics are up to date. This is generally done by the {@link View} class.
+ * It defines the two important methods {@link #pushView(Graphics2D, double, double, double, double)}
+ * and {@link #popView(Graphics2D)} that allow to prepare the camera for rendering using the
+ * given Java2D graphics and a view-port inside the rendering surface in pixels. Once finished
+ * rendering, one calls {@link #popView(Graphics2D)} to restore the Java2D graphics in their initial
+ * state.
  * </p>
  * 
  * <p>
- * Similarly, it defines a {@link #setSurfaceSize(double, double)} 
- * to setup the rendering surface dimensions. This also must be setup at each frame. This
- * is generally done by the {@link View} class.
+ * It defines a {@link #setBounds()} method allowing implementations to setup the bounds of the
+ * graph in {@link #pushView(Graphics2D, double, double, double, double)}.
+ * a frame.
  * </p>
  * 
  * <p>
  * It contains a {@link #cameraChanged} flag telling if the settings of the camera
  * changed since this flag was last checked. You can use {@link #resetCameraChangedFlag()} to
- * reset it. This is normally used by the {@link View} class and you should not need to use it.
+ * reset it. The {@link #cameraChangedFlag()} method is a user method, used by the views to
+ * know if a new rendering is needed. At the contrary the {@link #resetCameraChangedFlag()} is
+ * a renderer method (not present in the {@link Camera} interface) used 
  * </p>
  * 
  * <p>
  * This default implementation implements a large set of the visibility test
- * ({@link #nodeInvisible}), stores the settings
- * of the camera ({@link #zoom}, {@link #center}, {@link #rotation}, {@link #padding}). The
- * actual mode ({@link #autoFit}) and if not the graph view port ({@link #gviewport}).
+ * ({@link #nodeInvisible}), so that implementations only have to define the four methods
+ * {@link #isNodeVisibleIn(GraphicNode, double, double, double, double)},
+ * {@link #isSpriteVisibleIn(GraphicSprite, double, double, double, double)},
+ * {@link #nodeContains(GraphicElement, double, double)} and
+ * {@link #spriteContains(GraphicElement, double, double)}.
+ * </p>
+ * 
+ * <p>
+ * This default implementation also stores the settings
+ * of the camera ({@link #zoom}, {@link #center}, {@link #rotation}, {@link #padding}), as
+ * well as the actual mode ({@link #autoFit}) and if not the graph view port ({@link #gviewport}).
+ * The graph view-port tells which part of the graph is visible in graph units.
  * </p>
  */
 public abstract class BaseCamera implements Camera {
+	/**
+	 * The graphic graph we are viewing through the camera.
+	 */
+	protected GraphicGraph graph;
+	
 	/**
 	 * Information on the graph overall dimension and position.
 	 */
@@ -127,6 +145,14 @@ public abstract class BaseCamera implements Camera {
 	 * A dirty flag that tells if the camera was changed during the last frame.
 	 */
 	protected boolean cameraChanged = true;
+	
+	/**
+	 * New camera on the given graphic graph.
+	 * @param graph The graphic graph to render.
+	 */
+	public BaseCamera(GraphicGraph graph) {
+		this.graph = graph;
+	}
 	
 	public Point3 getViewCenter() {
 		return center;
@@ -225,26 +251,49 @@ public abstract class BaseCamera implements Camera {
 	}
 
 	/**
-	 * Set the rendering surface size in pixels.
+	 * Prepare for drawing a new frame, setup the camera for rendering on the drawing surface
+	 * in the given area, using the the Java2D graphics of the rendering surface.
 	 * 
-	 * @param surfaceWidth
-	 *            The width in pixels of the view port.
-	 * @param surfaceHeight
-	 *            The width in pixels of the view port.
+	 * <p>
+	 * This method must be called before any rendering to setup the camera. You MUST call
+	 * {@link #popView(Graphics2D)} after rendering to cleanup the Java2D graphics.
+	 * </p>
+	 *
+	 * @param g The Java2D graphics of the rendering surface.
+	 * @param x The abscissa of the view-port in pixels.
+	 * @param y The ordinate of the view-port in pixels.
+	 * @param width The width in pixels of the view port.
+	 * @param height The height in pixels of the view port.
 	 */
-	public void setSurfaceSize(double surfaceWidth, double surfaceHeight) {
-		metrics.setSurfaceSize(surfaceWidth, surfaceHeight);
-		cameraChanged = true;
-	}
+	public abstract void pushView(Graphics2D g, double x, double y, double width, double height);
 
 	/**
-	 * Set the graph padding.
-	 * 
-	 * @param graph
-	 *            The graphic graph.
+	 * Finish the rendering phase and cleanup the Java2D graphics.
+	 * @param g The Java2D graphics.
 	 */
-	public void setPadding(GraphicGraph graph) {
+	public abstract void popView(Graphics2D g);
+	
+	/**
+	 * Retrieve the graph padding from the graph style.
+	 * 
+	 * It is an utility method to be used in {@link #pushView(Graphics2D, double, double, double, double)}
+	 * to setup the camera and metrics before computing the view.
+	 */
+	protected void setPadding() {
 		padding.copy(graph.getStyle().getPadding());
+		cameraChanged = true;
+	}
+	
+	/**
+	 * Set the bounds of the graphic graph in GU. This is generally called just before
+	 * setting up the view for a new frame. It can be computed from the {@link #graph}
+	 * field, and therefore should be used internally, hence it is protected.
+	 */
+	protected void setBounds() {
+		Point3 lo = graph.getMinPos();
+		Point3 hi = graph.getMaxPos();
+		
+		metrics.setBounds(lo.x, lo.y, lo.z, hi.x, hi.y, hi.z);
 		cameraChanged = true;
 	}
 
@@ -265,28 +314,6 @@ public abstract class BaseCamera implements Camera {
 	public void resetView() {
 		setAutoFitView(true);
 		setViewRotation(0);
-	}
-	
-	/**
-	 * Set the bounds of the graphic graph in GU. Called by the Viewer.
-	 * 
-	 * @param minx
-	 *            Lowest abscissa.
-	 * @param miny
-	 *            Lowest ordinate.
-	 * @param minz
-	 *            Lowest depth.
-	 * @param maxx
-	 *            Highest abscissa.
-	 * @param maxy
-	 *            Highest ordinate.
-	 * @param maxz
-	 *            Highest depth.
-	 */
-	public void setBounds(double minx, double miny, double minz, double maxx,
-			double maxy, double maxz) {
-		metrics.setBounds(minx, miny, minz, maxx, maxy, maxz);
-		cameraChanged = true;
 	}
 
 	public double getGraphDimension() {
@@ -343,20 +370,33 @@ public abstract class BaseCamera implements Camera {
 
 	/**
 	 * Process each node to check if it is in the actual view port, and mark
-	 * invisible nodes. This method allows for fast node, sprite and edge
-	 * visibility checking when drawing. This must be called before each
-	 * rendering (if the view port changed).
+	 * invisible nodes. 
+	 * 
+	 * <p>
+	 * This method allows for fast node, attached sprite and edge
+	 * visibility checking when drawing, by storing once and for all before
+	 * rendering a frame, which node is in the visible area. This must therefore
+	 * be called before each rendering, in the {@link #pushView(Graphics2D, double, double, double, double)}
+	 * method.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method updates the {@link #nodeInvisible} field. It uses the
+	 * {@link #isNodeVisibleIn(GraphicNode, double, double, double, double)} test.
+	 * </p>
 	 */
 	public void checkVisibility(GraphicGraph graph) {
 		if(! autoFit) {
-			double W = metrics.surfaceSize.data[0];
-			double H = metrics.surfaceSize.data[1];
+			double X = metrics.surfaceViewport[0];
+			double Y = metrics.surfaceViewport[1];
+			double W = metrics.surfaceViewport[2];
+			double H = metrics.surfaceViewport[3];
 	
 			nodeInvisible.clear();
 	
 			for (Node node : graph) {
 				GraphicNode gnode = (GraphicNode) node;
-				boolean visible =  (!gnode.hidden) && gnode.positioned && isNodeVisibleIn((GraphicNode) node, 0, 0, W, H);
+				boolean visible =  (!gnode.hidden) && gnode.positioned && isNodeVisibleIn((GraphicNode) node, X, Y, X+W, Y+H);
 	
 				if (!visible)
 					nodeInvisible.add(node.getId());
@@ -364,21 +404,7 @@ public abstract class BaseCamera implements Camera {
 		}
 	}
 
-	/**
-	 * Search for the first node or sprite (in that order) that contains the
-	 * point at coordinates (x, y).
-	 * 
-	 * @param graph
-	 *            The graph to search for.
-	 * @param x
-	 *            The point abscissa.
-	 * @param y
-	 *            The point ordinate.
-	 * @return The first node or sprite at the given coordinates or null if
-	 *         nothing found.
-	 */
-	public GraphicElement findNodeOrSpriteAt(GraphicGraph graph, double x,
-			double y) {
+	public GraphicElement findNodeOrSpriteAt(double x, double y) {
 		
 		for (Node n : graph) {
 			GraphicNode node = (GraphicNode) n;
@@ -395,24 +421,7 @@ public abstract class BaseCamera implements Camera {
 		return null;
 	}
 
-	/**
-	 * Search for all the nodes and sprites contained inside the rectangle
-	 * (x1,y1)-(x2,y2).
-	 * 
-	 * @param graph
-	 *            The graph to search for.
-	 * @param x1
-	 *            The rectangle lowest point abscissa.
-	 * @param y1
-	 *            The rectangle lowest point ordinate.
-	 * @param x2
-	 *            The rectangle highest point abscissa.
-	 * @param y2
-	 *            The rectangle highest point ordinate.
-	 * @return The set of sprites and nodes in the given rectangle.
-	 */
-	public ArrayList<GraphicElement> allNodesOrSpritesIn(GraphicGraph graph,
-			double x1, double y1, double x2, double y2) {
+	public ArrayList<GraphicElement> allNodesOrSpritesIn(double x1, double y1, double x2, double y2) {
 		ArrayList<GraphicElement> elts = new ArrayList<GraphicElement>();
 
 		for (Node node : graph) {
@@ -436,8 +445,16 @@ public abstract class BaseCamera implements Camera {
 	 * @return True if visible.
 	 */
 	protected boolean isSpriteVisible(GraphicSprite sprite) {
-		return isSpriteVisibleIn(sprite, 0, 0, metrics.surfaceSize.data[0],
-				metrics.surfaceSize.data[1]);
+		if(! autoFit) {
+			double X = metrics.surfaceViewport[0];
+			double Y = metrics.surfaceViewport[1];
+			double W = metrics.surfaceViewport[2];
+			double H = metrics.surfaceViewport[3];
+
+			return isSpriteVisibleIn(sprite, X, Y, X+W, Y+H);
+		} else {
+			return true;
+		}
 	}
 
 	/**
@@ -532,10 +549,6 @@ public abstract class BaseCamera implements Camera {
 	 */
 	protected abstract boolean spriteContains(GraphicElement elt, double x, double y);
 	
-	/**
-	 * A flag set to true if something changed in the camera settings
-	 * {@link #resetCameraChangedFlag()} was last called.
-	 */
 	public boolean cameraChangedFlag() {
 		return cameraChanged;
 	}

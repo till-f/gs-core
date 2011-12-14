@@ -54,12 +54,17 @@ import org.graphstream.ui.swingViewer.basicRenderer.skeletons.SpriteSkeleton;
  * In addition to the {@link BaseCamera}, this implementation defines how to pass from GU to PX and
  * the reverse using Java2D AffineTransform matrices. It is also in charge of modifying the
  * Graphics2D to setup the actual transform according to the camera settings
- * ({@link #pushView(GraphicGraph, Graphics2D)} then {@link #autoFitView(Graphics2D)} or
- * {@link #userView(Graphics2D)} and finally {@link #popView(Graphics2D)}).
+ * {@link #pushView(Graphics2D, double, double, double, double)} then
+ * {@link #autoFitView(Graphics2D)} or {@link #userView(Graphics2D)} and finally
+ * {@link #popView(Graphics2D)}).
  * </p>
  * 
  * <p>
- * It defines the visibility tests using the element skeletons.
+ * It defines the visibility tests using the element skeletons and implements the four methods
+ * {@link #isNodeVisibleIn(GraphicNode, double, double, double, double)},
+ * {@link #isSpriteVisibleIn(GraphicSprite, double, double, double, double)},
+ * {@link #nodeContains(GraphicElement, double, double)} and
+ * {@link #spriteContains(GraphicElement, double, double)}.
  * </p>
  */
 public class BasicCamera extends BaseCamera {
@@ -78,6 +83,10 @@ public class BasicCamera extends BaseCamera {
 	 */
 	protected AffineTransform oldTx;
 
+	public BasicCamera(GraphicGraph graph) {
+		super(graph);
+	}
+	
 	@Override
 	public Point3 transformPxToGu(double x, double y) {
 		Point2D.Double p = new Point2D.Double(x, y);
@@ -110,35 +119,28 @@ public class BasicCamera extends BaseCamera {
 		return p;
 	}
 
-	/**
-	 * Set the camera view in the and backup the previous
-	 * transform of the graphics. Call {@link #popView(Graphics2D)} to restore
-	 * the saved transform. You can only push one time the view.
-	 * 
-	 * @param g2
-	 *            The Swing graphics to change.
-	 */
-	public void pushView(GraphicGraph graph, Graphics2D g2) {
+	@Override
+	public void pushView(Graphics2D g2, double x, double y, double width, double height) {
 		if (oldTx == null) {
 			oldTx = g2.getTransform();	// Save the Swing transform to reset it later.
-
+		
+			// Setup all that is needed to compute the view.
+			
+			setBounds();
+			setPadding();
+			metrics.setSurfaceViewport(x, y, width, height);
+			
+			// Compute the view.
+			
 			if (autoFit)
 			     autoFitView(g2);
 			else userView(g2);
-
-			g2.setTransform(Tx);		// Set the composition of the old Swing transform and our own new space.
 		}
 		
 		checkVisibility(graph);
 	}
 
-	/**
-	 * Restore the transform that was used before {@link #pushView(GraphicGraph, Graphics2D)}
-	 * is used.
-	 * 
-	 * @param g2
-	 *            The Swing graphics to restore.
-	 */
+	@Override
 	public void popView(Graphics2D g2) {
 		if (oldTx != null) {
 			g2.setTransform(oldTx);	// Restore the old Swing settings.
@@ -161,8 +163,8 @@ public class BasicCamera extends BaseCamera {
 		double padXpx = getPaddingXpx() * 2;
 		double padYpx = getPaddingYpx() * 2;
 
-		sx = (metrics.surfaceSize.data[0] - padXpx) / (metrics.size.data[0] + padXgu); // Ratio along X
-		sy = (metrics.surfaceSize.data[1] - padYpx) / (metrics.size.data[1] + padYgu); // Ratio along Y
+		sx = (metrics.surfaceViewport[2] - padXpx) / (metrics.size.data[0] + padXgu); // Ratio along X
+		sy = (metrics.surfaceViewport[3] - padYpx) / (metrics.size.data[1] + padYgu); // Ratio along Y
 		tx = metrics.lo.x + (metrics.size.data[0] / 2); // Center of graph in X
 		ty = metrics.lo.y + (metrics.size.data[1] / 2); // Center of graph in Y
 
@@ -171,14 +173,15 @@ public class BasicCamera extends BaseCamera {
 		else
 			sy = sx;
 
-		Tx = g2.getTransform();	// Get of copy of the Swing transforms.
-		Tx.translate(metrics.surfaceSize.data[0] / 2, metrics.surfaceSize.data[1] / 2);
+		g2.translate(metrics.surfaceViewport[2] / 2, metrics.surfaceViewport[3] / 2);
 		if (rotation != 0)
-			Tx.rotate(rotation / (180 / Math.PI));
-		Tx.scale(sx, -sy);
-		Tx.translate(-tx, -ty);
+			g2.rotate(rotation / (180 / Math.PI));
+		g2.scale(sx, -sy);
+		g2.translate(-tx, -ty);
 
+		Tx = g2.getTransform();	// Get of copy of the Swing transforms.
 		xT = new AffineTransform(Tx);
+
 		try {
 			xT.invert();
 		} catch (NoninvertibleTransformException e) {
@@ -213,8 +216,8 @@ public class BasicCamera extends BaseCamera {
 		double gh = gviewport != null ? gviewport[3] - gviewport[1]
 				: metrics.size.data[1];
 
-		sx = (metrics.surfaceSize.data[0] - padXpx) / ((gw + padXgu) * zoom);
-		sy = (metrics.surfaceSize.data[1] - padYpx) / ((gh + padYgu) * zoom);
+		sx = (metrics.surfaceViewport[2] - padXpx) / ((gw + padXgu) * zoom);
+		sy = (metrics.surfaceViewport[3] - padYpx) / ((gh + padYgu) * zoom);
 		tx = center.x;
 		ty = center.y;
 
@@ -223,14 +226,15 @@ public class BasicCamera extends BaseCamera {
 		else
 			sy = sx;
 
-		Tx = g2.getTransform();	// Get of copy of the Swing transforms.
-		Tx.translate(metrics.surfaceSize.data[0] / 2, metrics.surfaceSize.data[1] / 2); 
+		g2.translate(metrics.surfaceViewport[2] / 2, metrics.surfaceViewport[3] / 2); 
 		if (rotation != 0)
-			Tx.rotate(rotation / (180 / Math.PI));
-		Tx.scale(sx, -sy);
-		Tx.translate(-tx, -ty);
+			g2.rotate(rotation / (180 / Math.PI));
+		g2.scale(sx, -sy);
+		g2.translate(-tx, -ty);
 
+		Tx = g2.getTransform();	// Get of copy of the Swing transforms.
 		xT = new AffineTransform(Tx);
+
 		try {
 			xT.invert();
 		} catch (NoninvertibleTransformException e) {
@@ -239,8 +243,8 @@ public class BasicCamera extends BaseCamera {
 
 		metrics.setRatioPx2Gu(sx);
 
-		double w2 = (metrics.surfaceSize.data[0] / sx) / 2;
-		double h2 = (metrics.surfaceSize.data[1] / sx) / 2;
+		double w2 = (metrics.surfaceViewport[2] / sx) / 2;
+		double h2 = (metrics.surfaceViewport[3] / sx) / 2;
 
 		metrics.loVisible.set(center.x - w2, center.y - h2);
 		metrics.hiVisible.set(center.x + w2, center.y + h2);
@@ -287,11 +291,6 @@ public class BasicCamera extends BaseCamera {
 		return false;
 	}
 	
-	@Override
-	protected boolean edgeContains(GraphicElement elt, double x, double y) {
-		return false;
-	}
-
 	@Override
 	protected boolean spriteContains(GraphicElement elt, double x, double y) {
 		SpriteSkeleton skel = (SpriteSkeleton) elt.getSkeleton();

@@ -233,7 +233,7 @@ public class DefaultView extends View implements WindowListener {
 
 	public void render(Graphics2D g) {
 		setBackground(graph.getStyle().getFillColor(0));
-		renderer.render(g, getWidth(), getHeight());
+		renderer.render(g, getX(), getY(), getWidth(), getHeight());
 
 		String screenshot = (String) graph.getLabel("ui.screenshot");
 
@@ -310,12 +310,12 @@ public class DefaultView extends View implements WindowListener {
 	@Override
 	public ArrayList<GraphicElement> allNodesOrSpritesIn(double x1, double y1,
 			double x2, double y2) {
-		return renderer.allNodesOrSpritesIn(x1, y1, x2, y2);
+		return renderer.getCamera().allNodesOrSpritesIn(x1, y1, x2, y2);
 	}
 
 	@Override
 	public GraphicElement findNodeOrSpriteAt(double x, double y) {
-		return renderer.findNodeOrSpriteAt(x, y);
+		return renderer.getCamera().findNodeOrSpriteAt(x, y);
 	}
 
 	@Override

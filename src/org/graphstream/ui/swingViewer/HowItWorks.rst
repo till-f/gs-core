@@ -6,25 +6,30 @@ This only discuss the architecture of this specific viewer that uses Swing as it
 The viewer is a layer above the GraphicGraph. The graphic graph knows nothing about it. The viewer
 observes the graphic graph and each time it changes, and if it can, the viewer draws the graph.
 
-Planned features :
-	* Have several "views" of an unique graphic graph.
-	* Allow the view to modify the graphic graph (so that modifications can enter the event stream).
-	* Allow to open an close views at will (restarting from the current state).
-	* Provide simple graph view that demonstrate how all this works.
-	* Provide a 3D graph view using Jogl.
-	* Provide a complete Swing/Java2D implementation that is usable everywhere.
-	* Hide a GraphRenderer inside views that allows people wanting to use the low-level rendering
-	  routines of graph stream without all the viewer/view complexities.
+This viewer is separated in two very distinct parts: the views and the renderer. The viewer manages
+several `View` object that roughly can be seen as an AWT container (they inherit `JPanel` by
+default). We call the views a *rendering surface*. The viewer is in charge of asking each view
+to redraw itself at a given frame rate and if the graph changed since the last frame. Therefore
+the viewer is in charge of handling the GraphicGraph, the pipelining with the real user graph,
+eventually a layout thread, and the views.
 
-ViewSet
--------
+The other part is the renderer. A renderer sole task is to render a graphic graph in a rendering
+surface. It has no notion of views. The view gives the renderer a rendering surface.
 
-	* The view set contains all the active views on a graphic graph. It handles the graphic graph
+This separation of tasks allows to reuse the renderers in another rendering system that do not
+uses the views. The only restriction is that the renderer must render inside an AWT container.
+However this is not a strict restriction. For example the OpenGL parts create a new canvas and
+insert them in the AWT container.
+
+Viewer
+------
+
+	* The viewer contains all the active views on a graphic graph. It handles the graphic graph
 	  and calls the views when it changes.
-	* The view set is an iterative element, it registers a timer and activates at regular intervals
+	* The viewer is an iterative element, it registers a timer and activates at regular intervals
 	  (these intervals can vary in time).
 	* At regular intervals it calls the views.
-	* The views may or may not redraw when activated by the view set.
+	* The views may or may not redraw when activated by the viewer.
 		* This allows to have "animated views" that redraw constantly, very like simulations or
 		  even games (which indeed are kinds of simulations).
 		* But also to have "refresh on demand views" that only change when the informations to
@@ -37,8 +42,7 @@ Listeners
 	  on the graphic graph will be automatically triggered. This includes events like :
 	  	* adding or removing nodes, edges and sprites.
 	  	* adding, changing or removing attributes.
-	* But there are other kinds of events, a proposition would be to manage them via
-	  predefined attributes.
+	* But there are other kinds of events, they are managed via predefined attributes.
 		* click on an element (node, edge, sprite) :
 			ui.clicked.
 				During the click (after pushing the button, and before releasing it)
@@ -61,11 +65,19 @@ Renderers
 	  be used apart for project that only need to render a graph but want to implement the view
 	  control by themselves.
 
+Cameras
+-------
+
+Each renderer owns a `Camera` object that tells how the graph is viewed. The camera allows to zoom
+on the graph, pan the graph, and rotate it. The camera also allows to know which elements are visible
+or not, therefore allowing to fasten the rendering process by drawing only the visible or partly
+visible elements.
+
 The viewer, JFrames, Swing components and integration
 -----------------------------------------------------
 
 By default the viewer is only a set of views. Each view inherits JPanel and therefore is a
-JComponent.
+JComponent and an AWT container.
 
 Then several scenario can occur :
 	1. One view only :

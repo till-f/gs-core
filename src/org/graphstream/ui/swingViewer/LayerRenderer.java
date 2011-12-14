@@ -45,32 +45,22 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
  */
 public interface LayerRenderer {
 	/**
+	 * Tells whether the renderer operates in pixels units or in graph units. If you prefer
+	 * to do your rendering in pixel units, return true, else you will use the units defined
+	 * in the graph (GU, graph units) 
+	 * @return True if in pixel units.
+	 */
+	boolean rendersInPX();
+	
+	/**
 	 * Render something under or above the graph.
 	 * 
 	 * @param graphics
 	 *            The Swing graphics.
 	 * @param graph
 	 *            The graphic representation of the graph.
-	 * @param px2Gu
-	 *            The ratio to pass from pixels to graph units.
-	 * @param widthPx
-	 *            The width in pixels of the view port.
-	 * @param heightPx
-	 *            The height in pixels of the view port.
-	 * @param minXGu
-	 *            The minimum visible point abscissa of the graph in graph
-	 *            units.
-	 * @param minYGu
-	 *            The minimum visible point ordinate of the graph in graph
-	 *            units.
-	 * @param maxXGu
-	 *            The maximum visible point abscissa of the graph in graph
-	 *            units.
-	 * @param maxYGu
-	 *            The maximum visible point ordinate of the graph in graph
-	 *            units.
+	 * @param camera
+	 *            The actual view, graph metrics, etc.
 	 */
-	void render(Graphics2D graphics, GraphicGraph graph, double px2Gu,
-			int widthPx, int heightPx, double minXGu, double minYGu,
-			double maxXGu, double maxYGu);
+	void render(Graphics2D graphics, GraphicGraph graph, Camera camera);
 }

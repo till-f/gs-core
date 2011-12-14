@@ -42,7 +42,6 @@ import org.graphstream.graph.Graph;
 import org.graphstream.stream.ProxyPipe;
 import org.graphstream.stream.Source;
 import org.graphstream.stream.thread.ThreadProxyPipe;
-import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.layout.LayoutRunner;
@@ -537,11 +536,8 @@ public class Viewer implements ActionListener {
 				computeGraphMetrics();
 
 			for (View view : views.values()) {
-				BaseCamera camera = (BaseCamera)view.getCamera();
-				
-				if(camera.cameraChangedFlag() || changed) {
+				if(view.getCamera().cameraChangedFlag() || changed) {
 					view.display(graph, changed);
-					camera.resetCameraChangedFlag();
 				}
 			}
 			
@@ -567,18 +563,10 @@ public class Viewer implements ActionListener {
 	 * and sprites positions. We can only compute the graph bounds from the
 	 * nodes and sprites centers since the node and graph bounds may in certain
 	 * circumstances be computed according to the graph bounds. The bounds are
-	 * stored in the graph metrics.
+	 * stored in the graphic graph .
 	 */
 	protected void computeGraphMetrics() {
 		graph.computeBounds();
-
-		synchronized (views) {
-			Point3 lo = graph.getMinPos();
-			Point3 hi = graph.getMaxPos();
-
-			for (View view : views.values())
-				((BaseCamera)view.getCamera()).setBounds(lo.x, lo.y, lo.z, hi.x, hi.y, hi.z);
-		}
 	}
 
 	/**

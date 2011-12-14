@@ -33,139 +33,133 @@ package org.graphstream.ui.swingViewer;
 
 import java.awt.Container;
 import java.awt.Graphics2D;
-import java.util.ArrayList;
 
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 
 /**
- * Interface for classes that draw a GraphicGraph in a swing component.
+ * Interface for classes that draw a GraphicGraph in an AWT container.
  * 
  * <p>
  * There are two rendering mechanisms in this UI package: the viewer and
- * the renderers. The viewer is a complete architecture to render a graph in a
- * panel or frame, handling all the details of opening a window if needed, setting
- * up a graphic graph, a renderer and calling it when the graph is changed, with
- * a handling of the animation.
+ * the renderers. The viewer is a complete architecture to create a Swing container (the View)
+ * and manage several of them in a "viewer" that handles the animation (calls regularly
+ * the views if the graph changed). It handles all the details of opening a window if needed,
+ * setting up a graphic graph, and an eventual layout thread. The renderer is in charge of the
+ * drawing proper. It renders in a "surface" provided by the view. Separating the viewer and views
+ * from the renderers allow to have separate parts of the API handling very different tasks : to
+ * the viewer and views the role of handling the swing components, the graphic graph and all the
+ * pipelining with GraphStream. To the renderer the role of drawing a graph using whichever
+ * rendering technology that can draw in an AWT container.
  * </p>
  * 
- * <p>The renderer architecture is a way
- * to only render a graphic graph in any surface, handled directly by the developer. One could
- * use a renderer without using the {@link Viewer} or the {@link View}s. When using the renderer
- * you must handle the graphic graph by yourself, but you have a lot more flexibility.
+ * <p>Therefore, the renderer architecture is a way to only render a graphic graph in any surface,
+ * handled directly by the developer. One could also use a renderer without using the {@link Viewer}
+ * or the {@link View}s. When using the renderer you must handle the graphic graph by yourself, but
+ * you have a lot more flexibility.
  * </p>
  * 
  * <p>
- * The viewer mechanisms uses graph renderers.
+ * A renderer becomes active only after its {@link #open(GraphicGraph, Container)} method has been
+ * called. This method specifies the drawing surface it should use (an AWT container) and the
+ * graphic graph is draws on this surface. Similarly, when you are done with the renderer, you call
+ * the {@link #close()} method to free the surface.
+ * </p>
+ * 
+ * <p>
+ * The renderer provides a {@link Camera} object that tells how the graph is viewed. The camera
+ * allows to zoom on the graph, pan the view on the graph, rotate the view. It also allows the
+ * renderer to know which graph elements are visible, and which are not, allowing to fasten the
+ * drawing process when zooming on graphs with a very large number of elements.
  * </p>
  */
 public interface GraphRenderer {
 	/**
-	 * Called before any rendering operation.
+	 * Called before any rendering operation, the renderer becomes usable only after a call to this
+	 * method.
 	 * @param graph The graphic graph to draw.
 	 * @param drawingSurface The container that will receive the painting.
 	 */
 	void open(GraphicGraph graph, Container drawingSurface);
 
 	/**
-	 * Called when the renderer is about to be released.
+	 * Called when the renderer is about to be released, no rendering can occurs after that.
 	 */
 	void close();
 
 	/**
 	 * Get a camera object to provide control commands on which part of the graph is
-	 * shown by the renderer.
+	 * shown by the renderer and allows to know which element is visible, allows to
+	 * retrieve the elements at a given position, know some metrics on the graph, etc.
 	 * 
 	 * @return a Camera instance
 	 */
 	public abstract Camera getCamera();
 
-	/**
-	 * Search for the first node or sprite (in that order) that contains the
-	 * point at coordinates (x, y).
-	 * 
-	 * @param x
-	 *            The point abscissa.
-	 * @param y
-	 *            The point ordinate.
-	 * @return The first node or sprite at the given coordinates or null if
-	 *         nothing found.
-	 */
-	public abstract GraphicElement findNodeOrSpriteAt(double x, double y);
-
-	/**
-	 * Search for all the nodes and sprites contained inside the rectangle
-	 * (x1,y1)-(x2,y2).
-	 * 
-	 * @param x1
-	 *            The rectangle lowest point abscissa.
-	 * @param y1
-	 *            The rectangle lowest point ordinate.
-	 * @param x2
-	 *            The rectangle highest point abscissa.
-	 * @param y2
-	 *            The rectangle highest point ordinate.
-	 * @return The set of sprites and nodes in the given rectangle.
-	 */
-	public abstract ArrayList<GraphicElement> allNodesOrSpritesIn(double x1,
-			double y1, double x2, double y2);
-
 	// Command
 
 	/**
 	 * Redisplay or update the graph.
+	 * 
+	 * <p>
+	 * This method is called by the views in the swing viewer or by any other
+	 * mechanism. The caller must inform the viewer where in the rendering
+	 * surface the renderer should draw the graph by giving an area in pixels.
+	 * </p>
+	 * 
+	 * @param g The Java2D graphics associated with the rendering surface.
+	 * @param x The abscissa in pixels of the drawing area in the rendering surface.
+	 * @param y The ordinate in pixels of the drawing area in the rendering surface.
+	 * @param width The width in pixels of the drawing area in the rendering surface.
+	 * @param height The height in pixels of the drawing area in the rendering surface.
 	 */
-	public abstract void render(Graphics2D g, int width, int height);
+	public abstract void render(Graphics2D g, int x, int y, int width, int height);
 
 	/**
 	 * Called by the mouse manager to specify where a node and sprite selection
-	 * started.
+	 * started, in pixels.
 	 * 
-	 * @param x1
-	 *            The selection start abscissa.
-	 * @param y1
-	 *            The selection start ordinate.
+	 * @param x1 The selection start abscissa in pixels.
+	 * @param y1 The selection start ordinate in pixels.
 	 */
 	public abstract void beginSelectionAt(double x1, double y1);
 
 	/**
-	 * The selection already started grows toward position (x, y).
+	 * The selection already started grows toward position (x, y) in pixels. You must have called
+	 * {@link #beginSelectionAt(double, double)} for this method to work.
 	 * 
-	 * @param x
-	 *            The new end selection abscissa.
-	 * @param y
-	 *            The new end selection ordinate.
+	 * @param x The new end selection abscissa in pixels.
+	 * @param y The new end selection ordinate in pixels.
 	 */
 	public abstract void selectionGrowsAt(double x, double y);
 
 	/**
 	 * Called by the mouse manager to specify where a node and spite selection
-	 * stopped.
+	 * stopped in pixels. You must have called {@link #beginSelectionAt(double, double)}
+	 * for this method to work.
 	 * 
-	 * @param x2
-	 *            The selection stop abscissa.
-	 * @param y2
-	 *            The selection stop ordinate.
+	 * @param x2 The selection stop abscissa.
+	 * @param y2 The selection stop ordinate.
 	 */
 	public abstract void endSelectionAt(double x2, double y2);
 
 	/**
 	 * Force an element to move at the given location in pixels. This is
-	 * mainly used b mouse managers.
+	 * mainly used by mouse managers that move an element. To move an element is graph units,
+	 * use the "xy" or "xyz" attributes, as usual.
 	 * 
-	 * @param element
-	 *            The element.
-	 * @param x
-	 *            The requested position abscissa in pixels.
-	 * @param y
-	 *            The requested position ordinate in pixels.
+	 * @param element The element.
+	 * @param x The requested position abscissa in pixels.
+	 * @param y The requested position ordinate in pixels.
 	 */
-	public abstract void moveElementAtPx(GraphicElement element, double x,
-			double y);
+	public abstract void moveElementAtPx(GraphicElement element, double x, double y);
 
 	/**
-	 * Save a bitmap image file of the current rendering.
-	 * @param filename Name of the file to save.
+	 * Save a bitmap or vector image file of the current rendering.
+	 * 
+	 * @param filename Name of the file to save, the extension is used to define the file format,
+	 *  if the format is not supported, a default format is used, and the filename is changed
+	 *  accordingly.
 	 * @param width The width in pixels of the resulting image.
 	 * @param height The height in pixels of the resulting image.
 	 */
@@ -176,8 +170,7 @@ public interface GraphRenderer {
 	 * redrawn before the graph is rendered. Pass "null" to remove the layer
 	 * renderer.
 	 * 
-	 * @param renderer
-	 *            The renderer (or null to remove it).
+	 * @param renderer The renderer (or null to remove it).
 	 */
 	public abstract void setBackLayerRenderer(LayerRenderer renderer);
 
@@ -186,8 +179,7 @@ public interface GraphRenderer {
 	 * redrawn after the graph is rendered. Pass "null" to remove the layer
 	 * renderer.
 	 * 
-	 * @param renderer
-	 *            The renderer (or null to remove it).
+	 * @param renderer The renderer (or null to remove it).
 	 */
 	public abstract void setForeLayoutRenderer(LayerRenderer renderer);
 }
