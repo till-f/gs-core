@@ -42,10 +42,19 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
  * A view on a graphic graph.
  * 
  * <p>
- * Basically a view is a Swing panel where a {@link GraphRenderer} renders the
- * graphic graph. If you are in the Swing thread, you can change the view on the
- * graphic graph using methods to translate, zoom and rotate the view.
+ * A view is renderering surface where a {@link GraphRenderer} draws the graphic
+ * graph of the {@link Viewer}. Basically it is a an AWT container (indeed a
+ * {@link JPanel}). 
  * </p>
+ * 
+ * <h2>Threads</h2>
+ * 
+ * <p>
+ * As for the {@link Viewer}, the views ALWAYS run in the Swing thread. Some parts
+ * of the view interface are made to be used from this thread only, other parts are protected
+ * from concurrent accesses.
+ * </p>
+ * 
  */
 public abstract class View extends JPanel {
 	private static final long serialVersionUID = 4372240131578395549L;
@@ -85,13 +94,14 @@ public abstract class View extends JPanel {
 	}
 
 	/**
-	 * Get a camera object to provide control on which part of the graph appears in the view.
+	 * Get a camera object to provide control on which part of the graph appears in the view. Be
+	 * careful, this camera object can be used only in the Swing thread.
 	 */
 	public abstract Camera getCamera();
 
 	/**
 	 * Search for the first node or sprite (in that order) that contains the
-	 * point at coordinates (x, y).
+	 * point at coordinates (x, y). This method works only in the Swing thread.
 	 * 
 	 * @param x
 	 *            The point abscissa.
@@ -104,7 +114,7 @@ public abstract class View extends JPanel {
 
 	/**
 	 * Search for all the nodes and sprites contained inside the rectangle
-	 * (x1,y1)-(x2,y2).
+	 * (x1,y1)-(x2,y2). This method works only in the Swing thread.
 	 * 
 	 * @param x1
 	 *            The rectangle lowest point abscissa.
@@ -161,7 +171,7 @@ public abstract class View extends JPanel {
 
 	/**
 	 * Called by the mouse manager to specify where a node and sprite selection
-	 * started.
+	 * started. This method works only in the Swing thread.
 	 * 
 	 * @param x1
 	 *            The selection start abscissa.
@@ -171,7 +181,8 @@ public abstract class View extends JPanel {
 	public abstract void beginSelectionAt(double x1, double y1);
 
 	/**
-	 * The selection already started grows toward position (x, y).
+	 * The selection already started grows toward position (x, y). This method works only in
+	 * the Swing thread.
 	 * 
 	 * @param x
 	 *            The new end selection abscissa.
@@ -182,7 +193,7 @@ public abstract class View extends JPanel {
 
 	/**
 	 * Called by the mouse manager to specify where a node and spite selection
-	 * stopped.
+	 * stopped. This method works only in the Swing thread.
 	 * 
 	 * @param x2
 	 *            The selection stop abscissa.
@@ -192,7 +203,8 @@ public abstract class View extends JPanel {
 	public abstract void endSelectionAt(double x2, double y2);
 
 	/**
-	 * Force an element to move at the given location in pixels.
+	 * Force an element to move at the given location in pixels. This method works only in the
+	 * Swing thread.
 	 * 
 	 * @param element
 	 *            The element.
@@ -207,7 +219,7 @@ public abstract class View extends JPanel {
 	/**
 	 * Set a layer renderer that will be called each time the graph needs to be
 	 * redrawn before the graph is rendered. Pass "null" to remove the layer
-	 * renderer.
+	 * renderer. This method works from any thread.
 	 * 
 	 * @param renderer
 	 *            The renderer (or null to remove it).
@@ -217,7 +229,7 @@ public abstract class View extends JPanel {
 	/**
 	 * Set a layer renderer that will be called each time the graph needs to be
 	 * redrawn after the graph is rendered. Pass "null" to remove the layer
-	 * renderer.
+	 * renderer. This method works from any thread.
 	 * 
 	 * @param renderer
 	 *            The renderer (or null to remove it).
@@ -227,13 +239,15 @@ public abstract class View extends JPanel {
 	/**
 	 * The actual manager for mouse event. The mouse manager calls the view
 	 * method and tells what to do when the user interacts with the view using
-	 * the mouse.
+	 * the mouse. The returned object can only be used in the Swing thread.
+	 * 
 	 * @return The actual mouse manager.
 	 */
 	public abstract MouseManager getMouseManager();
 	
 	/**
-	 * Change the mouse manager.
+	 * Change the mouse manager. This method works from any thread.
+	 * 
 	 * @param mouseManager The new mouse manager.
 	 */
 	public abstract void setMouseManager(MouseManager mouseManager);
@@ -241,13 +255,14 @@ public abstract class View extends JPanel {
 	/**
 	 * The actual shortcut and keyboard manager. The shortcut manager calls the
 	 * view methods and tells what to do when the user interacts with the view
-	 * using the keyboard.
+	 * using the keyboard. The returned object can only be used in the Swing thread.
+	 * 
 	 * @return The actual shortcut manager.
 	 */
 	public abstract ShortcutManager getShortcutManager();
 	
 	/**
-	 * Change the shortcut and keyboard manager.
+	 * Change the shortcut and keyboard manager. This method works from any thread.
 	 * @param shortcutManager The new shortcut manager.
 	 */
 	public abstract void setShortcutManager(ShortcutManager shortcutManager);

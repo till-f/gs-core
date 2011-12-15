@@ -39,6 +39,7 @@ import java.awt.event.WindowListener;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
@@ -71,6 +72,10 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
  * {@link #display(GraphicGraph, boolean)} (that only calls repaint()) on a
  * regular basis (by default 25 frames per second), excepted if the graph did not
  * changed, in which case no redrawing is needed, and the CPU cycles can be saved.
+ * You are guaranteed that {@link #display(GraphicGraph, boolean)} is called only
+ * by the Viewer. This allows to separate the cases where the redraw is triggered
+ * by the Swing repaint mechanism, from repaints coming from the animation loop
+ * of the Viewer.
  * </p>
  * 
  * <p>
@@ -88,7 +93,7 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
  * 
  * <p>
  * This abstract view is able to create a frame that is added around this panel
- * (each view is a JPanel instance). The frame can be removed at any time.
+ * (each view is a {@link JPanel} instance). The frame can be removed at any time.
  * </p>
  * 
  * <h3>The frame closing protocol</h3>
@@ -99,6 +104,14 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
  * Furthermore it adds the "ui.viewClosed" attribute to the graph when the view
  * is closed or hidden, and removes it when the view is shown. The value of this
  * graph attribute is the identifier of the view.
+ * </p>
+ * 
+ * <h3>Threads</h3>
+ * 
+ * <p>
+ * As some methods are protected from concurrent accesses, this view will use the
+ * {@link Viewer} instance as the lock. The {@link Viewer} uses itself as a lock
+ * for its own synchronized methods.
  * </p>
  */
 public class DefaultView extends View implements WindowListener {
@@ -190,7 +203,7 @@ public class DefaultView extends View implements WindowListener {
 	}
 
 	@Override
-	public void close(GraphicGraph graph) {
+	protected void close(GraphicGraph graph) {
 		renderer.close();
 		graph.addAttribute("ui.viewClosed", getId());
 		removeKeyListener(shortcuts);
@@ -200,14 +213,14 @@ public class DefaultView extends View implements WindowListener {
 	}
 	
 	@Override
-	public void resizeFrame(int width, int height) {
+	protected void resizeFrame(int width, int height) {
 		if(frame != null) {
 			frame.setSize(width, height);
 		}
 	}
 
 	@Override
-	public void openInAFrame(boolean on) {
+	protected void openInAFrame(boolean on) {
 		if (on) {
 			if (frame == null) {
 				frame = new JFrame("GraphStream");
@@ -231,7 +244,7 @@ public class DefaultView extends View implements WindowListener {
 		}
 	}
 
-	public void render(Graphics2D g) {
+	protected void render(Graphics2D g) {
 		setBackground(graph.getStyle().getFillColor(0));
 		renderer.render(g, getX(), getY(), getWidth(), getHeight());
 
@@ -325,14 +338,18 @@ public class DefaultView extends View implements WindowListener {
 
 	@Override
 	public void setBackLayerRenderer(LayerRenderer renderer) {
-		this.renderer.setBackLayerRenderer(renderer);
-		repaint();
+		synchronized(viewer) {
+			this.renderer.setBackLayerRenderer(renderer);
+			repaint();
+		}
 	}
 
 	@Override
 	public void setForeLayoutRenderer(LayerRenderer renderer) {
-		this.renderer.setForeLayoutRenderer(renderer);
-		repaint();
+		synchronized(viewer) {
+			this.renderer.setForeLayoutRenderer(renderer);
+			repaint();
+		}
 	}
 	
 	@Override
@@ -342,18 +359,20 @@ public class DefaultView extends View implements WindowListener {
 	
 	@Override
 	public void setMouseManager(MouseManager mouseManager) {
-		if(mouseClicks != null) {
-			removeMouseListener(mouseClicks);
-			removeMouseMotionListener(mouseClicks);
-			removeMouseWheelListener(mouseClicks);
-		}
-		
-		mouseClicks = mouseManager;
-		
-		if(mouseClicks != null) {
-			addMouseListener(mouseClicks);
-			addMouseMotionListener(mouseClicks);
-			addMouseWheelListener(mouseClicks);
+		synchronized(viewer) {
+			if(mouseClicks != null) {
+				removeMouseListener(mouseClicks);
+				removeMouseMotionListener(mouseClicks);
+				removeMouseWheelListener(mouseClicks);
+			}
+			
+			mouseClicks = mouseManager;
+			
+			if(mouseClicks != null) {
+				addMouseListener(mouseClicks);
+				addMouseMotionListener(mouseClicks);
+				addMouseWheelListener(mouseClicks);
+			}
 		}
 	}
 	
@@ -364,14 +383,16 @@ public class DefaultView extends View implements WindowListener {
 	
 	@Override
 	public void setShortcutManager(ShortcutManager shortcutManager) {
-		if(shortcuts != null) {
-			removeKeyListener(shortcuts);
-		}
-		
-		shortcuts = shortcutManager;
-		
-		if(shortcuts != null) {
-			addKeyListener(shortcuts);
+		synchronized(viewer) {
+			if(shortcuts != null) {
+				removeKeyListener(shortcuts);
+			}
+			
+			shortcuts = shortcutManager;
+			
+			if(shortcuts != null) {
+				addKeyListener(shortcuts);
+			}
 		}
 	}
 }

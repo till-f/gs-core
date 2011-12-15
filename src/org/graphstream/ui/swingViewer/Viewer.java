@@ -42,6 +42,7 @@ import org.graphstream.graph.Graph;
 import org.graphstream.stream.ProxyPipe;
 import org.graphstream.stream.Source;
 import org.graphstream.stream.thread.ThreadProxyPipe;
+import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.layout.LayoutRunner;
@@ -52,37 +53,64 @@ import org.graphstream.ui.swingViewer.basicRenderer.SwingBasicGraphRenderer;
  * Set of views on a graphic graph.
  * 
  * <p>
- * The viewer class is in charge of maintaining :
- * <ul>
- * 		<li>A "graphic graph" (a special graph that internally stores the graph under
- * 		the form of style sets of "graphic" elements),</li>
- * 		<li>The eventual proxy pipe from which the events come from (but graph events
- * 		can come from any kind of source),</li>
- * 		<li>A default view, and eventually more views on the graphic graph.</li>
- * 		<li>A flag that allows to repaint the view only if the graphic graph changed.</li>
- * </ul>
+ * The viewer is an object whose role is to maintain a set of {@link View}s. Each view
+ * is a graphical representation of a graph. Each {@link View} owns a specific
+ * {@link GraphRenderer} that is in charge of really rendering the graph. Graph
+ * renderers can be chosen when adding a view.
+ * </p>
+ * 
+ * <h2>Graphic Graph</h2>
+ * 
+ * <p>
+ * The viewer is in charge of maintaining a {@link GraphicGraph}. The graphic graph is
+ * a special representation of the graph that defines the visual properties of nodes
+ * and edges and adds the notion of sprite. It contains a style sheet and a set of
+ * "style groups" that contains {@link GraphicElement}s having the same style.
  * </p>
  * 
  * <p>
- * The graphic graph can be created by the viewer or given at construction (to
+ * The graphic graph is updated from the real graph to display by being a sink
+ * of this graph. The graphic graph can be created by the viewer or given at construction (to
  * share it with another viewer).
  * </p>
  * 
+ * <h2>Threads</h2>
+ * 
  * <p>
- * Once created, the viewer runs in a loop inside the Swing thread, and repaint
- * the graph as soon as its dirty flag is on. It tries to do this at a
- * default maximum rate of 25 frames per second. However, be very careful
- * that the viewer runs in the Swing thread. Therefore all public methods in
- * this class are protected from concurrent accesses since they could be
- * accessed from another thread than the Swing thread.
+ * The viewer ALWAYS runs in the Swing thread. Be very careful, the Swing thread
+ * is not the thread your application runs at start (called the main thread). When
+ * designing a GUI, you often have all your code running from GUI events in the
+ * Swing thread, and your real graph is also accessed from this thread and there are
+ * no problems. When you are designing a small application that uses no GUI but only
+ * calls {@link Graph#display()}, you have two threads, the main thread and the Swing
+ * thread where the viewer runs. 
  * </p>
  * 
  * <p>
- * Some constructors allow a "ProxyPipe" as argument. If given, the graphic
- * graph is made listener of this pipe and the pipe is "pumped" during the view
- * loop. This allows to run algorithms on a graph in the main thread (or any
- * other thread) while letting the viewer run in the swing thread.
+ * The viewer is able to cope with these two threads by interposing a special
+ * {@link ProxyPipe} (instance of {@link ThreadProxyPipe}) so that the events from the real graph
+ * flow to the graphic graph in a safe way. But you have to tell it to the viewer. By default
+ * the viewer assumes your real graph is in the main thread and therefore creates a proxy pipe
+ * to protect from concurrent accesses. If you know your application runs in the Swing thread,
+ * you can inform the viewer that a proxy pipe is not needed and gain a lot more speed.
  * </p>
+ * 
+ * <p>
+ * Most of the methods of the viewer are protected from concurrent accesses, when it makes sense,
+ * but not all. This is documented individually in each method. For example the {@link #getGraphicGraph()}
+ * will allow you an access to the underlying graphic graph, but this graph is ALWAYS used in
+ * the Swing Thread. 
+ * </p>
+ *
+ * <h2>Animation and rendering loop</h2>
+ * 
+ * <p>
+ * Once created, the viewer runs in a loop inside the Swing thread. The viewer will activate
+ * at a given rate to redraw the graph. By default this rate is 25 frames per second. But
+ * this can be changed. However the viewer will avoid to repaint the graph is nothing changed
+ * either in the view (the camera object did not changed) or in the graph (the graphic
+ * graph object was not updated) since the last frame drawn. This mechanism is here to
+ * avoid consuming unneeded CPU cycles. 
  * </p>
  */
 public class Viewer implements ActionListener {
@@ -169,8 +197,6 @@ public class Viewer implements ActionListener {
 	 */
 	protected ArrayList<ViewerListener> listeners = new ArrayList<ViewerListener>();
 
-	// Construction
-
 	/**
 	 * The graph or source of graph events is in another thread or on another
 	 * machine, but the pipe already exists. The graphic graph displayed by this
@@ -197,14 +223,16 @@ public class Viewer implements ActionListener {
 	}
 
 	/**
-	 * New viewer on an existing graph. The viewer always run in the Swing
+	 * New viewer on an existing graph.
+	 * 
+	 * <p>The viewer always run in the Swing
 	 * thread, therefore, you must specify how it will take graph events from
 	 * the graph you give. If the graph you give will be accessed only from the
-	 * Swing thread use ThreadingModel.GRAPH_IN_SWING_THREAD. If the graph you
-	 * use is accessed in another thread use
-	 * ThreadingModel.GRAPH_IN_ANOTHER_THREAD. This last scheme is more powerful
-	 * since it allows to run algorithms on the graph in parallel with the
-	 * viewer.
+	 * Swing thread use {@link ThreadingModel#GRAPH_IN_SWING_THREAD}. If the graph you
+	 * use is accessed in another thread use {@link ThreadingModel#GRAPH_IN_ANOTHER_THREAD}.
+	 * Most of the time, when you are designing a GUI all your code will be invoked by
+	 * events, and therefore all your code will run in the Swing thread.
+	 * </p>
 	 * 
 	 * @param graph
 	 *            The graph to render.
@@ -278,10 +306,10 @@ public class Viewer implements ActionListener {
 	}
 
 	/**
-	 * Close definitively this viewer and all its views.
+	 * Close definitively this viewer and all its views. This can be called from any thread.
 	 */
 	public void close() {
-		synchronized (views) {
+		synchronized (this) {
 			disableAutoLayout();
 			timer.stop();
 			timer.removeActionListener(this);
@@ -346,32 +374,34 @@ public class Viewer implements ActionListener {
 	}
 
 	/**
-	 * What to do when a frame is closed.
+	 * What to do when a frame is closed. This can be used from any thread.
 	 */
 	public CloseFramePolicy getCloseFramePolicy() {
-		synchronized(views) {
+		synchronized(this) {
 			return closeFramePolicy;
 		}
 	}
 
 	/**
-	 * New proxy pipe on events coming from the viewer through a thread.
+	 * New proxy pipe on events coming from the viewer through a thread. This can be used
+	 * from any thread;
 	 * 
 	 * @return The new proxy pipe.
 	 */
 	public ProxyPipe newThreadProxyOnGraphicGraph() {
-		synchronized(views) {
+		synchronized(this) {
 			return new ThreadProxyPipe(graph);
 		}
 	}
 
 	/**
-	 * New viewer pipe on the events coming from the viewer through a thread.
+	 * New viewer pipe on the events coming from the viewer through a thread. This can be used
+	 * from any thread.
 	 * 
 	 * @return The new viewer pipe.
 	 */
 	public ViewerPipe newViewerPipe() {
-		synchronized(views) {
+		synchronized(this) {
 			return new ViewerPipe(String.format("viewer_%d",
 				(int) (Math.random() * 10000)), new ThreadProxyPipe(graph,
 				false));
@@ -387,21 +417,21 @@ public class Viewer implements ActionListener {
 	}
 
 	/**
-	 * The view that correspond to the given identifier.
+	 * The view that correspond to the given identifier. This can be used from any thread.
 	 * 
 	 * @param id
 	 *            The view identifier.
 	 * @return A view or null if not found.
 	 */
 	public View getView(String id) {
-		synchronized (views) {
+		synchronized(this) {
 			return views.get(id);
 		}
 	}
 	
 	/**
 	 * The default view. This is a shortcut to a call to {@link #getView(String)}
-	 * with {@link #DEFAULT_VIEW_ID} as parameter.
+	 * with {@link #DEFAULT_VIEW_ID} as parameter. This can be used from any thread.
 	 * 
 	 * @return The default view or null if no default view has been installed.
 	 */
@@ -414,14 +444,14 @@ public class Viewer implements ActionListener {
 	/**
 	 * Build the default graph view and insert it. The view identifier is
 	 * {@link #DEFAULT_VIEW_ID}. You can request the view to be open in its own
-	 * frame.
+	 * frame. This can be used from any thread.
 	 * 
 	 * @param openInAFrame
 	 *            It true, the view is placed in a frame, else the view is only
 	 *            created and you must embed it yourself in your application.
 	 */
 	public View addDefaultView(boolean openInAFrame) {
-		synchronized (views) {
+		synchronized(this) {
 			View view = new DefaultView(this, DEFAULT_VIEW_ID,
 					newGraphRenderer());
 			addView(view);
@@ -435,14 +465,15 @@ public class Viewer implements ActionListener {
 
 	/**
 	 * Add a view using its identifier. If there was already a view with this
-	 * identifier, it is closed and returned (if different of the one added).
+	 * identifier, it is closed and returned (if different of the one added). This
+	 * can be used from any thread.
 	 * 
 	 * @param view
 	 *            The view to add.
 	 * @return The old view that was at the given identifier, if any, else null.
 	 */
 	public View addView(View view) {
-		synchronized (views) {
+		synchronized(this) {
 			View old = views.put(view.getId(), view);
 
 			if (old != null && old != view)
@@ -455,7 +486,7 @@ public class Viewer implements ActionListener {
 	/**
 	 * Add a new default view with a specific renderer. If a view with the same
 	 * id exists, it is removed and closed. By default the view is open in a
-	 * frame.
+	 * frame. This can be used from any thread.
 	 * 
 	 * @param id
 	 *            The new view identifier.
@@ -469,7 +500,7 @@ public class Viewer implements ActionListener {
 
 	/**
 	 * Same as {@link #addView(String, GraphRenderer)} but allows to specify
-	 * that the view uses a frame or not.
+	 * that the view uses a frame or not. This can be used from any thread.
 	 * 
 	 * @param id
 	 *            The new view identifier.
@@ -481,7 +512,7 @@ public class Viewer implements ActionListener {
 	 * @return The created view.
 	 */
 	public View addView(String id, GraphRenderer renderer, boolean openInAFrame) {
-		synchronized (views) {
+		synchronized(this) {
 			View view = new DefaultView(this, id, renderer);
 			addView(view);
 
@@ -493,13 +524,13 @@ public class Viewer implements ActionListener {
 	}
 
 	/**
-	 * Remove a view.
+	 * Remove a view. This can be used from any thread.
 	 * 
 	 * @param id
 	 *            The view identifier.
 	 */
 	public void removeView(String id) {
-		synchronized (views) {
+		synchronized(this) {
 			views.remove(id);
 		}
 	}
@@ -521,7 +552,7 @@ public class Viewer implements ActionListener {
 	 * </p>
 	 */
 	public void actionPerformed(ActionEvent e) {
-		synchronized (views) {
+		synchronized(this) {
 			if (pumpPipe != null)
 				pumpPipe.pump();
 
@@ -570,13 +601,14 @@ public class Viewer implements ActionListener {
 	}
 
 	/**
-	 * What to do when the frame containing one or more views is closed.
+	 * What to do when the frame containing one or more views is closed. This can be
+	 * used from any thread.
 	 * 
 	 * @param policy
 	 *            The close frame policy.
 	 */
 	public void setCloseFramePolicy(CloseFramePolicy policy) {
-		synchronized(views) {
+		synchronized(this) {
 			closeFramePolicy = policy;
 		}
 	}
@@ -585,7 +617,7 @@ public class Viewer implements ActionListener {
 
 	/**
 	 * Launch an automatic layout process that will position nodes in the
-	 * background.
+	 * background. This can be used from any thread.
 	 */
 	public void enableAutoLayout() {
 		enableAutoLayout(Layouts.newLayoutAlgorithm());
@@ -593,14 +625,14 @@ public class Viewer implements ActionListener {
 
 	/**
 	 * Launch an automatic layout process that will position nodes in the
-	 * background.
+	 * background. This can be used from any thread.
 	 * 
 	 * @param layoutAlgorithm
 	 *            The algorithm to use (see Layouts.newLayoutAlgorithm() for the
 	 *            default algorithm).
 	 */
 	public void enableAutoLayout(Layout layoutAlgorithm) {
-		synchronized(views) {
+		synchronized(this) {
 			if (optLayout == null) {
 				optLayout = new LayoutRunner(graph, layoutAlgorithm, true, true);
 				layoutPipeIn = optLayout.newLayoutPipe();
@@ -610,10 +642,11 @@ public class Viewer implements ActionListener {
 	}
 
 	/**
-	 * Disable the running automatic layout process, if any.
+	 * Disable the running automatic layout process, if any. This can be used from
+	 * any thread.
 	 */
 	public void disableAutoLayout() {
-		synchronized(views) {
+		synchronized(this) {
 			if (optLayout != null) {
 				((ThreadProxyPipe) layoutPipeIn).unregisterFromSource();
 				layoutPipeIn.removeSink(graph);
@@ -644,7 +677,7 @@ public class Viewer implements ActionListener {
 	}
 	
 	/**
-	 * Remove a listener for events on the views.
+	 * Remove a listener for events on the views. This can be used only in the Swing thread.
 	 * @param listener The listener to remove.
 	 */
 	public void removeViewerListener(ViewerListener listener) {
