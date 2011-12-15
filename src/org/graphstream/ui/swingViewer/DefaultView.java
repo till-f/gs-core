@@ -436,18 +436,14 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	protected void handleCameraAttribute(String attribute, Object value) {
 		if(attribute.startsWith("ui.camera.")) {
 			attribute = attribute.substring(10);
-System.err.printf("attribute = %s --> ", attribute);
 			int pos = attribute.indexOf('.');
 			if(pos >= 0) {
 				String viewId = attribute.substring(0, pos);
-System.err.printf(" id = %s -- >", viewId);
 				if(viewId.equals(getId())) {
 					attribute = attribute.substring(pos+1);
-System.err.printf(" attribute = %s", attribute);
 					handleCameraAttributeValue(attribute, value);
 				}
 			}
-System.err.printf("%n");
 		}
 	}
 	

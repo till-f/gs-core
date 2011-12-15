@@ -32,12 +32,48 @@
 
 package org.graphstream.ui.viewer.test;
 
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.SingleGraph;
+import org.graphstream.ui.swingViewer.CameraManager;
+import org.graphstream.ui.swingViewer.Viewer;
+
 public class TestCameraManager {
 	public static void main(String args[]) {
 		(new TestCameraManager()).test();
 	}
 	
 	public void test() {
+		Graph graph = new SingleGraph("foo");
+		Node A = graph.addNode("A");
+		Node B = graph.addNode("B");
+		Node C = graph.addNode("C");
+		graph.addEdge("AB", "A", "B");
+		graph.addEdge("BC", "B", "C");
+		graph.addEdge("CA", "C", "A");
 		
+		A.addAttribute("xyz",  0,  1, 0);
+		B.addAttribute("xyz", -1, -1, 0);
+		C.addAttribute("xyz",  1, -1, 0);
+		
+		Viewer viewer = graph.display(false);
+		
+		CameraManager cam = new CameraManager(graph);
+		
+		String vid = viewer.getDefaultViewId();
+		int mode = 0;
+		
+		while(true) {
+			switch(mode) {
+				case 0: cam.setViewAutoFit(vid); break;
+				case 1: cam.setViewCenter(vid, 0, 1, 0); break;
+				case 2: cam.setViewCenter(vid, 0, 0, 0); cam.setViewPercent(vid, 1.5); break;
+				case 3: cam.setViewRotation(vid, 45); break;
+			}
+				
+			mode = (mode + 1)%4;
+			
+			try { Thread.sleep(1000); } catch(Exception e) {}
+		}
 	}
 }
