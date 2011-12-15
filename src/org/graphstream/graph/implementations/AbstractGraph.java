@@ -526,7 +526,7 @@ public abstract class AbstractGraph extends AbstractElement implements Graph {
 		Viewer viewer = new Viewer(this,
 				Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
 		GraphRenderer renderer = Viewer.newGraphRenderer();
-		viewer.addView(Viewer.DEFAULT_VIEW_ID, renderer);
+		viewer.addView(viewer.getDefaultViewId(), renderer);
 		if (autoLayout) {
 			Layout layout = Layouts.newLayoutAlgorithm();
 			viewer.enableAutoLayout(layout);

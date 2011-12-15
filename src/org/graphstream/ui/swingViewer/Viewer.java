@@ -117,7 +117,7 @@ public class Viewer implements ActionListener {
 	/**
 	 * Name of the default view.
 	 */
-	public static String DEFAULT_VIEW_ID = "defaultView";
+	protected String defaultViewId = "defView"+((int)(Math.random()*10000));
 
 	/**
 	 * What to do when a view frame is closed.
@@ -430,21 +430,29 @@ public class Viewer implements ActionListener {
 	}
 	
 	/**
+	 * Name of the default view.
+	 * @return The name of the default view.
+	 */
+	public String getDefaultViewId() {
+		return defaultViewId;
+	}
+	
+	/**
 	 * The default view. This is a shortcut to a call to {@link #getView(String)}
-	 * with {@link #DEFAULT_VIEW_ID} as parameter. This can be used from any thread.
+	 * with {@link #getDefaultViewId()} as parameter. This can be used from any thread.
 	 * 
 	 * @return The default view or null if no default view has been installed.
 	 */
 	public View getDefaultView() {
-		return getView(DEFAULT_VIEW_ID);
+		return getView(defaultViewId);
 	}
 
 	// Command
 
 	/**
 	 * Build the default graph view and insert it. The view identifier is
-	 * {@link #DEFAULT_VIEW_ID}. You can request the view to be open in its own
-	 * frame. This can be used from any thread.
+	 * {@link #getDefaultViewId()}. You can request the view to be open in its own
+	 * frame. You can do this only once. This can be used from any thread.
 	 * 
 	 * @param openInAFrame
 	 *            It true, the view is placed in a frame, else the view is only
@@ -452,13 +460,15 @@ public class Viewer implements ActionListener {
 	 */
 	public View addDefaultView(boolean openInAFrame) {
 		synchronized(this) {
-			View view = new DefaultView(this, DEFAULT_VIEW_ID,
-					newGraphRenderer());
-			addView(view);
+			View view = getDefaultView();
+			if(view == null) {
+				view = new DefaultView(this, defaultViewId, newGraphRenderer());
+				addView(view);
 
-			if (openInAFrame)
-				view.openInAFrame(true);
-
+				if (openInAFrame)
+					view.openInAFrame(true);
+			}
+			
 			return view;
 		}
 	}

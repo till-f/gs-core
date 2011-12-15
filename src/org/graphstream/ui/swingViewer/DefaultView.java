@@ -41,6 +41,8 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import org.graphstream.stream.AttributeSink;
+import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 
@@ -114,7 +116,7 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
  * for its own synchronized methods.
  * </p>
  */
-public class DefaultView extends View implements WindowListener {
+public class DefaultView extends View implements WindowListener, AttributeSink {
 
 	private static final long serialVersionUID = - 4489484861592064398L;
 
@@ -165,6 +167,7 @@ public class DefaultView extends View implements WindowListener {
 		setShortcutManager(new DefaultShortcutManager(this));
 		setMouseManager(new DefaultMouseManager(this.graph, this));
 		renderer.open(graph, this);
+		graph.addAttributeSink(this);
 	}
 
 	@Override
@@ -205,6 +208,7 @@ public class DefaultView extends View implements WindowListener {
 	@Override
 	protected void close(GraphicGraph graph) {
 		renderer.close();
+		graph.removeAttributeSink(this);
 		graph.addAttribute("ui.viewClosed", getId());
 		removeKeyListener(shortcuts);
 		removeMouseListener(mouseClicks);
@@ -393,6 +397,96 @@ public class DefaultView extends View implements WindowListener {
 			if(shortcuts != null) {
 				addKeyListener(shortcuts);
 			}
+		}
+	}
+	
+// AttributeSink
+
+	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+		handleCameraAttribute(attribute, value);
+	}
+
+	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue, Object newValue) {
+		handleCameraAttribute(attribute, newValue);
+	}
+
+	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+		handleCameraAttribute(attribute, null);
+	}
+
+	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) { } 
+	public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue, Object newValue) { } 
+	public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) { } 
+	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) { } 
+	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue, Object newValue) { } 
+	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) { }
+	
+	/**
+	 * Decode the "ui.camera." attributes and modify the camera settings accordingly.
+	 * 
+	 * <p>
+	 * This method understands the attributes "ui.camera.center" whose value must be either a Point3
+	 * or an array of three numbers. The "ui.camera.zoom" attribute which tells the view percent,
+	 * and a "ui.camera.angle" attribute which must be an angle in degree.
+	 * </p>
+	 * 
+	 * @param attribute The attribute to decode.
+	 * @param value The eventual value of the attribute, pass null to mean "attribute removed".
+	 */
+	protected void handleCameraAttribute(String attribute, Object value) {
+		if(attribute.startsWith("ui.camera.")) {
+			attribute = attribute.substring(10);
+System.err.printf("attribute = %s --> ", attribute);
+			int pos = attribute.indexOf('.');
+			if(pos >= 0) {
+				String viewId = attribute.substring(0, pos);
+System.err.printf(" id = %s -- >", viewId);
+				if(viewId.equals(getId())) {
+					attribute = attribute.substring(pos+1);
+System.err.printf(" attribute = %s", attribute);
+					handleCameraAttributeValue(attribute, value);
+				}
+			}
+System.err.printf("%n");
+		}
+	}
+	
+	protected void handleCameraAttributeValue(String attribute, Object value) {
+		if(value != null) {
+			if(attribute.equals("center")) {
+				Point3 center = new Point3();
+				if(value instanceof Point3) {
+					center.copy((Point3)value);
+				} else if(value instanceof Object[]) {
+					Object[] tab = (Object[]) value;
+					if(tab.length > 2 && tab[0] instanceof Number && tab[1] instanceof Number && tab[2] instanceof Number)
+						center.set(((Number)tab[0]).doubleValue(), ((Number)tab[1]).doubleValue(), ((Number)tab[2]).doubleValue());
+					else if(tab.length > 2 && tab[0] instanceof Number && tab[1] instanceof Number)
+						center.set(((Number)tab[0]).doubleValue(), ((Number)tab[1]).doubleValue(), 0);
+					else center.copy(getCamera().getViewCenter());
+				} else {
+					center.copy(getCamera().getViewCenter());
+				}
+				getCamera().setViewCenter(center.x, center.y, center.z);
+			} else if(attribute.equals("zoom")) {
+				if(value instanceof Number) {
+					double zoom = ((Number)value).doubleValue();
+					getCamera().setViewPercent(zoom);
+				}
+			} else if(attribute.equals("angle")) {
+				if(value instanceof Number) {
+					double angle = ((Number)value).doubleValue();
+					getCamera().setViewRotation(angle);
+				}				
+			}
+		} else {
+			if(attribute.equals("center")) {
+				getCamera().setAutoFitView(true);
+			} else if(attribute.equals("zoom")) {
+				getCamera().setViewPercent(1);
+			} else if(attribute.equals("angle")) {
+				getCamera().setViewRotation(0);
+			}			
 		}
 	}
 }
