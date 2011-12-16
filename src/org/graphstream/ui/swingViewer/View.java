@@ -31,7 +31,7 @@
  */
 package org.graphstream.ui.swingViewer;
 
-import java.util.ArrayList;
+import java.awt.Graphics2D;
 
 import javax.swing.JPanel;
 
@@ -42,7 +42,7 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
  * A view on a graphic graph.
  * 
  * <p>
- * A view is renderering surface where a {@link GraphRenderer} draws the graphic
+ * A view is rendering surface where a {@link GraphRenderer} draws the graphic
  * graph of the {@link Viewer}. Basically it is a an AWT container (indeed a
  * {@link JPanel}). 
  * </p>
@@ -52,9 +52,39 @@ import org.graphstream.ui.graphicGraph.GraphicGraph;
  * <p>
  * As for the {@link Viewer}, the views ALWAYS run in the Swing thread. Some parts
  * of the view interface are made to be used from this thread only, other parts are protected
- * from concurrent accesses.
+ * from concurrent accesses. This is documented individually in each method.
  * </p>
  * 
+ * <p>
+ * You will probably have few occasions to use views in another thread than the Swing
+ * one, excepted when creating them. The view provides control on the way the graph is
+ * seen using a {@link Camera} object. This object must be used only in the Swing thread,
+ * If you are in another thread, use the {@link CameraManager} class to control the view.
+ * </p>
+ * 
+ * <h2>View control</h2>
+ * 
+ * <p>
+ * You can setup a {@link MouseManager} and a {@link ShortcutManager} to handle user interaction
+ * with the view. By default the {@link DefaultMouseManager} and the {@link DefaultShortcutManager}
+ * classes are used. Theses classes are only a mouse listener and a keyboard listener, and they
+ * modify the view or camera according to the user interactions.
+ * </p>
+ * 
+ * <p>
+ * You can control a "selection area" that is usually drawn with the mouse in the view. This
+ * selection will put a "ui.selected" attribute on each node that lies within the selection
+ * area bounds. It is rare to have to use these methods excepted when creating a
+ * {@link MouseManager}.
+ * </p>
+ * 
+ * <p>
+ * In addition to this, you can put a {@link LayerRenderer} either under the graph rendering or
+ * above it. A layer renderer is an object that is called either before or after rendering by the
+ * view and is passed a {@link Graphics2D} instance to draw inside the view. You can with this
+ * draw whatever you want in addition to the graph. One common use of the back layer renderer is
+ * to put another viewer in it to render two graphs one above the other.
+ * </p>
  */
 public abstract class View extends JPanel {
 	private static final long serialVersionUID = 4372240131578395549L;
@@ -95,39 +125,10 @@ public abstract class View extends JPanel {
 
 	/**
 	 * Get a camera object to provide control on which part of the graph appears in the view. Be
-	 * careful, this camera object can be used only in the Swing thread.
+	 * careful, this camera object can be used only in the Swing thread. If you want to control
+	 * the camera from another thread use the {@link CameraManager} class.
 	 */
 	public abstract Camera getCamera();
-
-	/**
-	 * Search for the first node or sprite (in that order) that contains the
-	 * point at coordinates (x, y). This method works only in the Swing thread.
-	 * 
-	 * @param x
-	 *            The point abscissa.
-	 * @param y
-	 *            The point ordinate.
-	 * @return The first node or sprite at the given coordinates or null if
-	 *         nothing found.
-	 */
-	public abstract GraphicElement findNodeOrSpriteAt(double x, double y);
-
-	/**
-	 * Search for all the nodes and sprites contained inside the rectangle
-	 * (x1,y1)-(x2,y2). This method works only in the Swing thread.
-	 * 
-	 * @param x1
-	 *            The rectangle lowest point abscissa.
-	 * @param y1
-	 *            The rectangle lowest point ordinate.
-	 * @param x2
-	 *            The rectangle highest point abscissa.
-	 * @param y2
-	 *            The rectangle highest point ordinate.
-	 * @return The set of sprites and nodes in the given rectangle.
-	 */
-	public abstract ArrayList<GraphicElement> allNodesOrSpritesIn(double x1,
-			double y1, double x2, double y2);
 
 	/**
 	 * Redisplay or update the view contents. You should not need to call this
@@ -162,7 +163,7 @@ public abstract class View extends JPanel {
 
 	/**
 	 * Set the size of the view frame, if any. If this view has been open in a frame, this changes
-	 * the size of the frame containing it. 
+	 * the size of the frame containing it.  This must be called in the Swing thread.
 	 * 
 	 * @param width The new width.
 	 * @param height The new height.

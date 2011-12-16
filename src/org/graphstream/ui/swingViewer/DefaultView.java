@@ -36,7 +36,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.util.ArrayList;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -167,6 +166,7 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 		setShortcutManager(new DefaultShortcutManager(this));
 		setMouseManager(new DefaultMouseManager(this.graph, this));
 		renderer.open(graph, this);
+		checkInitialAttributes();
 		graph.addAttributeSink(this);
 	}
 
@@ -183,26 +183,9 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	@Override
 	public void paintComponent(Graphics g) {
 		// super.paintComponent(g);	// We do not want any background. We handle it.
-		checkTitle();
 		Graphics2D g2 = (Graphics2D) g;
 		render(g2);
 		((BaseCamera)renderer.getCamera()).resetCameraChangedFlag();
-	}
-
-	protected void checkTitle() {
-		if (frame != null) {
-			String titleAttr = String.format("ui.%s.title", getId());
-			String title = (String) graph.getLabel(titleAttr);
-
-			if (title == null)
-				title = (String) graph.getLabel("ui.default.title");
-
-			if (title == null)
-				title = (String) graph.getLabel("ui.title");
-			
-			if (title != null)
-				frame.setTitle(title);
-		}
 	}
 
 	@Override
@@ -325,17 +308,6 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	// Methods deferred to the renderer
 
 	@Override
-	public ArrayList<GraphicElement> allNodesOrSpritesIn(double x1, double y1,
-			double x2, double y2) {
-		return renderer.getCamera().allNodesOrSpritesIn(x1, y1, x2, y2);
-	}
-
-	@Override
-	public GraphicElement findNodeOrSpriteAt(double x, double y) {
-		return renderer.getCamera().findNodeOrSpriteAt(x, y);
-	}
-
-	@Override
 	public void moveElementAtPx(GraphicElement element, double x, double y) {
 		renderer.moveElementAtPx(element, x, y);
 	}
@@ -403,15 +375,15 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 // AttributeSink
 
 	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
-		handleCameraAttribute(attribute, value);
+		handleAttributes(attribute, value);
 	}
 
 	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue, Object newValue) {
-		handleCameraAttribute(attribute, newValue);
+		handleAttributes(attribute, newValue);
 	}
 
 	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
-		handleCameraAttribute(attribute, null);
+		handleAttributes(attribute, null);
 	}
 
 	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) { } 
@@ -422,34 +394,55 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) { }
 	
 	/**
-	 * Decode the "ui.camera." attributes and modify the camera settings accordingly.
+	 * Decode the "ui.camera." and "ui.title." attributes and modify the view and camera 
+	 * settings accordingly.
 	 * 
 	 * <p>
-	 * This method understands the attributes "ui.camera.center" whose value must be either a Point3
-	 * or an array of three numbers. The "ui.camera.zoom" attribute which tells the view percent,
-	 * and a "ui.camera.angle" attribute which must be an angle in degree.
+	 * This method understands the attributes:
+	 * <ul>
+	 * 		<li>"ui.VIEWID.camera.center", with VIEWID the identifier of this view,
+	 *          whose value must be either a Point3 or an array of three {@link Number}s.</li>
+	 *      <li>The "ui.VIEWID.camera.zoom" attribute which tells the view percent,
+	 *          and whose value must be a {@link Number}.</li>
+	 *      <li>The "ui.VIEWID.camera.angle" attribute which must be an angle in degreen
+	 *          with a {@link Number} value.</li>
+	 *      <li>The "ui.VIEWID.title", or "ui.title" attributes whose value must be a
+	 *          string and that change the eventual view frame title.</li>
 	 * </p>
 	 * 
+	 * <p>
+	 * It also understands the attributes
+	 * </p>
+	 *
 	 * @param attribute The attribute to decode.
 	 * @param value The eventual value of the attribute, pass null to mean "attribute removed".
 	 */
-	protected void handleCameraAttribute(String attribute, Object value) {
-		if(attribute.startsWith("ui.camera.")) {
-			attribute = attribute.substring(10);
+	protected void handleAttributes(String attribute, Object value) {
+		if(attribute.startsWith("ui.")) {
+			attribute = attribute.substring(3);
 			int pos = attribute.indexOf('.');
 			if(pos >= 0) {
 				String viewId = attribute.substring(0, pos);
 				if(viewId.equals(getId())) {
 					attribute = attribute.substring(pos+1);
-					handleCameraAttributeValue(attribute, value);
+					handleAttributeValue(attribute, value);
 				}
+			} else if(attribute.equals("ui.title")) {
+				handleAttributeValue("title", value);
 			}
 		}
 	}
 	
-	protected void handleCameraAttributeValue(String attribute, Object value) {
+	/**
+	 * Apply the attribute action on the view or camera. The actions can be "camera.center",
+	 * "camera.zoom" and "camera.angle" and "title".
+	 * @param attribute The attribute action.
+	 * @param value The value associated with the action.
+	 * @see #handleAttributes(String, Object)
+	 */
+	protected void handleAttributeValue(String attribute, Object value) {
 		if(value != null) {
-			if(attribute.equals("center")) {
+			if(attribute.equals("camera.center")) {
 				Point3 center = new Point3();
 				if(value instanceof Point3) {
 					center.copy((Point3)value);
@@ -464,25 +457,50 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 					center.copy(getCamera().getViewCenter());
 				}
 				getCamera().setViewCenter(center.x, center.y, center.z);
-			} else if(attribute.equals("zoom")) {
+			} else if(attribute.equals("camera.zoom")) {
 				if(value instanceof Number) {
 					double zoom = ((Number)value).doubleValue();
 					getCamera().setViewPercent(zoom);
 				}
-			} else if(attribute.equals("angle")) {
+			} else if(attribute.equals("camera.angle")) {
 				if(value instanceof Number) {
 					double angle = ((Number)value).doubleValue();
 					getCamera().setViewRotation(angle);
 				}				
+			} else if(attribute.equals("title")) {
+				frame.setTitle((String)value);
 			}
 		} else {
-			if(attribute.equals("center")) {
+			if(attribute.equals("camera.center")) {
 				getCamera().setAutoFitView(true);
-			} else if(attribute.equals("zoom")) {
+			} else if(attribute.equals("camera.zoom")) {
 				getCamera().setViewPercent(1);
-			} else if(attribute.equals("angle")) {
+			} else if(attribute.equals("camera.angle")) {
 				getCamera().setViewRotation(0);
 			}			
+		}
+	}
+	
+	/**
+	 * Check some known graph attributes to configure the view and camera. 
+	 */
+	protected void checkInitialAttributes() {
+		String basis  = String.format("ui.%s.", getId());
+		String title  = String.format("%s.title", basis);
+		String zoom   = String.format("%s.camera.zoom", basis);
+		String angle  = String.format("%s.camera.angle", basis);
+		String center = String.format("%s.camera.center", basis);
+		
+		if(graph.hasLabel("ui.title")) {
+			handleAttributeValue("title", graph.getLabel("ui.title"));
+		} else if(graph.hasLabel(title)) {
+			handleAttributeValue("title", graph.getLabel("title"));
+		} else if(graph.hasAttribute(zoom)) {
+			handleAttributeValue("camera.zoom", graph.getAttribute(zoom));
+		} else if(graph.hasAttribute(angle)) {
+			handleAttributeValue("camera.angle", graph.getAttribute(angle));
+		} else if(graph.hasAttribute(center)) {
+			handleAttributeValue("camera.center", graph.getAttribute(center));
 		}
 	}
 }

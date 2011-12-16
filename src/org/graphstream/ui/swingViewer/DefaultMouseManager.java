@@ -169,7 +169,7 @@ public class DefaultMouseManager implements MouseManager {
 	protected double x1, y1;
 
 	public void mouseClicked(MouseEvent event) {
-		GraphicElement e = view.findNodeOrSpriteAt(event.getX(), event.getY());
+		GraphicElement e = view.getCamera().findNodeOrSpriteAt(event.getX(), event.getY());
 		
 		if(e == null) {
 			mouseButtonPress(event);
@@ -177,7 +177,7 @@ public class DefaultMouseManager implements MouseManager {
 	}
 
 	public void mousePressed(MouseEvent event) {
-		curElement = view.findNodeOrSpriteAt(event.getX(), event.getY());
+		curElement = view.getCamera().findNodeOrSpriteAt(event.getX(), event.getY());
 
 		if (curElement != null) {
 			mouseButtonPressOnElement(curElement, event);
@@ -230,7 +230,7 @@ public class DefaultMouseManager implements MouseManager {
 					y2 = t;
 				}
 				
-				mouseButtonReleaseInSelection(event, view.allNodesOrSpritesIn(x1, y1, x2, y2));
+				mouseButtonReleaseInSelection(event, view.getCamera().allNodesOrSpritesIn(x1, y1, x2, y2));
 				view.endSelectionAt(x2, y2);
 			} else {
 				mouseDragEnd(event, x1, y1, x2, y2);
