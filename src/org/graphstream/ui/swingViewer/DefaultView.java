@@ -217,6 +217,7 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 				frame.setVisible(true);
 				frame.addWindowListener(this);
 				frame.addKeyListener(shortcuts);
+				checkInitialAttributes();
 			} else {
 				frame.setVisible(true);
 			}
@@ -468,7 +469,8 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 					getCamera().setViewRotation(angle);
 				}				
 			} else if(attribute.equals("title")) {
-				frame.setTitle((String)value);
+				if(frame != null)
+					frame.setTitle((String)value);
 			}
 		} else {
 			if(attribute.equals("camera.center")) {
