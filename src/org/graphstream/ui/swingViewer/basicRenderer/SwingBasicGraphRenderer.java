@@ -288,12 +288,12 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	}
 
 	protected void renderSelection(Graphics2D g) {
-		if (selection.active && selection.lo.x != selection.lo.x && selection.hi.y != selection.hi.y) {
+		if (selection.active && selection.lo.x != selection.hi.x && selection.lo.y != selection.hi.y) {
 			double t;
 			double x1 = selection.lo.x;
 			double y1 = selection.lo.y;
-			double x2 = selection.lo.x;
-			double y2 = selection.lo.y;
+			double x2 = selection.hi.x;
+			double y2 = selection.hi.y;
 			double w  = camera.getMetrics().surfaceViewport[2];
 			double h  = camera.getMetrics().surfaceViewport[3];
 
