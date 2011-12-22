@@ -144,6 +144,13 @@ public interface GraphRenderer {
 	public abstract void endSelectionAt(double x2, double y2);
 
 	/**
+	 * True if a selection was begun and not yet ended.
+	 * 
+	 * @return True if a selection is currently being drawn.
+	 */
+	public abstract boolean hasSelection();
+	
+	/**
 	 * Force an element to move at the given location in pixels. This is
 	 * mainly used by mouse managers that move an element. To move an element is graph units,
 	 * use the "xy" or "xyz" attributes, as usual.

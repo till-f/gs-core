@@ -263,6 +263,11 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 		renderer.endSelectionAt(x2, y2);
 		repaint();
 	}
+	
+	@Override
+	public boolean hasSelection() {
+		return renderer.hasSelection();
+	}
 
 	// Window Listener
 

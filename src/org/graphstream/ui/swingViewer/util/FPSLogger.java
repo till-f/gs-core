@@ -34,6 +34,8 @@ package org.graphstream.ui.swingViewer.util;
 
 import java.io.PrintStream;
 
+import org.graphstream.ui.graphicGraph.GraphicGraph;
+
 /**
  * Very simple logger for Frame-Per-Second measurements.
  */
@@ -80,8 +82,9 @@ public class FPSLogger {
    
    /** 
     * Start a new frame measurement.
+    * @param graph The graphic graph to draw.
     */
-   public void beginFrame() {
+   public void beginFrame(GraphicGraph graph) {
        T1 = System.currentTimeMillis();
    }
    
@@ -100,16 +103,18 @@ public class FPSLogger {
     * the frame lasted.
     * </p> 
     */
-   public void endFrame() {
+   public void endFrame(GraphicGraph graph) {
        T2 = System.currentTimeMillis();
        
        if(out == null) {
     	   try {
     		   out = new PrintStream(fileName);
-    		   out.println("# Each line is a frame, for each line, 3 fields:");
+    		   out.println("# Each line is a frame, for each line, 5 fields:");
     		   out.println("#   1 FPS instantaneous frame per second.");
     		   out.println("#   2 Time in milliseconds of the frame.");
     		   out.println("#   3 Average frame time so far.");
+    		   out.println("#   4 The number of nodes of the graph.");
+    		   out.println("#   5 The number of edges.");
     	   } catch(java.io.IOException e) {
     		   out = null;
     		   e.printStackTrace();
@@ -122,7 +127,7 @@ public class FPSLogger {
     	   time = time > 0 ? time : 1;
     	   double fps  = 1000.0 / time;
     	   sum += fps;
-    	   out.printf("%.3f   %d   %.3f%n", fps, time, sum/steps);
+    	   out.printf("%.3f   %d   %.3f   %d   %d%n", fps, time, sum/steps, graph.getNodeCount(), graph.getEdgeCount());
        }
    }
    

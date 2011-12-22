@@ -170,7 +170,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		}
 		
 		if(fpsLog != null) {
-			fpsLog.beginFrame();
+			fpsLog.beginFrame(graph);
 		}
 	}
 	
@@ -179,7 +179,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	 */
 	protected void endFrame() {
 		if(fpsLog != null) {
-			fpsLog.endFrame();
+			fpsLog.endFrame(graph);
 		}
 	}
 
@@ -297,15 +297,24 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 			double w  = camera.getMetrics().surfaceViewport[2];
 			double h  = camera.getMetrics().surfaceViewport[3];
 
+			Point3 lo = camera.transformPxToGu(new Point3(selection.lo));
+			Point3 hi = camera.transformPxToGu(new Point3(selection.hi));
+
 			if (x1 > x2) {
 				t  = x1;
 				x1 = x2;
 				x2 = t;
+				t = lo.x;
+				lo.x = hi.x;
+				hi.x = t;
 			}
 			if (y1 > y2) {
 				t  = y1;
 				y1 = y2;
 				y2 = t;
+				t = lo.y;
+				lo.y = hi.y;
+				hi.y = t;
 			}
 
 			Stroke s = g.getStroke();
@@ -319,6 +328,10 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 			g.setColor(new Color(250, 200, 0));
 			g.drawRect((int) x1, (int) y1, (int) (x2 - x1), (int) (y2 - y1));
 			g.setStroke(s);
+			
+			g.setColor(graph.getStyle().getStrokeColor().get(0));
+			g.drawString(String.format("(%.3f, %.3f)", lo.x, lo.y), (int)x1, (int)y1);
+			g.drawString(String.format("(%.3f, %.3f)", hi.x, hi.y), (int)x2, (int)y2);
 		}
 	}
 

@@ -122,6 +122,10 @@ public abstract class GraphRendererBase implements GraphRenderer,
 	public void endSelectionAt(double x2, double y2) {
 		selection.active = false;
 	}
+	
+	public boolean hasSelection() {
+		return selection.active;
+	}
 
 	/**
 	 * Utility method that draws a "nothing to display" message.

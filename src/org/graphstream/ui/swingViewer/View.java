@@ -204,6 +204,13 @@ public abstract class View extends JPanel {
 	public abstract void endSelectionAt(double x2, double y2);
 
 	/**
+	 * True if a selection was begun and not yet ended.
+	 *
+	 * @return True if a selection is actually drawn.
+	 */
+	public abstract boolean hasSelection();
+	
+	/**
 	 * Force an element to move at the given location in pixels. This method works only in the
 	 * Swing thread.
 	 * 

@@ -197,7 +197,7 @@ public class DefaultMouseManager implements MouseManager {
 		if (curElement != null) {
 			elementMoving(curElement, event);
 		} else {
-			if(event.isShiftDown()) {
+			if(event.isShiftDown()||view.hasSelection()) {
 				view.selectionGrowsAt(event.getX(), event.getY());
 			} else {
 				double x2 = event.getX();
@@ -216,7 +216,7 @@ public class DefaultMouseManager implements MouseManager {
 		} else {
 			double x2 = event.getX();
 			double y2 = event.getY();
-			if(event.isShiftDown()) {
+			if(event.isShiftDown()||view.hasSelection()) {
 				double t;
 
 				if (x1 > x2) {
