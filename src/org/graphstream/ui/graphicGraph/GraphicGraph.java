@@ -393,8 +393,8 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	 */
 	public void computeBounds() {
 		if (boundsChanged) {
-			lo.x = lo.y = lo.z = Double.MAX_VALUE;
-			hi.x = hi.y = hi.z = Double.MIN_VALUE;
+			lo.x = lo.y = lo.z = Double.POSITIVE_INFINITY;
+			hi.x = hi.y = hi.z = Double.NEGATIVE_INFINITY;
 
 			for (Node n : getEachNode()) {
 				GraphicNode node = (GraphicNode) n;
