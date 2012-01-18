@@ -496,7 +496,9 @@ public abstract class GraphicElement extends AbstractGraphicElement {
 		} else {
 			// REMOVE
 			if (attribute.equals("ui.class")) {
+				Object o = attributes.remove("ui.class");	// Horror !
 				mygraph.styleGroups.checkElementStyleGroup(this);
+				attributes.put("ui.class", o);
 				mygraph.graphChanged = true;
 				if(skeleton != null) skeleton.styleChanged();
 			} else if (attribute.equals("label")
