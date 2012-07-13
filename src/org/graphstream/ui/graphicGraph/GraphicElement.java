@@ -47,13 +47,14 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
  * Base class for nodes, sprites and edges graphic representation, used in the {@link GraphicGraph}.
  * </p>
  * 
- * <h2>Graphic ?</h2>
+ * <h2>Graphics ?</h2>
  * 
  * <p>
  * Each graphic element has specific fields and methods dedicated to graphics. Each element at least
  * has:
  * <ul>
- * 	<li>a style (group), defining the CSS properties applying on the element,</li>
+ * 	<li>a style (group), defining the CSS properties applying on the element (and all the
+ *     elements of the same group),</li>
  * 	<li>a label, that may be null (by default),</li>
  *  <li>a hidden flag, indicating if the element should be visible.</li>
  * </p>

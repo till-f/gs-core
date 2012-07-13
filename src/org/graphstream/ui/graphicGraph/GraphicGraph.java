@@ -64,6 +64,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleSheet;
 import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+import org.graphstream.ui.spriteManager.SpriteManager;
 
 /**
  * Graph representation used in display classes.
@@ -90,7 +91,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  *
  * <p>
  * The graphic graph does not completely duplicate a graph, it only
- * store things that are useful for drawing it. Although it implements "Graph",
+ * stores things that are useful for drawing it. Although it implements "Graph",
  * some methods are not implemented and will throw a runtime exception. These
  * methods are mostly utility methods like write(), read(), and naturally
  * display().
@@ -100,7 +101,8 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  * 
  * <p>
  * The style sheet is uploaded on the graph using an attribute correspondingly
- * named "stylesheet" or "ui.stylesheet" (the second one is better). It can be
+ * named "stylesheet" or "ui.stylesheet" (the second one is preferred as all
+ * attributes touching the viewer should be prefixed by "ui."). It can be
  * a string that contains the whole style sheet, or an URL of the form :
  * </p>
  * 
@@ -118,7 +120,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  * 		<li>All attributes starting with "ui.".</li>
  * 		<li>The "x", "y", "z", "xy" and "xyz" attributes.</li>
  * 		<li>The "stylesheet" attribute (although "ui.stylesheet" is preferred).</li>
- * 		<li>The "label" attribute.</li>
+ * 		<li>The "label" attribute (altough "ui.label" is preferred).</li>
  * </ul>
  * All other attributes are filtered and not stored. The result is that if the
  * graphic graph is used as an input (a source of graph events) some attributes
@@ -142,7 +144,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
  * and GraphicEdge instances. These factories cannot be changed. In addition, the
  * graph handles the specific "ui.sprite." attributes to generate GraphicSprite
  * instances that allow to easily handle sprites. In this graph, sprites are elements
- * like nodes and edges.
+ * like nodes and edges, not only attributes.
  * </p>
  * 
  * <p>
@@ -184,7 +186,7 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	protected StyleGroupSet styleGroups;
 
 	/**
-	 * Connectivity.  The way nodes are connected one with another via edges. The map is sorted
+	 * Connectivity. The way nodes are connected one with another via edges. The map is sorted
 	 * by node. For each node an array of edges lists the connectivity.
 	 */
 	protected HashMap<GraphicNode, ArrayList<GraphicEdge>> connectivity;
@@ -381,7 +383,7 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	 * </p>
 	 * 
 	 * <p>
-	 * This operation will process each node and sprite and is therefore costly.
+	 * This operation will process each node and (non attached) sprite and is therefore costly.
 	 * However it does this computation again only when a node or sprite moved,
 	 * according to an internal flag set by each {@link GraphicNode} or
 	 * {@link GraphicSprite} when they move. Therefore it can be called several times,
@@ -513,12 +515,6 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 
 		if (node != null) {
 			node.move(x, y, z);
-//			node.x = x;
-//			node.y = y;
-//			node.z = z;
-//			node.addAttribute("x", x);
-//			node.addAttribute("y", y);
-//			node.addAttribute("z", z);
 
 			graphChanged = true;
 		}
@@ -1036,7 +1032,8 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	 * This method is called when a sprite attribute changed on the graph (or
 	 * on a node or edge). It handle the attributes, creating or deleting {@link GraphicSprite}
 	 * objects as needed, or updating them to reflect their current state. This
-	 * is the main method in charge of handling the set of sprites.
+	 * is the main method in charge of handling the set of sprites. It can be
+	 * seen as the equivalent of the {@link SpriteManager} in the public API.
 	 */
 	protected void spriteAttribute(AttributeChangeEvent event, Element element,
 			String attribute, Object value) {
@@ -1309,8 +1306,11 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	 * factory will be invoked if the element does not own a skeleton.
 	 */
 	public interface SkeletonFactory {
+		/** Create a new skeleton for a node. */
 		Skeleton newNodeSkeleton();
+		/** Create a new skeleton for an edge. */
 		Skeleton newEdgeSkeleton();
+		/** Create a new skeleton for a sprite. */
 		Skeleton newSpriteSkeleton();
 	}
 	
