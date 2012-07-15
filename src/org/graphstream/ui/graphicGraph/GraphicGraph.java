@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -372,6 +370,25 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	}
 
 	/**
+	 * Does the graphic graph publish via attribute changes the XYZ changes on nodes and sprites
+	 * when changed ?. This is disabled by default, and enabled as soon as there is at least one
+	 * listener.
+	 */
+	public boolean feedbackXYZ() {
+		return feedbackXYZ;
+	}
+
+	// Command
+
+	/**
+	 * Should the graphic graph publish via attribute changes the XYZ changes on
+	 * nodes and sprites when changed ?.
+	 */
+	public void feedbackXYZ(boolean on) {
+		feedbackXYZ = on;
+	}
+
+	/**
 	 * Compute the overall bounds of the graphic graph according to the nodes
 	 * and sprites positions.
 	 * 
@@ -440,6 +457,10 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 				}
 			}
 
+			if((hi.x - lo.x < 0.000001)) { hi.x = 1; lo.x = -1; }   
+			if((hi.y - lo.y < 0.000001)) { hi.y = 1; lo.y = -1; }   
+			if((hi.z - lo.z < 0.000001)) { hi.z = 1; lo.z = -1; }   
+			
 			boundsChanged = false;
 		}
 	}
@@ -453,9 +474,11 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 			GraphicNode n1 = (GraphicNode) styleGroups.getNode(from);
 			GraphicNode n2 = (GraphicNode) styleGroups.getNode(to);
 
-			if (n1 == null || n2 == null)
-				throw new RuntimeException(
-						"org.miv.graphstream.ui.graphicGraph.GraphicGraph.addEdge() : ERROR : one of the nodes does not exist");
+			if (n1 == null)
+				throw new ElementNotFoundException("node \"%s\"", from);
+
+			if (n2 == null)
+				throw new ElementNotFoundException("node \"%s\"", to);
 
 			edge = new GraphicEdge(id, n1, n2, directed, attributes);
 
@@ -613,7 +636,9 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 		// One of the most important method. Most of the communication comes
 		// from attributes.
 
-		if (attribute.equals("ui.stylesheet") || attribute.equals("stylesheet")) {
+		if (attribute.equals("ui.repaint")) {
+			graphChanged = true;
+		} else if (attribute.equals("ui.stylesheet") || attribute.equals("stylesheet")) {
 			if (event == AttributeChangeEvent.ADD
 					|| event == AttributeChangeEvent.CHANGE) {
 				if (newValue instanceof String) {
@@ -649,10 +674,12 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	}
 
 	public void clear(String sourceId, long timeId) {
+		clearAttributes_(sourceId, timeId);
 		listeners.sendGraphCleared(sourceId, timeId);
 		connectivity.clear();
 		styleGroups.clear();
-
+		styleSheet.clear();
+//		attributes.clear();
 		step = 0;
 		graphChanged = true;
 	}
@@ -727,7 +754,7 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 			}
 
 			public int size() {
-				return getNodeCount();
+				return getEdgeCount();
 			}
 		};
 	}
@@ -1330,5 +1357,46 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	 */
 	public void setSkeletonFactory(SkeletonFactory factory) {
 		skeletonFactory = factory;
+	}
+
+	/**
+	 * Replay all the elements of the graph and all attributes as new events to
+	 * all connected sinks.
+	 * 
+	 * Be very careful with this method, it introduces new events in the event
+	 * stream and some sinks may therefore receive them twice !! Graph replay
+	 * is always dangerous !
+	 */
+	public void replay() {
+		// Replay all graph attributes.
+
+		if (getAttributeKeySet() != null)
+			for (String key : getAttributeKeySet()) {
+				listeners.sendGraphAttributeAdded(id, key, getAttribute(key));
+			}
+
+		// Replay all nodes and their attributes.
+
+		for (Node node : this) {
+			listeners.sendNodeAdded(id, node.getId());
+
+			if (node.getAttributeKeySet() != null) {
+				for (String key : node.getAttributeKeySet()) {
+					listeners.sendNodeAttributeAdded(id, node.getId(), key, node.getAttribute(key));
+				}
+			}
+		}
+
+		// Replay all edges and their attributes.
+
+		for (Edge edge : getEachEdge()) {
+			listeners.sendEdgeAdded(id, edge.getId(), edge.getSourceNode().getId(), edge.getTargetNode().getId(), edge.isDirected());
+			
+			if (edge.getAttributeKeySet() != null) {
+				for (String key : edge.getAttributeKeySet()) {
+					listeners.sendEdgeAttributeAdded(id, edge.getId(), key, edge.getAttribute(key));
+				}
+			}
+		}
 	}
 }

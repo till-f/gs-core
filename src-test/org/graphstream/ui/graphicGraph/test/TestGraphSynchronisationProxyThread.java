@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -127,7 +125,7 @@ public class TestGraphSynchronisationProxyThread {
 		// ****************************************************************************************
 		// Now we can begin the real test. We ensure the timer in the Swing
 		// graph stopped and check
-		// If the two graphs (main and graphic) synchronised correctly.
+		// If the two graphs (main and graphic) synchronized correctly.
 
 		GraphicGraph graphic = viewerThread.graphic;
 
@@ -164,9 +162,9 @@ public class TestGraphSynchronisationProxyThread {
 
 		// Assert attributes passed back to the graph from the graphic graph.
 
-		Object xyz1[] = { new Float(4), new Float(3), new Float(2) };
-		Object xyz2[] = { new Float(2), new Float(1), new Float(0) };
-		Object xyz3[] = { new Float(3), new Float(2), new Float(1) };
+		Object xyz1[] = { 4, 3, 2 };
+		Object xyz2[] = { 2, 1, 0 };
+		Object xyz3[] = { 3, 2, 1 };
 
 		assertArrayEquals(xyz1, (Object[]) main.getNode("A")
 				.getAttribute("xyz"));

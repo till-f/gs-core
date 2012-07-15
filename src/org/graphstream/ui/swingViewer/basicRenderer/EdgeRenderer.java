@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -179,8 +177,11 @@ public class EdgeRenderer extends ElementRenderer {
 		double w = size.x;
 		double h = size.y;
 
+		w /= 2;
+		h /= 2;
+				
 		if (w == h)
-			return w / 2; // Welcome simplification for circles ...
+			return w; // Welcome simplification for circles ...
 
 		// Vector of the entering edge.
 
@@ -212,5 +213,4 @@ public class EdgeRenderer extends ElementRenderer {
 
 		return Math.sqrt(dx * dx + dy * dy);
 	}
-
 }

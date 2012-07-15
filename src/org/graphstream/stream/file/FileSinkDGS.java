@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -136,7 +134,7 @@ public class FileSinkDGS extends FileSinkBase {
 	}
 
 	public void graphCleared(String graphId, long timeId) {
-		out.printf("clear%n");
+		out.printf("cl%n");
 	}
 
 	public void nodeAdded(String graphId, long timeId, String nodeId) {
@@ -164,25 +162,10 @@ public class FileSinkDGS extends FileSinkBase {
 		if (remove) {
 			return String.format(" -\"%s\"", key);
 		} else {
-			if (value != null && value.getClass().isArray()) {
-				return String.format("\"%s\":%s", key, arrayString(value));
-				/*
-				 * Object[] values = (Object[]) value; StringBuffer sb = new
-				 * StringBuffer();
-				 * 
-				 * sb.append(String.format(" \"%s\":", key));
-				 * 
-				 * if (values.length > 0) sb.append(valueString(values[0]));
-				 * else sb.append("\"\"");
-				 * 
-				 * for (int i = 1; i < values.length; ++i)
-				 * sb.append(String.format(",%s", valueString(values[i])));
-				 * 
-				 * return sb.toString();
-				 */
-			} else {
+			if (value != null && value.getClass().isArray())
+				return String.format(" \"%s\":%s", key, arrayString(value));
+			else
 				return String.format(" \"%s\":%s", key, valueString(value));
-			}
 		}
 	}
 
@@ -208,6 +191,9 @@ public class FileSinkDGS extends FileSinkBase {
 	}
 
 	protected String valueString(Object value) {
+		if (value == null)
+			return "\"\"";
+
 		if (value instanceof CharSequence) {
 			if (value instanceof String)
 				return String.format("\"%s\"",
@@ -215,23 +201,17 @@ public class FileSinkDGS extends FileSinkBase {
 			else
 				return String.format("\"%s\"", (CharSequence) value);
 		} else if (value instanceof Number) {
+			Number nval = (Number) value;
+
 			if (value instanceof Integer || value instanceof Short
-					|| value instanceof Byte || value instanceof Long) {
-				return String.format(Locale.US, "%d", ((Number) value)
-						.longValue());
-			} else if (value instanceof Float || value instanceof Double) {
-				return String.format(Locale.US, "%f", ((Number) value)
-						.doubleValue());
-			} else if (value instanceof Character) {
-				return String.format("\"%c\"", ((Character) value).charValue());
-			} else if (value instanceof Boolean) {
-				return String.format(Locale.US, "\"%b\"", ((Boolean) value));
-			} else {
-				return String.format(Locale.US, " %f", ((Number) value)
-						.doubleValue());
-			}
-		} else if (value == null) {
-			return "\"\"";
+					|| value instanceof Byte || value instanceof Long)
+				return String.format(Locale.US, "%d", nval.longValue());
+			else
+				return String.format(Locale.US, "%f", nval.doubleValue());
+		} else if (value instanceof Boolean) {
+			return String.format(Locale.US, "%b", ((Boolean) value));
+		} else if (value instanceof Character) {
+			return String.format("\"%c\"", ((Character) value).charValue());
 		} else if (value instanceof Object[]) {
 			Object array[] = (Object[]) value;
 			int n = array.length;

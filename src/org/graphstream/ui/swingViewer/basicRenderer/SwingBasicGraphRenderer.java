@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -409,6 +407,22 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 						out.outputTo(filename);
 					} else {
 						System.err.printf("plugin %s is not an instance of Graphics2DOutput (%s)%n", plugin, o.getClass().getName());
+					}
+				} else if(filename.toLowerCase().endsWith("svg")) {
+					try {
+						String plugin = "org.graphstream.ui.batik.BatikGraphics2D";
+						Class<?> c = Class.forName(plugin);
+						Object o = c.newInstance();
+						if(o instanceof Graphics2DOutput) {
+							Graphics2DOutput out = (Graphics2DOutput) o;
+							Graphics2D g2 = out.getGraphics();
+							render(g2, 0, 0, width, height);
+							out.outputTo(filename);
+						} else {
+							System.err.printf("plugin %s is not an instance of Graphics2DOutput (%s)%n", plugin, o.getClass().getName());
+						}
+					} catch(Exception e) {
+						e.printStackTrace();
 					}
 				} else {// if (filename.toLowerCase().endsWith("jpg") || filename.toLowerCase().endsWith("jpeg")) {
 					BufferedImage img = new BufferedImage(width, height,

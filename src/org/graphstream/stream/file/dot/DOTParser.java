@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -36,6 +34,7 @@ import java.io.IOException;
 import java.io.Reader;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 import org.graphstream.stream.SourceBase.ElementType;
@@ -89,6 +88,11 @@ public class DOTParser implements Parser, DOTParserConstants {
 	private HashMap<String, Object> globalEdgesAttributes;
 
 	/**
+	 * IDs of added nodes.
+	 */
+	private HashSet<String> nodeAdded;
+
+	/**
 	 * Create a new parser associated with a DOT source from an input stream.
 	 */
 	public DOTParser(FileSourceDOT dot, InputStream stream) {
@@ -117,29 +121,42 @@ public class DOTParser implements Parser, DOTParserConstants {
 
 		globalNodesAttributes = new HashMap<String, Object>();
 		globalEdgesAttributes = new HashMap<String, Object>();
+
+		nodeAdded = new HashSet<String>();
 	}
 
 	private void addNode(String nodeId, String[] port,
 			HashMap<String, Object> attr) {
-		dot.sendNodeAdded(sourceId, nodeId);
-
-		if (attr == null) {
-			for (String key : globalNodesAttributes.keySet())
-				dot.sendAttributeChangedEvent(sourceId, nodeId,
-						ElementType.NODE, key, AttributeChangeEvent.ADD, null,
-						globalNodesAttributes.get(key));
+		if (nodeAdded.contains(nodeId)) {
+			if (attr != null) {
+				for (String key : attr.keySet())
+					dot.sendAttributeChangedEvent(sourceId, nodeId,
+							ElementType.NODE, key, AttributeChangeEvent.ADD,
+							null, attr.get(key));
+			}
 		} else {
-			for (String key : globalNodesAttributes.keySet()) {
-				if (!attr.containsKey(key))
+			dot.sendNodeAdded(sourceId, nodeId);
+			nodeAdded.add(nodeId);
+
+			if (attr == null) {
+				for (String key : globalNodesAttributes.keySet())
 					dot.sendAttributeChangedEvent(sourceId, nodeId,
 							ElementType.NODE, key, AttributeChangeEvent.ADD,
 							null, globalNodesAttributes.get(key));
-			}
+			} else {
+				for (String key : globalNodesAttributes.keySet()) {
+					if (!attr.containsKey(key))
+						dot.sendAttributeChangedEvent(sourceId, nodeId,
+								ElementType.NODE, key,
+								AttributeChangeEvent.ADD, null,
+								globalNodesAttributes.get(key));
+				}
 
-			for (String key : attr.keySet())
-				dot.sendAttributeChangedEvent(sourceId, nodeId,
-						ElementType.NODE, key, AttributeChangeEvent.ADD, null,
-						attr.get(key));
+				for (String key : attr.keySet())
+					dot.sendAttributeChangedEvent(sourceId, nodeId,
+							ElementType.NODE, key, AttributeChangeEvent.ADD,
+							null, attr.get(key));
+			}
 		}
 	}
 
@@ -152,6 +169,12 @@ public class DOTParser implements Parser, DOTParserConstants {
 		for (int i = 0; i < edges.size() - 1; i += 2) {
 			String from = edges.get(i);
 			String to = edges.get(i + 2);
+
+			if (!nodeAdded.contains(from))
+				addNode(from, null, null);
+			if (!nodeAdded.contains(to))
+				addNode(to, null, null);
+
 			String edgeId = String.format("(%s;%s)", from, to);
 			String rev = String.format("(%s;%s)", to, from);
 
@@ -160,7 +183,7 @@ public class DOTParser implements Parser, DOTParserConstants {
 			} else {
 				hash.put(edgeId, count);
 				ids[count] = edgeId;
-				directed[count] = edges.get(i).equals("->");
+				directed[count] = edges.get(i + 1).equals("->");
 
 				count++;
 			}
@@ -174,8 +197,8 @@ public class DOTParser implements Parser, DOTParserConstants {
 		}
 
 		for (int i = 0; i < count; i++) {
-			dot.sendEdgeAdded(sourceId, ids[i], edges.get(i * 2),
-					edges.get((i + 1) * 2), directed[i]);
+			dot.sendEdgeAdded(sourceId, ids[i], edges.get(i * 2), edges
+					.get((i + 1) * 2), directed[i]);
 
 			if (attr == null) {
 				for (String key : globalEdgesAttributes.keySet())
@@ -257,11 +280,8 @@ public class DOTParser implements Parser, DOTParserConstants {
 			jj_consume_token(-1);
 			throw new ParseException();
 		}
-		{
-			if (true)
-				return hasMore;
-		}
-		throw new Error("Missing return statement in function");
+
+		return hasMore;
 	}
 
 	final public void open() throws ParseException {
@@ -344,26 +364,27 @@ public class DOTParser implements Parser, DOTParserConstants {
 
 	final private String id() throws ParseException {
 		Token t;
+		String id;
 		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {
 		case STRING:
 			t = jj_consume_token(STRING);
+			id = t.image.substring(1, t.image.length() - 1);
 			break;
 		case REAL:
 			t = jj_consume_token(REAL);
+			id = t.image;
 			break;
 		case WORD:
 			t = jj_consume_token(WORD);
+			id = t.image;
 			break;
 		default:
 			jj_la1[7] = jj_gen;
 			jj_consume_token(-1);
 			throw new ParseException();
 		}
-		{
-			if (true)
-				return t.image;
-		}
-		throw new Error("Missing return statement in function");
+
+		return id;
 	}
 
 	final private void statement() throws ParseException {
@@ -457,11 +478,8 @@ public class DOTParser implements Parser, DOTParserConstants {
 			jj_consume_token(-1);
 			throw new ParseException();
 		}
-		{
-			if (true)
-				return pt.image;
-		}
-		throw new Error("Missing return statement in function");
+
+		return pt.image;
 	}
 
 	final private String[] port() throws ParseException {
@@ -499,11 +517,8 @@ public class DOTParser implements Parser, DOTParserConstants {
 			jj_consume_token(-1);
 			throw new ParseException();
 		}
-		{
-			if (true)
-				return p;
-		}
-		throw new Error("Missing return statement in function");
+
+		return p;
 	}
 
 	final private void edgeStatement() throws ParseException {
@@ -600,11 +615,8 @@ public class DOTParser implements Parser, DOTParserConstants {
 				break label_3;
 			}
 		}
-		{
-			if (true)
-				return attributes;
-		}
-		throw new Error("Missing return statement in function");
+
+		return attributes;
 	}
 
 	final private void attributeList(HashMap<String, Object> attributes)
@@ -666,9 +678,17 @@ public class DOTParser implements Parser, DOTParserConstants {
 		}
 	}
 
-	private boolean jj_3_1() {
-		if (jj_3R_5())
-			return true;
+	private boolean jj_3R_6() {
+		Token xsp;
+		xsp = jj_scanpos;
+		if (jj_3R_8()) {
+			jj_scanpos = xsp;
+			if (jj_3R_9()) {
+				jj_scanpos = xsp;
+				if (jj_3R_10())
+					return true;
+			}
+		}
 		return false;
 	}
 
@@ -678,17 +698,15 @@ public class DOTParser implements Parser, DOTParserConstants {
 		return false;
 	}
 
-	private boolean jj_3R_6() {
-		Token xsp;
-		xsp = jj_scanpos;
-		if (jj_scan_token(25)) {
-			jj_scanpos = xsp;
-			if (jj_scan_token(24)) {
-				jj_scanpos = xsp;
-				if (jj_scan_token(26))
-					return true;
-			}
-		}
+	private boolean jj_3R_8() {
+		if (jj_scan_token(STRING))
+			return true;
+		return false;
+	}
+
+	private boolean jj_3R_10() {
+		if (jj_scan_token(WORD))
+			return true;
 		return false;
 	}
 
@@ -700,10 +718,22 @@ public class DOTParser implements Parser, DOTParserConstants {
 		return false;
 	}
 
+	private boolean jj_3R_9() {
+		if (jj_scan_token(REAL))
+			return true;
+		return false;
+	}
+
 	private boolean jj_3R_5() {
 		if (jj_3R_6())
 			return true;
 		if (jj_3R_7())
+			return true;
+		return false;
+	}
+
+	private boolean jj_3_1() {
+		if (jj_3R_5())
 			return true;
 		return false;
 	}
@@ -865,8 +895,8 @@ public class DOTParser implements Parser, DOTParserConstants {
 		throw generateParseException();
 	}
 
+	@SuppressWarnings("serial")
 	static private final class LookaheadSuccess extends java.lang.Error {
-		private static final long serialVersionUID = 5117810622789993901L;
 	}
 
 	final private LookaheadSuccess jj_ls = new LookaheadSuccess();

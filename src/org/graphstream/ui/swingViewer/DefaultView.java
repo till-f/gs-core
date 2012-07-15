@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -44,6 +42,10 @@ import org.graphstream.stream.AttributeSink;
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
+import org.graphstream.ui.swingViewer.util.DefaultMouseManager;
+import org.graphstream.ui.swingViewer.util.DefaultShortcutManager;
+import org.graphstream.ui.swingViewer.util.MouseManager;
+import org.graphstream.ui.swingViewer.util.ShortcutManager;
 
 /**
  * Base for constructing views.
@@ -130,11 +132,6 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	protected JFrame frame;
 
 	/**
-	 * The graph changed since the last repaint.
-	 */
-	protected boolean graphChanged;
-
-	/**
 	 * Manager for events with the keyboard.
 	 */
 	protected ShortcutManager shortcuts;
@@ -163,8 +160,8 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 
 		setOpaque(true);
 		setDoubleBuffered(true);
-		setShortcutManager(new DefaultShortcutManager(this));
-		setMouseManager(new DefaultMouseManager(this.graph, this));
+		setMouseManager(null);
+		setShortcutManager(null);
 		renderer.open(graph, this);
 		checkInitialAttributes();
 		graph.addAttributeSink(this);
@@ -174,12 +171,12 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	public Camera getCamera() {
 		return renderer.getCamera();
 	}
-	
+
 	@Override
 	public void display(GraphicGraph graph, boolean graphChanged) {
 		repaint();
 	}
-
+	
 	@Override
 	public void paintComponent(Graphics g) {
 		// super.paintComponent(g);	// We do not want any background. We handle it.
@@ -194,11 +191,12 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 		graph.removeAttributeSink(this);
 		graph.addAttribute("ui.viewClosed", getId());
 		removeKeyListener(shortcuts);
-		removeMouseListener(mouseClicks);
-		removeMouseMotionListener(mouseClicks);
+		shortcuts.release();
+		mouseClicks.release();
+		
 		openInAFrame(false);
 	}
-	
+
 	@Override
 	protected void resizeFrame(int width, int height) {
 		if(frame != null) {
@@ -292,9 +290,11 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 			System.exit(0);
 		default:
 			throw new RuntimeException(
-					String.format(
-							"The %s view is not up to date, do not know %s CloseFramePolicy.",
-							getClass().getName(), viewer.getCloseFramePolicy()));
+					String
+							.format(
+									"The %s view is not up to date, do not know %s CloseFramePolicy.",
+									getClass().getName(), viewer
+											.getCloseFramePolicy()));
 		}
 	}
 
@@ -315,7 +315,23 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 
 	@Override
 	public void moveElementAtPx(GraphicElement element, double x, double y) {
+		// The feedback on the node positions is often off since not needed
+		// and generating lots of events. We activate it here since the
+		// movement of the node is decided by the viewer. This is one of the
+		// only moment when the viewer really moves a node.
+		boolean on = graph.feedbackXYZ();
+		graph.feedbackXYZ(true);
 		renderer.moveElementAtPx(element, x, y);
+		graph.feedbackXYZ(on);
+	}
+	
+	@Override
+	public void freezeElement(GraphicElement element, boolean frozen) {
+		if(frozen) {
+			element.addAttribute("layout.frozen");
+		} else {
+			element.removeAttribute("layout.frozen");
+		}
 	}
 
 	@Override
@@ -335,47 +351,29 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	}
 	
 	@Override
-	public MouseManager getMouseManager() {
-		return mouseClicks;
+	public void setMouseManager(MouseManager manager) {
+		if(mouseClicks != null)
+			mouseClicks.release();
+		
+		if(manager == null)
+			manager = new DefaultMouseManager();
+
+		manager.init(graph, this);
+		
+		mouseClicks = manager;
 	}
-	
+
 	@Override
-	public void setMouseManager(MouseManager mouseManager) {
-		synchronized(viewer) {
-			if(mouseClicks != null) {
-				removeMouseListener(mouseClicks);
-				removeMouseMotionListener(mouseClicks);
-				removeMouseWheelListener(mouseClicks);
-			}
-			
-			mouseClicks = mouseManager;
-			
-			if(mouseClicks != null) {
-				addMouseListener(mouseClicks);
-				addMouseMotionListener(mouseClicks);
-				addMouseWheelListener(mouseClicks);
-			}
-		}
-	}
-	
-	@Override
-	public ShortcutManager getShortcutManager() {
-		return shortcuts;
-	}
-	
-	@Override
-	public void setShortcutManager(ShortcutManager shortcutManager) {
-		synchronized(viewer) {
-			if(shortcuts != null) {
-				removeKeyListener(shortcuts);
-			}
-			
-			shortcuts = shortcutManager;
-			
-			if(shortcuts != null) {
-				addKeyListener(shortcuts);
-			}
-		}
+	public void setShortcutManager(ShortcutManager manager) {
+		if(shortcuts != null)
+			shortcuts.release();
+		
+		if(manager == null)
+			manager = new DefaultShortcutManager();
+		
+		manager.init(graph, this);
+		
+		shortcuts = manager;
 	}
 	
 // AttributeSink

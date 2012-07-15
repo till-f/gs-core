@@ -36,7 +36,7 @@ import org.graphstream.graph.Graph;
 import org.graphstream.ui.geom.Point3;
 
 /**
- * Manage a set if views in all viewers on the same graph and allow to change the point of view of
+ * Manage a set of views in all viewers on the same graph and allow to change the point of view of
  * each one, storing the values in the graph for later retrieving.
  */
 public class CameraManager {

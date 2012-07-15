@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -37,6 +35,8 @@ import javax.swing.JPanel;
 
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
+import org.graphstream.ui.swingViewer.util.MouseManager;
+import org.graphstream.ui.swingViewer.util.ShortcutManager;
 
 /**
  * A view on a graphic graph.
@@ -211,6 +211,16 @@ public abstract class View extends JPanel {
 	public abstract boolean hasSelection();
 	
 	/**
+	 * Freeze an element so that the optional layout cannot move it.
+	 * 
+	 * @param element
+	 * 			The element.
+	 * @param frozen
+	 * 			If true the element cannot be moved automatically.
+	 */
+	public abstract void freezeElement(GraphicElement element, boolean frozen);
+	
+	/**
 	 * Force an element to move at the given location in pixels. This method works only in the
 	 * Swing thread.
 	 * 
@@ -245,29 +255,11 @@ public abstract class View extends JPanel {
 	public abstract void setForeLayoutRenderer(LayerRenderer renderer);
 	
 	/**
-	 * The actual manager for mouse event. The mouse manager calls the view
-	 * method and tells what to do when the user interacts with the view using
-	 * the mouse. The returned object can only be used in the Swing thread.
-	 * 
-	 * @return The actual mouse manager.
-	 */
-	public abstract MouseManager getMouseManager();
-	
-	/**
 	 * Change the mouse manager. This method works from any thread.
 	 * 
 	 * @param mouseManager The new mouse manager.
 	 */
 	public abstract void setMouseManager(MouseManager mouseManager);
-	
-	/**
-	 * The actual shortcut and keyboard manager. The shortcut manager calls the
-	 * view methods and tells what to do when the user interacts with the view
-	 * using the keyboard. The returned object can only be used in the Swing thread.
-	 * 
-	 * @return The actual shortcut manager.
-	 */
-	public abstract ShortcutManager getShortcutManager();
 	
 	/**
 	 * Change the shortcut and keyboard manager. This method works from any thread.

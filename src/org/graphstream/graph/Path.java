@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -31,6 +29,8 @@
  */
 package org.graphstream.graph;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
@@ -62,7 +62,7 @@ import java.util.Stack;
  * grow it and the {@link #popEdge()} or {@link #popNode()}.
  * 
  */
-public class Path {
+public class Path implements Structure {
 	// ------------- ATTRIBUTES ------------
 
 	/**
@@ -153,15 +153,6 @@ public class Path {
 	 * Returns the size of the path
 	 */
 	public int size() {
-		return nodePath.size();
-	}
-
-	/**
-	 * Returns the size of the path. Identical to {@link #size()}.
-	 * 
-	 * @return The size of the path.
-	 */
-	public int getNodeCount() {
 		return nodePath.size();
 	}
 
@@ -407,5 +398,83 @@ public class Path {
 	@Override
 	public String toString() {
 		return nodePath.toString();
+	}
+
+	/**
+	 * Returns the size of the path. Identical to {@link #size()}.
+	 * 
+	 * @return The size of the path.
+	 */
+	public int getNodeCount() {
+		return nodePath.size();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.graph.Structure#getEdgeCount()
+	 */
+	public int getEdgeCount() {
+		return edgePath.size();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.graph.Structure#getNodeIterator()
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Node> Iterator<T> getNodeIterator() {
+		return (Iterator<T>) nodePath.iterator();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.graph.Structure#getEdgeIterator()
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Edge> Iterator<T> getEdgeIterator() {
+		return (Iterator<T>) edgePath.iterator();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.graph.Structure#getEachNode()
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Node> Iterable<? extends T> getEachNode() {
+		return (Iterable<? extends T>) nodePath;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.graph.Structure#getEachEdge()
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Edge> Iterable<? extends T> getEachEdge() {
+		return (Iterable<? extends T>) edgePath;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.graph.Structure#getNodeSet()
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Node> Collection<T> getNodeSet() {
+		return (Collection<T>) nodePath;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.graph.Structure#getEdgeSet()
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Edge> Collection<T> getEdgeSet() {
+		return (Collection<T>) edgePath;
 	}
 }

@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -611,7 +609,7 @@ public class StyleGroupSet implements StyleSheetListener {
 		groups.put(id, group);
 		zIndex.groupAdded(group);
 		shadow.groupAdded(group);
-
+		
 		return group;
 	}
 
@@ -942,8 +940,10 @@ public class StyleGroupSet implements StyleSheetListener {
 				if (oldRule.getGroups() != null)
 					for (String s : oldRule.getGroups()) {
 						StyleGroup group = groups.get(s);
-						zIndex.groupChanged(group);
-						shadow.groupChanged(group);
+						if(group != null) {
+							zIndex.groupChanged(group);
+							shadow.groupChanged(group);
+						}
 					}
 			} else {
 				// For kind styles "NODE", "EDGE", "GRAPH", "SPRITE", we must
@@ -968,13 +968,25 @@ public class StyleGroupSet implements StyleSheetListener {
 	 * We try to avoid at most to affect anew styles to elements and to recreate
 	 * groups, which is time consuming.
 	 * 
-	 * Two cases : 1. The style is an specific (id) style. In this case a new
-	 * group may be added. * check an element matches the style and in this case
-	 * create the group by adding the element. * else do nothing. 2. The style
-	 * is a kind or class style. * check all the groups in the kind of the style
-	 * (graph, node, edge, sprite) and only in this kind (since other will never
-	 * be affected). * remove all groups of this kind. * add all elements of
-	 * this kind anew to recreate the group.
+	 * Two cases :
+	 * <ol>
+	 *    <li>The style is an specific (id) style. In this case a new
+	 *        group may be added.
+	 *        <ul>
+	 *            <li>check an element matches the style and in this case
+     *                create the group by adding the element.</li>
+     *            <li>else do nothing.</li>
+     *        </ul></li>
+     *   <li>The style is a kind or class style.
+     *        <ul>
+     *            <li>check all the groups in the kind of the style
+	 *                  (graph, node, edge, sprite) and only in this kind (since other will never
+	 *                  be affected).</li>
+	 *            <li>remove all groups of this kind.</li>
+	 *            <li>add all elements of this kind anew to recreate the group.</li>
+	 *        </ul>
+	 *   </li>
+	 * </ol>
 	 */
 	protected void checkForNewStyle(Rule newRule) {
 		switch (newRule.selector.type) {

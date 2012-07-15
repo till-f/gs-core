@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -256,11 +254,8 @@ public class TLPParser implements Parser, TLPParserConstants {
 			jj_consume_token(-1);
 			throw new ParseException();
 		}
-		{
-			if (true)
-				return hasMore;
-		}
-		throw new Error("Missing return statement in function");
+
+		return hasMore;
 	}
 
 	final public void open() throws ParseException {
@@ -454,31 +449,22 @@ public class TLPParser implements Parser, TLPParserConstants {
 	final private PropertyType type() throws ParseException {
 		Token t;
 		t = jj_consume_token(PTYPE);
-		{
-			if (true)
-				return PropertyType.valueOf(t.image.toUpperCase());
-		}
-		throw new Error("Missing return statement in function");
+
+		return PropertyType.valueOf(t.image.toUpperCase());
 	}
 
 	final private String string() throws ParseException {
 		Token t;
 		t = jj_consume_token(STRING);
-		{
-			if (true)
-				return t.image.substring(1, t.image.length() - 1);
-		}
-		throw new Error("Missing return statement in function");
+
+		return t.image.substring(1, t.image.length() - 1);
 	}
 
 	final private Integer integer() throws ParseException {
 		Token t;
 		t = jj_consume_token(INTEGER);
-		{
-			if (true)
-				return Integer.valueOf(t.image);
-		}
-		throw new Error("Missing return statement in function");
+
+		return Integer.valueOf(t.image);
 	}
 
 	private boolean jj_2_1(int xla) {

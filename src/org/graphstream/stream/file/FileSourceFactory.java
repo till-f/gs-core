@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -32,9 +30,15 @@
 package org.graphstream.stream.file;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
 
 /**
  * File source factory.
@@ -126,6 +130,10 @@ public class FileSourceFactory {
 
 		// If we did not found anything, we try with the filename extension ...
 
+		if (flc.endsWith(".dgs")) {
+			return new FileSourceDGS();
+		}
+
 		if (flc.endsWith(".gml") || flc.endsWith(".dgml")) {
 			return new org.graphstream.stream.file.FileSourceGML();
 		}
@@ -159,9 +167,47 @@ public class FileSourceFactory {
 		}
 
 		if (flc.endsWith(".xml")) {
+			String root = getXMLRootElement(fileName);
+
+			if (root.equalsIgnoreCase("gexf"))
+				return new FileSourceGEXF();
+			
 			return new FileSourceGraphML();
 		}
 
+		if (flc.endsWith(".gexf")) {
+			return new FileSourceGEXF();
+		}
+
 		return null;
+	}
+
+	public static String getXMLRootElement(String fileName) throws IOException {
+		FileReader stream = new FileReader(fileName);
+		XMLEventReader reader;
+		XMLEvent e;
+		String root;
+
+		try {
+			reader = XMLInputFactory.newInstance().createXMLEventReader(stream);
+
+			do {
+				e = reader.nextEvent();
+			} while (!e.isStartElement() && !e.isEndDocument());
+
+			if (e.isEndDocument())
+				throw new IOException(
+						"document ended before catching root element");
+
+			root = e.asStartElement().getName().getLocalPart();
+			reader.close();
+			stream.close();
+
+			return root;
+		} catch (XMLStreamException ex) {
+			throw new IOException(ex);
+		} catch (FactoryConfigurationError ex) {
+			throw new IOException(ex);
+		}
 	}
 }

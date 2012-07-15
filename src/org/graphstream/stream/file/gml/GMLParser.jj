@@ -2,7 +2,7 @@ options { JDK_VERSION = "1.5"; STATIC = false; IGNORE_CASE = true; }
 
 PARSER_BEGIN(GMLParser)
 /*
- * Copyright 2006 - 2011 
+ * Copyright 2006 - 2012
  *     Julien Baudry	<julien.baudry@graphstream-project.org>
  *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
  *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
@@ -149,12 +149,13 @@ void all() throws IOException:
 	String key;
 }
 {
-	( graphStart()         { inGraph = true; ctx.setDirected(false); }
-	| diGraphStart()       { inGraph = true; ctx.setDirected(true); }
-	| graphEnd()           { values.key = null; inGraph = false; }
+	( graphStart()         { ctx.setIsInGraph(true); ctx.setDirected(false); }
+	| diGraphStart()       { ctx.setIsInGraph(true); ctx.setDirected(true); }
 	)
 	
 	( key=keyValue(values) { values.key = key; ctx.handleKeyValues(values); values.clear(); } )*
+
+	graphEnd()           { values.key = null; inGraph = false; }
 	
 	<EOF>
 }
@@ -210,8 +211,8 @@ KeyValues list():
 }
 {
 	( (<COMMENT>)*
-  	  ( k=<KEY>    { key=k.image.toLowerCase(); if (key.equals("step")) step = true; }
-  	  | k=<STRING> { key=k.image.substring(1,k.image.length()-2).toLowerCase(); }
+  	  ( k=<KEY>    { key=k.image; if (key.equalsIgnoreCase("step")) step = true; }
+  	  | k=<STRING> { key=k.image.substring(1,k.image.length()-2); }
   	  )
 	  v=value(key) { values.put(key, v); values.line = k.beginLine; values.column = k.beginColumn; }
 	)
@@ -237,7 +238,7 @@ Object value(String key):
 	KeyValues kv;
 }
 {
-	( t=<REAL>   { val = t.image; }
+	( t=<REAL>   { if (t.image.indexOf('.') < 0) val = Integer.valueOf(t.image); else val = Double.valueOf(t.image); }
 	| t=<STRING> { val = t.image.substring(1, t.image.length()-1); }
 	| t=<KEY>    { val = t.image; }
 	| <LSQBR>  kv = list() { val = kv; } <RSQBR>

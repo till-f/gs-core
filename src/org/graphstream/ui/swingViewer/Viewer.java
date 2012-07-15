@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -38,7 +36,9 @@ import java.util.HashMap;
 
 import javax.swing.Timer;
 
+import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
 import org.graphstream.stream.ProxyPipe;
 import org.graphstream.stream.Source;
 import org.graphstream.stream.thread.ThreadProxyPipe;
@@ -111,6 +111,15 @@ import org.graphstream.ui.swingViewer.basicRenderer.SwingBasicGraphRenderer;
  * either in the view (the camera object did not changed) or in the graph (the graphic
  * graph object was not updated) since the last frame drawn. This mechanism is here to
  * avoid consuming unneeded CPU cycles. 
+ * </p>
+ * 
+ * <p>
+ * Be very careful: due to the nature of graph events in GraphStream, the viewer
+ * is not aware of events that occured on the graph <u>before</u> its creation.
+ * There is a special mechanism that replay the graph if you use a proxy pipe or
+ * if you pass the graph directly. However, when you create the viewer by yourself
+ * and only pass a {@link Source}, the viewer <u>will not</u> display the events
+ * that occured on the source before it is connected to it.
  * </p>
  */
 public class Viewer implements ActionListener {
@@ -286,8 +295,11 @@ public class Viewer implements ActionListener {
 
 		if (pumpPipe != null)
 			pumpPipe.addSink(graph);
-		if (sourceInSameThread != null)
+		if (sourceInSameThread != null) {
+			if(source instanceof Graph)
+				replayGraph((Graph) source);
 			sourceInSameThread.addSink(graph);
+		}
 
 		if(pumpPipe != null)
 			pumpPipe.pump();
@@ -644,7 +656,9 @@ public class Viewer implements ActionListener {
 	public void enableAutoLayout(Layout layoutAlgorithm) {
 		synchronized(this) {
 			if (optLayout == null) {
-				optLayout = new LayoutRunner(graph, layoutAlgorithm, true, true);
+//				optLayout = new LayoutRunner(graph, layoutAlgorithm, true, true);
+				optLayout = new LayoutRunner(graph, layoutAlgorithm, true, false);
+				graph.replay();
 				layoutPipeIn = optLayout.newLayoutPipe();
 				layoutPipeIn.addAttributeSink(graph);
 			}
@@ -695,6 +709,40 @@ public class Viewer implements ActionListener {
 		
 		if(pos >= 0) {
 			listeners.remove(pos);
+		}
+	}
+
+	/** Dirty replay of the graph. */
+	protected void replayGraph(Graph graph) {
+		// Replay all graph attributes.
+
+		if (graph.getAttributeKeySet() != null)
+			for (String key : graph.getAttributeKeySet()) {
+				this.graph.addAttribute(key, graph.getAttribute(key));
+			}
+
+		// Replay all nodes and their attributes.
+
+		for (Node node : graph) {
+			Node n = this.graph.addNode(node.getId());
+
+			if (node.getAttributeKeySet() != null) {
+				for (String key : node.getAttributeKeySet()) {
+					n.addAttribute(key, node.getAttribute(key));
+				}
+			}
+		}
+
+		// Replay all edges and their attributes.
+
+		for (Edge edge : graph.getEachEdge()) {
+			Edge e = this.graph.addEdge(edge.getId(), edge.getSourceNode().getId(), edge.getTargetNode().getId(), edge.isDirected());
+			
+			if (edge.getAttributeKeySet() != null) {
+				for (String key : edge.getAttributeKeySet()) {
+					e.addAttribute(key, edge.getAttribute(key));
+				}
+			}
 		}
 	}
 }

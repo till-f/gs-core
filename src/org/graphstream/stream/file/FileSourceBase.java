@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -114,7 +112,7 @@ public abstract class FileSourceBase extends SourceBase implements FileSource {
 	/**
 	 * No-op constructor.
 	 */
-	FileSourceBase() {
+	protected FileSourceBase() {
 	}
 
 	/**
@@ -123,7 +121,7 @@ public abstract class FileSourceBase extends SourceBase implements FileSource {
 	 * @param eol_is_significant
 	 *            If true EOL will be returned as a token, else it is ignored.
 	 */
-	FileSourceBase(boolean eol_is_significant) {
+	protected FileSourceBase(boolean eol_is_significant) {
 		this.eol_is_significant = eol_is_significant;
 	}
 
@@ -138,7 +136,7 @@ public abstract class FileSourceBase extends SourceBase implements FileSource {
 	 * @param quoteChar
 	 *            Character used to enclose quotations.
 	 */
-	FileSourceBase(boolean eol_is_significant, int commentChar, int quoteChar) {
+	protected FileSourceBase(boolean eol_is_significant, int commentChar, int quoteChar) {
 		this.eol_is_significant = eol_is_significant;
 
 		this.COMMENT_CHAR = commentChar;

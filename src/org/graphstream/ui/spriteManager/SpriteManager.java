@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -103,14 +101,14 @@ public class SpriteManager implements Iterable<Sprite>, AttributeSink {
 	 * @param graph
 	 *            The graph to associate with this manager;
 	 */
-	public SpriteManager(Graph graph) {
+	public SpriteManager(Graph graph) throws InvalidSpriteIDException {
 		this.graph = graph;
 
 		lookForExistingSprites();
 		graph.addAttributeSink(this);
 	}
 
-	protected void lookForExistingSprites() {
+	protected void lookForExistingSprites() throws InvalidSpriteIDException {
 		if (graph.getAttributeCount() > 0) {
 			for (String attr : graph.getAttributeKeySet()) {
 				if (attr.startsWith("ui.sprite.")) {
@@ -118,6 +116,8 @@ public class SpriteManager implements Iterable<Sprite>, AttributeSink {
 
 					if (id.indexOf('.') < 0) {
 						addSprite(id);
+					} else {
+						throw new InvalidSpriteIDException("Sprites identifiers cannot contain dots.");
 					}
 				}
 			}
@@ -228,13 +228,16 @@ public class SpriteManager implements Iterable<Sprite>, AttributeSink {
 
 	/**
 	 * Add a sprite with the given identifier. If the sprite already exists,
-	 * nothing is done.
+	 * nothing is done. The sprite identifier cannot actually contain dots.
+	 * This character use is reserved by the sprite mechanism.
 	 * 
 	 * @param identifier
 	 *            The identifier of the new sprite to add.
 	 * @return The created sprite.
+	 * @throws InvalidSpriteIDException
+	 * 			If the given identifier contains a dot.
 	 */
-	public Sprite addSprite(String identifier) {
+	public Sprite addSprite(String identifier) throws InvalidSpriteIDException {
 		return addSprite(identifier, (Values) null);
 	}
 
@@ -243,15 +246,21 @@ public class SpriteManager implements Iterable<Sprite>, AttributeSink {
 	 * already exists, nothing is done, excepted if the position is not null in
 	 * which case it is repositioned. If the sprite does not exists, it is added
 	 * and if position is not null, it is used as the initial position of the
-	 * sprite.
+	 * sprite.  The sprite identifier cannot actually contain dots.
+	 * This character use is reserved by the sprite mechanism.
 	 * 
 	 * @param identifier
 	 *            The sprite identifier.
 	 * @param position
 	 *            The sprite position (or null for (0,0,0)).
 	 * @return The created sprite.
+	 * @throws InvalidSpriteIDException
+	 * 			If the given identifier contains a dot.
 	 */
-	protected Sprite addSprite(String identifier, Values position) {
+	protected Sprite addSprite(String identifier, Values position) throws InvalidSpriteIDException {
+		if(identifier.indexOf('.') >= 0)
+			throw new InvalidSpriteIDException("Sprite identifiers cannot contain dots.");
+		
 		Sprite sprite = sprites.get(identifier);
 
 		if (sprite == null) {
@@ -409,7 +418,13 @@ public class SpriteManager implements Iterable<Sprite>, AttributeSink {
 					if (value != null)
 						position = getPositionValue(value);
 
-					addSprite(spriteId, position);
+					try {
+						addSprite(spriteId, position);
+					} catch(InvalidSpriteIDException e) {
+						e.printStackTrace();
+						throw new RuntimeException(e);
+						// Ho !! Dirty !!
+					}
 				}
 			}
 		}

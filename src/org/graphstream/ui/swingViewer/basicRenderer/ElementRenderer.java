@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -54,7 +52,7 @@ import org.graphstream.ui.swingViewer.util.FontCache;
  * Base renderer for element groups. 
  * 
  * <p>
- * This bass renderer handles the {@link #render(StyleGroup, Graphics2D, Camera)} method by
+ * This base renderer handles the {@link #render(StyleGroup, Graphics2D, Camera)} method by
  * providing an execution base for specific renderers. The {@link #render(StyleGroup, Graphics2D, Camera)}
  * method is called at each frame for a group of element having the same style. This method will
  * take care of which elements are bulk (all with the same style), and which elements are dynamic

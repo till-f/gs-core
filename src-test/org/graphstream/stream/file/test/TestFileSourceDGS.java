@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -73,7 +71,7 @@ public class TestFileSourceDGS extends TestFileSourceBase {
 	}
 
 	protected static String TEST3_ATTRIBUTES = "DGS004\n" + "\"test3\" 0 0\n"
-			+ "an A a:1 b:\"truc\" c:true\n"
+			+ "an A a:1 b:\"truc\" c:\"true\"\n"
 			+ "an B aa:1,2,3,4 bb:foo cc:bar\n" + "an C aaa=1.234\n"
 			+ "ae AB A B\n" + "ae BC B C\n" + "ae CA C A\n";
 
@@ -84,6 +82,6 @@ public class TestFileSourceDGS extends TestFileSourceBase {
 
 	@Override
 	public String anUndirectedTriangleHttpURL() {
-		return "http://graphstream.sourceforge.net/data/undirectedTriangle.dgs";
+		return "http://graphstream-project.org/media/data/undirectedTriangle.dgs";
 	}
 }

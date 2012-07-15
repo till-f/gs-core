@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -131,13 +129,15 @@ public class FileSinkDOT extends FileSinkBase {
 
 	public void graphAttributeAdded(String graphId, long timeId,
 			String attribute, Object value) {
-		out.printf("\tgraph [ %s ];%n", outputAttribute(attribute, value, true));
+		out
+				.printf("\tgraph [ %s ];%n", outputAttribute(attribute, value,
+						true));
 	}
 
 	public void graphAttributeChanged(String graphId, long timeId,
 			String attribute, Object oldValue, Object newValue) {
-		out.printf("\tgraph [ %s ];%n",
-				outputAttribute(attribute, newValue, true));
+		out.printf("\tgraph [ %s ];%n", outputAttribute(attribute, newValue,
+				true));
 	}
 
 	public void graphAttributeRemoved(String graphId, long timeId,
@@ -147,14 +147,14 @@ public class FileSinkDOT extends FileSinkBase {
 
 	public void nodeAttributeAdded(String graphId, long timeId, String nodeId,
 			String attribute, Object value) {
-		out.printf("\t\"%s\" [ %s ];%n", nodeId,
-				outputAttribute(attribute, value, true));
+		out.printf("\t\"%s\" [ %s ];%n", nodeId, outputAttribute(attribute,
+				value, true));
 	}
 
 	public void nodeAttributeChanged(String graphId, long timeId,
 			String nodeId, String attribute, Object oldValue, Object newValue) {
-		out.printf("\t\"%s\" [ %s ];%n", nodeId,
-				outputAttribute(attribute, newValue, true));
+		out.printf("\t\"%s\" [ %s ];%n", nodeId, outputAttribute(attribute,
+				newValue, true));
 	}
 
 	public void nodeAttributeRemoved(String graphId, long timeId,
@@ -166,13 +166,12 @@ public class FileSinkDOT extends FileSinkBase {
 			String fromNodeId, String toNodeId, boolean directed) {
 		if (digraph) {
 			out.printf("\t\"%s\" -> \"%s\"", fromNodeId, toNodeId);
-			
+
 			if (!directed)
 				out.printf(" -> \"%s\"", fromNodeId);
-			
+
 			out.printf("\n;");
-		}
-		else
+		} else
 			out.printf("\t\"%s\" -- \"%s\";%n", fromNodeId, toNodeId);
 	}
 
@@ -217,9 +216,12 @@ public class FileSinkDOT extends FileSinkBase {
 	 * out.printf("]"); }
 	 */
 	protected String outputAttribute(String key, Object value, boolean first) {
-		if (first)
-			return String.format("\"%s\"=\"%s\"", key, value);
-		else
-			return String.format(",\"%s\"=\"%s\"", key, value);
+		boolean quote = true;
+
+		if (value instanceof Number)
+			quote = false;
+
+		return String.format("%s\"%s\"=%s%s%s", first ? "" : ",", key,
+				quote ? "\"" : "", value, quote ? "\"" : "");
 	}
 }

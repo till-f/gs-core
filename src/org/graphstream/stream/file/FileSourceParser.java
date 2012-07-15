@@ -1,13 +1,11 @@
 /*
- * Copyright 2006 - 2011 
- *     Stefan Balev 	<stefan.balev@graphstream-project.org>
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
- *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
- *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
- * 
- * This file is part of GraphStream <http://graphstream-project.org>.
- * 
+ * Copyright 2006 - 2012
+ *      Stefan Balev       <stefan.balev@graphstream-project.org>
+ *      Julien Baudry	<julien.baudry@graphstream-project.org>
+ *      Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *      Yoann Pigné	<yoann.pigne@graphstream-project.org>
+ *      Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ *  
  * GraphStream is a library whose purpose is to handle static or dynamic
  * graph, create them from scratch, file or any source and display them.
  * 
@@ -80,6 +78,7 @@ public abstract class FileSourceParser extends SourceBase implements FileSource 
 
 		try {
 			parser.all();
+			parser.close();
 		} catch (ParseException e) {
 			throw new IOException(e);
 		}
@@ -96,6 +95,7 @@ public abstract class FileSourceParser extends SourceBase implements FileSource 
 
 		try {
 			parser.all();
+			parser.close();
 		} catch (ParseException e) {
 			throw new IOException(e);
 		}
@@ -111,6 +111,7 @@ public abstract class FileSourceParser extends SourceBase implements FileSource 
 
 		try {
 			parser.all();
+			parser.close();
 		} catch (ParseException e) {
 			throw new IOException(e);
 		}
@@ -126,6 +127,7 @@ public abstract class FileSourceParser extends SourceBase implements FileSource 
 
 		try {
 			parser.all();
+			parser.close();
 		} catch (ParseException e) {
 			throw new IOException(e);
 		}
