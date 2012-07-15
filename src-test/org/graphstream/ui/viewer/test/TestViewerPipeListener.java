@@ -39,6 +39,8 @@ import org.graphstream.ui.swingViewer.ViewerPipe;
 
 /**
  * Test the viewer pipe listener mechanism.
+ * 
+ * TODO correct the size bug.
  */
 public class TestViewerPipeListener implements ViewerPipeListener {
 	public static void main(String args[]) {
