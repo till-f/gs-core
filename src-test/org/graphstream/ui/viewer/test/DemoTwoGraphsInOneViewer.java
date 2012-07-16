@@ -66,8 +66,8 @@ public class DemoTwoGraphsInOneViewer extends JFrame {
 		graph1.addAttribute("ui.stylesheet", styleSheet1);
 		graph2.addAttribute("ui.stylesheet", styleSheet2);
 		
-		graph1.addAttribute("layout.stabilization-limit", 1);
-		graph2.addAttribute("layout.stabilization-limit", 1);
+//		graph1.addAttribute("layout.stabilization-limit", 1);
+//		graph2.addAttribute("layout.stabilization-limit", 1);
 		
 		//View view1 =
 		viewer1.addDefaultView(false);
