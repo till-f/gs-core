@@ -526,30 +526,6 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 		return node;
 	}
 
-	/**
-	 * Force a node to move at a new position.
-	 * @param id The node identifier.
-	 * @param x The new abscissa.
-	 * @param y The new ordinate.
-	 * @param z The new depth.
-	 */
-	protected void moveNode(String id, double x, double y, double z) {
-		GraphicNode node = (GraphicNode) styleGroups.getNode(id);
-
-		if (node != null) {
-			node.move(x, y, z);
-
-			if (feedbackXYZ) {
-				System.err.printf("node moved !!!%n");
-				node.setAttribute("xyz", node.center.x, node.center.y, node.center.z);
-				node.setAttribute("x", node.center.x);
-				node.setAttribute("y", node.center.y);
-			}
-
-			graphChanged = true;
-		}
-	}
-
 	public Edge removeEdge(String sourceId, long timeId, String id)
 			throws ElementNotFoundException {
 		GraphicEdge edge = (GraphicEdge) styleGroups.getEdge(id);

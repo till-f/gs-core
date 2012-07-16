@@ -107,6 +107,19 @@ public class GraphicNode extends GraphicElement implements Node {
 		center.set(x, y, z);
 		positionChanged();
 	}
+
+	@Override
+	public void move(double x, double y, double z) {
+		center.set(x, y, z);
+		positionChanged();
+		// We now this move command does not comes from an event
+		// therefore if feedback is enabled, we modify the xyz
+		// attributes to send back the move event coming from the
+		// user interaction.
+		if (mygraph.feedbackXYZ) {
+			setAttribute("xyz", center.x, center.y, center.z);
+		}
+	}
 	
 	protected void positionChanged() {
 		positioned = true;
@@ -126,12 +139,6 @@ public class GraphicNode extends GraphicElement implements Node {
 	@Override
 	public void attachMoved(GraphicElement element) {
 		// Nodes are never attached.
-	}
-
-	@Override
-	public void move(double x, double y, double z) {
-		center.set(x, y, z);
-		positionChanged();
 	}
 
 	@Override
