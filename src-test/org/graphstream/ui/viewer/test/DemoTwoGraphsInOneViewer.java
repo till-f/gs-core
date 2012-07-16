@@ -29,22 +29,35 @@
  */
 package org.graphstream.ui.viewer.test;
 
+import java.awt.GridLayout;
 import java.io.IOException;
+
+import javax.swing.JFrame;
 
 import org.graphstream.graph.*;
 import org.graphstream.graph.implementations.*;
+import org.graphstream.stream.file.FileSource;
 import org.graphstream.stream.file.FileSourceDGS;
+import org.graphstream.stream.file.FileSourceGML;
 import org.graphstream.stream.thread.*;
 import org.graphstream.ui.swingViewer.*;
 
-public class DemoTwoGraphsInOneViewer {
-	public static final String GRAPH = "data/dorogovtsev_mendes6000.dgs";
+/**
+ * Test and show the use of two distinct viewers in the same JFrame.
+ * 
+ *  The graphs are the same, but the layouts are different.
+ */
+public class DemoTwoGraphsInOneViewer extends JFrame {
+	private static final long serialVersionUID = 1L;
 
+	public static final String GRAPH = "data/dolphins.gml";
+//	public static final String GRAPH = "data/dorogovtsev_mendes6000.dgs";
+	
 	public static void main(String args[]) {
-		new DemoTwoGraphsInOneViewer();
+		(new DemoTwoGraphsInOneViewer()).test();
 	}
 
-	public DemoTwoGraphsInOneViewer() {
+	public void test() {
 		Graph graph1 = new MultiGraph("g1");
 		Graph graph2 = new MultiGraph("g2");
 		Viewer viewer1 = new Viewer(new ThreadProxyPipe(graph1));
@@ -52,39 +65,41 @@ public class DemoTwoGraphsInOneViewer {
 
 		graph1.addAttribute("ui.stylesheet", styleSheet1);
 		graph2.addAttribute("ui.stylesheet", styleSheet2);
+		
+		graph1.addAttribute("layout.stabilization-limit", 1);
+		graph2.addAttribute("layout.stabilization-limit", 1);
+		
 		//View view1 =
-		viewer1.addDefaultView(true);
-		viewer2.addDefaultView(true);
+		viewer1.addDefaultView(false);
+		viewer2.addDefaultView(false);
 		viewer1.enableAutoLayout();
 		viewer2.enableAutoLayout();
 
-		//view1.setBackLayerRenderer(view2);
+		FileSource in = GRAPH.endsWith(".gml") ? new FileSourceGML() : new FileSourceDGS();
+		readGraph(graph1, in);
+		readGraph(graph2, in);
 
-		FileSourceDGS dgs = new FileSourceDGS();
+		setLayout(new GridLayout(1, 2));
+		add(viewer1.getDefaultView());
+		add(viewer2.getDefaultView());
+		setSize(800, 600);
+		setVisible(true);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
 
-		dgs.addSink(graph1);
+	protected void readGraph(Graph graph, FileSource source) {
+		source.addSink(graph);
 		try {
-			dgs.begin(getClass().getResourceAsStream(GRAPH));
-			for (int i = 0; i < 100 && dgs.nextEvents(); i++)
-				;
-			dgs.end();
+			source.begin(getClass().getResourceAsStream(GRAPH));
+			while(source.nextEvents()) {
+			}
+			source.end();
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			System.exit(1);
 		}
-		dgs.removeSink(graph1);
+		source.removeSink(graph);
 
-		dgs.addSink(graph2);
-		try {
-			dgs.begin(getClass().getResourceAsStream(GRAPH));
-			for (int i = 0; i < 100 && dgs.nextEvents(); i++)
-				;
-			dgs.end();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-			System.exit(1);
-		}
-		dgs.removeSink(graph2);
 	}
 	
 	protected String styleSheet1 =

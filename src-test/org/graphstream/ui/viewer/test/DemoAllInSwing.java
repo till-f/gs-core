@@ -44,21 +44,11 @@ public class DemoAllInSwing {
 	}
 	
 	public DemoAllInSwing() {
-		// On est dans le thread main.
-		
-		Graph graph  = new MultiGraph("mg");
-		
-		// On demande au viewer de consid�rer que le graphe ne sera lu et modifi� que
-		// dans le thread Swing.
-		
-		Viewer viewer = new Viewer(graph, Viewer.ThreadingModel.GRAPH_IN_SWING_THREAD);
-
-		// � Partir de l�, le viewer consid�re que le graphe est dans son propre thread,
-		// c'est-�-dire le thread Swing. Il est donc dangereux d'y toucher dans la thread
-		// main. On utilise invokeLater pour faire tourner du code dans le thread Swing,
-		// par exemple pour initialiser l'application :
-		
-		SwingUtilities.invokeLater(new InitializeApplication(viewer, graph));
+		// We are in the main thread.
+		Graph graph  = new MultiGraph("mg");		
+		// We can use invokeLater to run the code inside the Swing
+		// Thread.
+		SwingUtilities.invokeLater(new InitializeApplication(graph));
 	}
 }
 
@@ -67,9 +57,12 @@ class InitializeApplication extends JFrame implements Runnable {
 	protected Graph graph;
 	protected Viewer viewer;
 	
-	public InitializeApplication(Viewer viewer, Graph graph) {
-		this.viewer = viewer;
+	public InitializeApplication(Graph graph) {
+		// We are in the Swing thread, we can create the viewer with the
+		// GRAPH_IN_SWING_THREAD profile. The graph cannot be changed from
+		// another thread or concurrency problems will occur. 
 		this.graph = graph;
+		this.viewer = new Viewer(graph, Viewer.ThreadingModel.GRAPH_IN_SWING_THREAD);
 	}
 	
 	public void run() {
@@ -79,17 +72,17 @@ class InitializeApplication extends JFrame implements Runnable {
 		graph.addEdge("AB", "A", "B");
 		graph.addEdge("BC", "B", "C");
 		graph.addEdge("CA", "C", "A");
-		graph.addAttribute( "ui.antialias" );
-		graph.addAttribute( "ui.quality" );
-		graph.addAttribute( "ui.stylesheet", styleSheet );
+		graph.addAttribute("ui.antialias");
+		graph.addAttribute("ui.quality");
+		graph.addAttribute("ui.stylesheet", styleSheet);
    
 		graph.getNode("A").setAttribute("xyz", -1, 0, 0 );
 		graph.getNode("B").setAttribute("xyz",  1, 0, 0 );
   		graph.getNode("C").setAttribute("xyz",  0, 1, 0 );
    
-  		// On ins�re la vue principale du viewer dans la JFrame.
+  		// We can insert the main view inside a JPanel or JFrame for example.
   		
-		add(viewer.addDefaultView( false ), BorderLayout.CENTER );
+		add(viewer.addDefaultView( false ), BorderLayout.CENTER);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setSize(800, 600);
 		setVisible(true);

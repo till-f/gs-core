@@ -114,12 +114,8 @@ public class GraphicNode extends GraphicElement implements Node {
 		mygraph.graphChanged = true;
 		mygraph.boundsChanged = true;	// Maybe ...
 
-//		if (mygraph.feedbackXYZ)
-//			setAttribute("xyz", center.x, center.y, center.z);
-		
 		if(skeleton != null) {
 			skeleton.positionChanged();
-
 		}
 
 		if(attached != null)

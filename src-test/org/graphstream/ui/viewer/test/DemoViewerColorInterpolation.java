@@ -128,7 +128,7 @@ public class DemoViewerColorInterpolation implements ViewerPipeListener {
 			+ "node:clicked  { fill-color: blue; fill-mode: plain; }"
 			+ "node#A        { fill-color: green, yellow, purple; fill-mode: dyn-plain; }";
 
-	public void nodeClicked(String id) { System.err.printf("node %s clicke"); }
+	public void nodeClicked(String id) { System.err.printf("node %s clicked", id); }
 	public void nodeReleased(String id) {}
 	public void nodeSelected(String id) {}
 	public void nodeUnselected(String id) {}

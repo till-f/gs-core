@@ -37,6 +37,7 @@ import org.graphstream.graph.implementations.MultiGraph;
 import org.graphstream.stream.ProxyPipe;
 import org.graphstream.stream.file.FileSource;
 import org.graphstream.stream.file.FileSourceDGS;
+import org.graphstream.stream.file.FileSourceFactory;
 import org.graphstream.stream.file.FileSourceGML;
 import org.graphstream.stream.thread.ThreadProxyPipe;
 import org.graphstream.ui.geom.Point3;
@@ -60,18 +61,20 @@ import org.graphstream.ui.swingViewer.Viewer;
 public class DemoLayoutAndViewer {
 //	public static final String GRAPH = "data/dorogovtsev_mendes6000.dgs"; public static final double a= 0; public static final double r=-1.3; public static double force = 3;
 //	public static final String GRAPH = "data/karate.gml";		public static double a= 0; public static double r=-1.3; public static double force = 3;
-	public static final String GRAPH = "data/dolphins.gml";		public static double a= 0; public static double r=-1.2; public static double force = 8;
+	public static final String GRAPH = "src-test/org/graphstream/ui/viewer/test/data/dolphins.gml";		public static double a= 0; public static double r=-1.2; public static double force = 8;
 //	public static final String GRAPH = "data/polbooks.gml";		public static double a= 0; public static double r=-2; public static double force = 3;
 //	public static final String GRAPH = "data/triangles.dgs";	public static double a= 1; public static double r=-1; public static double force = 3;
 //	public static final String GRAPH = "data/FourClusters.dgs";	public static double a= 0; public static double r=-1; public static double force = 3;
 //	public static final String GRAPH = "data/grid7x7.dgs";		public static double a= 0; public static double r=-1; public static double force = 100;
 //	public static final String GRAPH = "data/imdb.dgs";			
 
-	public static void main(String args[]) {
+	protected double cutThreshold = 1;
+	
+	public static void main(String args[]) throws IOException {
 		new DemoLayoutAndViewer();
 	}
 
-	public DemoLayoutAndViewer() {
+	public DemoLayoutAndViewer() throws IOException {
 		boolean loop = true;
 		Graph graph = new MultiGraph("test");
 		Viewer viewer = new Viewer(new ThreadProxyPipe(graph));
@@ -87,33 +90,31 @@ public class DemoLayoutAndViewer {
 		graph.addSink(layout);
 		layout.addAttributeSink(graph);
 
-		FileSource dgs = GRAPH.endsWith(".gml") ? new FileSourceGML() : new FileSourceDGS();
+		FileSource in = FileSourceFactory.sourceFor(GRAPH);
 
-		dgs.addSink(graph);
+		in.addSink(graph);
 		try {
-			dgs.begin(getClass().getResourceAsStream(GRAPH));
-			for (int i = 0; i < 5000 && dgs.nextEvents(); i++) {
+			in.begin(GRAPH);
+			while(in.nextEvents()) {
 //				fromViewer.pump();
 //				layout.compute();
 //				sleep(100);
 			}
-			dgs.end();
+			in.end();
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			System.exit(1);
 		}
 		
-		System.out.println("Finished creating the graph.");
-
 		while (loop) {
 			fromViewer.pump();
 
 			if (graph.hasAttribute("ui.viewClosed")) {
 				loop = false;
 			} else {
-				//sleep(1000);				
+				sleep(5);				
 				layout.compute();
-				findCommunities(graph, 1.3);
+				findCommunities(graph, cutThreshold);
 			}
 		}
 

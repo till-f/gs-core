@@ -539,6 +539,13 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 		if (node != null) {
 			node.move(x, y, z);
 
+			if (feedbackXYZ) {
+				System.err.printf("node moved !!!%n");
+				node.setAttribute("xyz", node.center.x, node.center.y, node.center.z);
+				node.setAttribute("x", node.center.x);
+				node.setAttribute("y", node.center.y);
+			}
+
 			graphChanged = true;
 		}
 	}

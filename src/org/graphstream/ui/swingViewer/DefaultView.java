@@ -329,8 +329,10 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	public void freezeElement(GraphicElement element, boolean frozen) {
 		if(frozen) {
 			element.addAttribute("layout.frozen");
+System.err.printf("FREEZE(%s)%n", element.getId());
 		} else {
 			element.removeAttribute("layout.frozen");
+System.err.printf("UN-FREEZE(%s)%n", element.getId());
 		}
 	}
 
