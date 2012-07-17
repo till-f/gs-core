@@ -56,6 +56,7 @@ import org.graphstream.stream.file.FileSource;
 import org.graphstream.stream.sync.SinkTime;
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement.Skeleton;
+import org.graphstream.ui.graphicGraph.StyleGroupSet.EdgeSet;
 import org.graphstream.ui.graphicGraph.stylesheet.Style;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleSheet;
@@ -372,7 +373,8 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	/**
 	 * Does the graphic graph publish via attribute changes the XYZ changes on nodes and sprites
 	 * when changed ?. This is disabled by default, and enabled as soon as there is at least one
-	 * listener.
+	 * listener. It is also activated automatically if the user has an interactions with a node
+	 * or sprite, but returns to its previous state when the interaction finishes.
 	 */
 	public boolean feedbackXYZ() {
 		return feedbackXYZ;
@@ -382,7 +384,11 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 
 	/**
 	 * Should the graphic graph publish via attribute changes the XYZ changes on
-	 * nodes and sprites when changed ?.
+	 * nodes and sprites when changed ?. This is often a costly operation and most
+	 * of the time there is no receiver. The XYZ feedback will be activated automatically
+	 * when the user interacts with a node or sprite and move it, and will then return
+	 * in its previous state when the interaction finishes. It will be also automatically
+	 * activated whent there is at least one attribute sink.
 	 */
 	public void feedbackXYZ(boolean on) {
 		feedbackXYZ = on;
@@ -405,6 +411,11 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	 * according to an internal flag set by each {@link GraphicNode} or
 	 * {@link GraphicSprite} when they move. Therefore it can be called several times,
 	 * if nothing moved in the graph, the computation will not be redone.
+	 * </p>
+	 * 
+	 * <p>
+	 * When nodes, sprites or edges have skeletons, their {@link Skeleton#sizeChanged(Object)}
+	 * method is called (with a null argument).
 	 * </p>
 	 * 
 	 * @see #getMaxPos()
@@ -432,6 +443,11 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 						lo.z = pos.z;
 					if (pos.z > hi.z)
 						hi.z = pos.z;
+					
+					// Update the skeleton if needed.
+					Skeleton skel = node.getSkeleton();
+					if(skel != null)
+						skel.sizeChanged(null);
 				}
 			}
 
@@ -454,6 +470,23 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 						if (pos.z > hi.z)
 							hi.z = pos.z;
 					}
+					
+					if(!sprite.hidden) {
+						// Update the skeleton if needed.
+						Skeleton skel = sprite.getSkeleton();
+						if(skel != null)
+							skel.sizeChanged(null);
+					}
+				}
+			}
+			
+			for(Edge e : getEachEdge()) {
+				GraphicEdge edge = (GraphicEdge) e;
+				
+				if(! edge.hidden) {
+					Skeleton skel = edge.getSkeleton();
+					if(skel != null)
+						skel.sizeChanged(null);
 				}
 			}
 

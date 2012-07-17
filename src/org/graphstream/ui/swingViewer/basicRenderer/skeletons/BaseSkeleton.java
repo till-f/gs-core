@@ -84,7 +84,7 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	protected Point3 size = new Point3();
 	
 	/**
-	 * Length of the label in pixels.
+	 * Should the length of the label in pixels be computed when accessed ?
 	 */
 	protected boolean labelLengthPxDirty = true;
 	
@@ -165,7 +165,7 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	 * different from the center of an element. The center coordinates may be relative coordinates.
 	 * The position are absolute coordinates. The center are the values specified by the user to
 	 * position an element. The position is the real position on screen of the element. For example,
-	 * sprites can be attached and their center is expressed in coordinates relative to the
+	 * sprites can be attached to an element and their center is expressed in coordinates relative to the
 	 * attachment, the position are absolute coordinates.
 	 * @param camera The camera.
 	 * @param pos The memory where to store the computed position, if null, a point is created.
@@ -216,7 +216,7 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	
 	/**
 	 * Compute or recompute the size of the element, after a style change, a "ui.size" attribute
-	 * change, etc.
+	 * change, etc. The size is computed in GU.
 	 * @param camera The camera.
 	 */
 	protected void computeSize(Camera camera) {
@@ -226,7 +226,7 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 		size.x = camera.getMetrics().lengthToGu(sizes, 0);
 		size.y = sizes.size() > 1 ? camera.getMetrics().lengthToGu(sizes, 1) : size.x;
 		
-		if(style.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE ) {
+		if(style.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE) {
 			Object o = element.getAttribute("ui.size");
 			
 			if(o != null) {
@@ -240,11 +240,12 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 						Value val = Value.getNumber(element.getAttribute("ui.size"));
 						size.x = camera.getMetrics().lengthToGu(val);
 						size.y = size.x * ratio;
-					} catch(NumberFormatException e) {}
+					} catch(NumberFormatException e) { System.err.printf("cannot interpret ui.size attribute %s%n", o); }
 				}
 			}
 			
 		}
+		System.err.printf("%s recomputed size%n", element.getId());
 		
 		sizeDirty = false;
 	}
