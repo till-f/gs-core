@@ -405,7 +405,7 @@ public class EdgeSkeleton extends BaseSkeleton {
 		double s = camera.getMetrics().lengthToGu(edge.from.style.getSize(), 0);
 		NodeSkeleton nodeSkel = (NodeSkeleton)edge.from.getSkeleton(); 
 		if(nodeSkel != null) {
-			Point3 nodeSize = nodeSkel.getSizeGU(camera);
+			Point3 nodeSize = nodeSkel.getDynamicSizeGU(camera);
 			s = (nodeSize.x + nodeSize.y) / 2;
 		}
 		double d = s / 2 * m + 4 * s * m;

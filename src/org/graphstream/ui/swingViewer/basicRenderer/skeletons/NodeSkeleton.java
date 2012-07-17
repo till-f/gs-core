@@ -75,7 +75,7 @@ public class NodeSkeleton extends BaseSkeleton {
 	 * @return True if the point is in the rectangular bounds of the node.
 	 */
 	public boolean contains(Camera camera, double x, double y, Units units) {
-		getSizeGU(camera);
+		getDynamicSizeGU(camera);
 		
 		Point3 pos = getPosition(camera, Units.GU);
 		Point3 p   = new Point3(x, y, 0);
@@ -83,8 +83,10 @@ public class NodeSkeleton extends BaseSkeleton {
 		if(units == Units.PX)
 			p = camera.transformPxToGu(p);
 		
-		double sx = size.x/2;
-		double sy = size.y/2;
+		Point3 sz = hasDynSize ? dynSize : getSizeGU(camera);
+		
+		double sx = sz.x/2;
+		double sy = sz.y/2;
 
 		if (p.x < (pos.x - sx)) return false;
 		if (p.y < (pos.y - sy)) return false;
@@ -106,7 +108,7 @@ public class NodeSkeleton extends BaseSkeleton {
 	 * @return True if the node intersects or is in the given region.
 	 */
 	public boolean visibleIn(Camera camera, double X1, double Y1, double X2, double Y2, Units units) {
-		Point3 s  = getSize(camera, Units.PX);
+		Point3 s  = getDynamicSize(camera, Units.PX);
 		double w2 = s.x;
 		double h2 = s.y;
 		Point3 p  = getPosition(camera, null, Units.PX);

@@ -47,6 +47,10 @@ import org.graphstream.ui.swingViewer.util.GraphMetrics;
 public class NodeRenderer extends ElementRenderer {
 	protected Ellipse2D shape;
 
+	protected Point3 groupSize = null;
+	
+	protected Color groupFillColor = null;
+	
 	protected double width, height, w2, h2;
 	
 	protected Color strokeColor = null;
@@ -61,14 +65,15 @@ public class NodeRenderer extends ElementRenderer {
 	@Override
 	protected void pushStyle(StyleGroup group, Graphics2D g, Camera camera) {
 		GraphMetrics metrics = camera.getMetrics();
-		Values size = group.getSize();
 		shape = new Ellipse2D.Double();
-		width = metrics.lengthToGu(size, 0);
-		height = size.size() > 1 ? metrics.lengthToGu(size, 1) : width;
+		groupSize = metrics.valuesToPoint3GU(group.getSize());
+		groupFillColor = group.getFillColor(0);
+		width = groupSize.x;
+		height = groupSize.y;
 		w2 = width / 2;
 		h2 = height / 2;
 
-		g.setColor(group.getFillColor(0));
+		g.setColor(groupFillColor);
 		
 		if(group.getStrokeMode() != StyleConstants.StrokeMode.NONE) {
 			strokeWidth = camera.getMetrics().lengthToGu(group.getStrokeWidth());
@@ -86,13 +91,13 @@ public class NodeRenderer extends ElementRenderer {
 		Color color = null;
 		Point3 size = null;
 		
-		if(skel.hasDynColor())
-			 color = skel.getColor();
-		else color = group.getFillColor(0);
+		if(skel.hasDynamicColor())
+			 color = skel.getDynamicColor();
+		else color = groupFillColor;
 		
-		if(skel.hasDynSize())
-			 size = skel.getSizeGU(camera);
-		else size = camera.getMetrics().valuesToPoint3GU(group.getSize());
+		if(skel.hasDynamicSize())
+			 size = skel.getDynamicSizeGU(camera);
+		else size = groupSize;
 
 		g.setColor(color);
 

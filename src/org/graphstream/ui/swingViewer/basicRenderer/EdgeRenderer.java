@@ -61,6 +61,10 @@ public class EdgeRenderer extends ElementRenderer {
 	
 	protected Path2D arrowShape = null;
 
+	protected double groupWidth = 0;
+	
+	protected Color groupFillColor = null;
+	
 	@Override
 	protected void setupRenderingPass(StyleGroup group, Graphics2D g,
 			Camera camera) {
@@ -69,11 +73,13 @@ public class EdgeRenderer extends ElementRenderer {
 	@Override
 	protected void pushStyle(StyleGroup group, Graphics2D g, Camera camera) {
 		GraphMetrics metrics = camera.getMetrics();
-		width = metrics.lengthToGu(group.getSize(), 0);
+		groupWidth = metrics.lengthToGu(group.getSize(), 0);
+		width = groupWidth;
+		groupFillColor = group.getFillColor(0);
 		arrowLength = metrics.lengthToGu(group.getArrowSize(), 0);
 		arrowWidth = metrics.lengthToGu(group.getArrowSize(), group.getArrowSize().size() > 1 ? 1 : 0);
 
-		g.setColor(group.getFillColor(0));
+		g.setColor(groupFillColor);
 		g.setStroke(new BasicStroke((float) width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
 	}
 
@@ -81,20 +87,17 @@ public class EdgeRenderer extends ElementRenderer {
 	protected void pushDynStyle(StyleGroup group, Graphics2D g, Camera camera, GraphicElement element) {
 		EdgeSkeleton skel = (EdgeSkeleton)element.getSkeleton();
 		Color color = null;
-		Point3 size = null;
 		
-		if(skel.hasDynColor())
-			 color = skel.getColor();
-		else color = group.getFillColor(0);
+		if(skel.hasDynamicColor())
+			 color = skel.getDynamicColor();
+		else color = groupFillColor;
 		
-		if(skel.hasDynSize())
-			 size = skel.getSizeGU(camera);
-		else size = camera.getMetrics().valuesToPoint3GU(group.getSize());
+		width = groupWidth;
 
 		g.setColor(color);
 
-		if (group.getSizeMode() == SizeMode.DYN_SIZE) {
-			width = size.x;
+		if (skel.hasDynamicSize()) {
+			width = skel.getDynamicSizeGU(camera).x;
 			g.setStroke(new BasicStroke((float) width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
 		}
 	}
@@ -180,7 +183,7 @@ public class EdgeRenderer extends ElementRenderer {
 	}
 
 	protected double evalEllipseRadius(GraphicEdge edge, GraphicNode sourceNode, GraphicNode targetNode, Camera camera) {
-		Point3 size = ((BaseSkeleton)(targetNode.getSkeleton())).getSizeGU(camera);
+		Point3 size = ((BaseSkeleton)(targetNode.getSkeleton())).getDynamicSizeGU(camera);
 		double w = size.x;
 		double h = size.y;
 

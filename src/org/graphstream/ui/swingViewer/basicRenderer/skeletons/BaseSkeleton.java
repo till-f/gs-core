@@ -66,22 +66,22 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	/**
 	 * Should the color be computed when accessed ?
 	 */
-	protected boolean colorDirty = true;
+	protected boolean dynColorDirty = true;
 
 	/**
 	 * The color of the element.
 	 */
-	protected Color color;
+	protected Color dynColor;
 
 	/**
 	 * Should the size be computed hen accessed ?
 	 */
-	protected boolean sizeDirty = true;
+	protected boolean dynSizeDirty = true;
 	
 	/**
 	 * The size of the element.
 	 */
-	protected Point3 size = new Point3();
+	protected Point3 dynSize = new Point3();
 	
 	/**
 	 * Should the length of the label in pixels be computed when accessed ?
@@ -94,26 +94,43 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	protected double labelLengthPx = 0;
 	
 	/**
-	 * Color of the element.
+	 * Does the style specify a dynamic size ? Set from the style and updated when the style changes.
 	 */
-	public Color getColor() {
-		if(colorDirty) {
+	protected boolean hasDynSize = false;
+	
+	/**
+	 * Does the style specify a dynamic color ? Set from the style, and update when the style changes.
+	 */
+	protected boolean hasDynColor = false;
+	
+	/**
+	 * Dynamic color of the element.
+	 */
+	public Color getDynamicColor() {
+		if(dynColorDirty) {
 			computeColor();
 		}
 		
-		return color;
+		return dynColor;
+	}
+	
+	/**
+	 * Color of the element. Be careful, this is not the dynamic color.
+	 */
+	public Color getColor() {
+		return element.style.getFillColor(0);
 	}
 
 	/**
-	 * Size of the element in graph units.
+	 * Dynamic size of the element in graph units.
 	 * @param camera The camera.
 	 */
-	public Point3 getSizeGU(Camera camera) {
-		if(sizeDirty) {
+	public Point3 getDynamicSizeGU(Camera camera) {
+		if(dynSizeDirty) {
 			computeSize(camera);
 		}
 		
-		return size;
+		return dynSize;
 	}
 
 	/**
@@ -121,21 +138,39 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	 * @param camera The camera.
 	 * @param units The units you want the size in.
 	 */
-	public Point3 getSize(Camera camera, Units units) {
-		if(sizeDirty) {
+	public Point3 getDynamicSize(Camera camera, Units units) {
+		if(dynSizeDirty) {
 			computeSize(camera);
 		}
 		
 		if(units == Units.GU) {
-			return size;
+			return dynSize;
 		} else if(units == Units.PX) {
 			Point3 s = new Point3();
-			s.x = camera.getMetrics().lengthToPx(size.x, Units.GU);
-			s.y = camera.getMetrics().lengthToPx(size.y, Units.GU);
+			s.x = camera.getMetrics().lengthToPx(dynSize.x, Units.GU);
+			s.y = camera.getMetrics().lengthToPx(dynSize.y, Units.GU);
 			return s;
 		} else {
 			throw new RuntimeException("TODO");
 		}
+	}
+	
+	/**
+	 * Size of the element, in graph units. Be careful, this is not the dynamic size.
+	 * This is mostly a shortcut to the style.
+	 * @param camera The camera.
+	 */
+	public Point3 getSizeGU(Camera camera) {
+		return camera.getMetrics().valuesToPoint3GU(element.style.getSize());
+	}
+	
+	/**
+	 * Size of the element, in pixels. Be careful, this is not the dynamic size.
+	 * This is mostly a shortcut to the style.
+	 * @param camera The camera.
+	 */
+	public Point3 getSizePX(Camera camera) {
+		return camera.getMetrics().valuesToPoint3PX(element.style.getSize());
 	}
 	
 	public double getLabelLengthPX(Camera camera) {
@@ -177,8 +212,10 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	
 	public void installed(GraphicElement element) {
 		this.element = element;
-		sizeDirty = true;
-		colorDirty = true;
+		dynSizeDirty = true;
+		dynColorDirty = true;
+		hasDynSize = (element.style.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE);
+		hasDynColor = (element.style.getFillMode() == StyleConstants.FillMode.DYN_PLAIN);
 	}
 
 	public void uninstalled() {
@@ -191,8 +228,8 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	public void pointsChanged(Object newValue) {
 	}
 
-	public void sizeChanged(Object newValue) {
-		sizeDirty = true;
+	public void dynamicSizeChanged(Object newValue) {
+		dynSizeDirty = true;
 	}
 
 	public void labelChanged() {
@@ -202,24 +239,30 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	public void iconChanged(Object newValue) {
 	}
 
-	public void colorChanged(Object newValue) {
-		colorDirty = true;
+	public void dynamicColorChanged(Object newValue) {
+		dynColorDirty = true;
 	}
 	
 	public void unknownUIAttributeChanged(String attribute, Object newValue) {
 	}
 
-	public boolean hasDynSize() {
-		return (element.style.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE);
+	public boolean hasDynamicSize() {
+		return hasDynSize;
 	}
 
-	public boolean hasDynColor() {
-		return (element.style.getFillMode() == StyleConstants.FillMode.DYN_PLAIN);
+	public boolean hasDynamicColor() {
+		return hasDynColor;
 	}
 
 	public void styleChanged() {
-		colorDirty = true;
-		sizeDirty = true;
+		dynColorDirty = true;
+		dynSizeDirty = true;
+		hasDynSize = (element.style.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE);
+		hasDynColor = (element.style.getFillMode() == StyleConstants.FillMode.DYN_PLAIN);
+	}
+	
+	public void graphBoundsChanged() {
+		dynSizeDirty = true;
 	}
 	
 	/**
@@ -231,23 +274,23 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 		StyleGroup style = element.style;
 		Values sizes = style.getSize();
 
-		size.x = camera.getMetrics().lengthToGu(sizes, 0);
-		size.y = sizes.size() > 1 ? camera.getMetrics().lengthToGu(sizes, 1) : size.x;
+		dynSize.x = camera.getMetrics().lengthToGu(sizes, 0);
+		dynSize.y = sizes.size() > 1 ? camera.getMetrics().lengthToGu(sizes, 1) : dynSize.x;
 		
-		if(hasDynSize()) {
+		if(hasDynSize) {
 			Object o = element.getAttribute("ui.size");
 			
 			if(o != null) {
 				if(o instanceof Values) {
 					Values val = (Values)o;
-					size.x = camera.getMetrics().lengthToGu(val, 0);
-					size.y = val.size() > 1 ? camera.getMetrics().lengthToGu(val, 1) : size.x;
+					dynSize.x = camera.getMetrics().lengthToGu(val, 0);
+					dynSize.y = val.size() > 1 ? camera.getMetrics().lengthToGu(val, 1) : dynSize.x;
 				} else {
 					try {
-						double ratio = size.x / size.y;
+						double ratio = dynSize.x / dynSize.y;
 						Value val = Value.getNumber(element.getAttribute("ui.size"));
-						size.x = camera.getMetrics().lengthToGu(val);
-						size.y = size.x * ratio;
+						dynSize.x = camera.getMetrics().lengthToGu(val);
+						dynSize.y = dynSize.x * ratio;
 					} catch(NumberFormatException e) { System.err.printf("cannot interpret ui.size attribute %s%n", o); }
 				}
 			}
@@ -255,7 +298,7 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 		}
 		System.err.printf("%s recomputed size%n", element.getId());
 		
-		sizeDirty = false;
+		dynSizeDirty = false;
 	}
 	
 	/**
@@ -263,23 +306,23 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	 * change, etc.
 	 */
 	protected void computeColor() {
-		if(hasDynColor()) {
+		if(hasDynColor) {
 			Object value = element.getAttribute("ui.color");
 			
 			if(value != null) {
 				if(value instanceof Color) {
-					color = (Color) value;
+					dynColor = (Color) value;
 				} else if(value instanceof Number) {
-					color = interpolateColor(((Number)value).doubleValue());
+					dynColor = interpolateColor(((Number)value).doubleValue());
 				}
 			} else {
-				color = element.style.getFillColor(0);
+				dynColor = element.style.getFillColor(0);
 			}
 		} else {
-			color = element.style.getFillColor(0);
+			dynColor = element.style.getFillColor(0);
 		}
 		
-		colorDirty = false;
+		dynColorDirty = false;
 	}
 	
 	/**

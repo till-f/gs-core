@@ -386,8 +386,17 @@ public abstract class ElementRenderer {
 			 && group.getTextMode() != StyleConstants.TextMode.HIDDEN
 			 && group.getTextVisibilityMode() != StyleConstants.TextVisibilityMode.HIDDEN) {
 				BaseSkeleton skel = (BaseSkeleton) element.getSkeleton();
-				Point3 c = skel == null ? element.getCenter() : skel.getPosition(camera, null, Units.PX);
-				Point3 s = skel == null ? new Point3(0, 0, 0) : skel.getSize(camera, Units.PX);
+				Point3 c = null;
+				Point3 s = null;
+				if(skel != null) {
+					c = skel.getPosition(camera, null, Units.PX);
+					if(skel.hasDynamicSize())
+						 s = skel.getDynamicSize(camera, Units.PX);
+					else s = skel.getSizePX(camera); //camera.getMetrics().valuesToPoint3PX(element.style.getSize());
+				} else {
+					c = element.getCenter();
+					s = camera.getMetrics().valuesToPoint3PX(element.style.getSize());
+				}
 
 // XXX TODO this feature would require to store the textLength in the skeleton.
 //				switch(element.getStyle().getTextAlignment()) {

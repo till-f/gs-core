@@ -57,6 +57,7 @@ import org.graphstream.stream.sync.SinkTime;
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement.Skeleton;
 import org.graphstream.ui.graphicGraph.StyleGroupSet.EdgeSet;
+import org.graphstream.ui.graphicGraph.stylesheet.Selector;
 import org.graphstream.ui.graphicGraph.stylesheet.Style;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleSheet;
@@ -400,8 +401,8 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	 * 
 	 * <p>
 	 * We can only compute the graph bounds from the
-	 * nodes and sprites centers to avoid an endless recursive call to this method,
-	 * since the node and sprite sizes may in certain circumstances be computed
+	 * nodes and sprites centers (positions) to avoid an endless recursive call to this method,
+	 * since the node and sprite sizes may, in certain circumstances, be computed
 	 * according to the graph bounds. The bounds are stored in the graph metrics.
 	 * </p>
 	 * 
@@ -414,7 +415,7 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 	 * </p>
 	 * 
 	 * <p>
-	 * When nodes, sprites or edges have skeletons, their {@link Skeleton#sizeChanged(Object)}
+	 * When nodes, sprites or edges have skeletons, their {@link Skeleton#dynamicSizeChanged(Object)}
 	 * method is called (with a null argument).
 	 * </p>
 	 * 
@@ -443,11 +444,6 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 						lo.z = pos.z;
 					if (pos.z > hi.z)
 						hi.z = pos.z;
-					
-					// Update the skeleton if needed.
-					Skeleton skel = node.getSkeleton();
-					if(skel != null && skel.hasDynSize())
-						skel.sizeChanged(null);
 				}
 			}
 
@@ -470,26 +466,26 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 						if (pos.z > hi.z)
 							hi.z = pos.z;
 					}
-					
-					if(!sprite.hidden) {
-						// Update the skeleton if needed.
-						Skeleton skel = sprite.getSkeleton();
-						if(skel != null && skel.hasDynSize())
-							skel.sizeChanged(null);
+				}
+			}
+			
+			// The dynamic size of each element having such a property must be
+			// recomputed since the ratio pixels/GU probably changed. It is
+			// faster to use the group, this way we iterate only on the elements
+			// that really need it (and edges need the update also).
+			
+			for(StyleGroup group: styleGroups.groups.values()) {
+				if(group.getType() != Selector.Type.GRAPH && group.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE) {
+					for(AbstractGraphicElement e: group) {
+						// The cast will always work thanks to the type test above.
+						Skeleton skel = ((GraphicElement)e).getSkeleton();
+						if(skel != null) {
+							skel.graphBoundsChanged();
+						}
 					}
 				}
 			}
 			
-			for(Edge e : getEachEdge()) {
-				GraphicEdge edge = (GraphicEdge) e;
-				
-				if(! edge.hidden) {
-					Skeleton skel = edge.getSkeleton();
-					if(skel != null && skel.hasDynSize())
-						skel.sizeChanged(null);
-				}
-			}
-
 			if((hi.x - lo.x < 0.000001)) { hi.x = 1; lo.x = -1; }   
 			if((hi.y - lo.y < 0.000001)) { hi.y = 1; lo.y = -1; }   
 			if((hi.z - lo.z < 0.000001)) { hi.z = 1; lo.z = -1; }   

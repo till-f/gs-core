@@ -188,34 +188,30 @@ public abstract class GraphicElement extends AbstractGraphicElement {
 		 */
 		void positionChanged();
 		/**
-		 * Called each time the "ui.point" attribute changed. If there are no more points, the
-		 * new value is null.
-		 * @param newValue the new value for the points.
+		 * Called each time the "ui.point" attribute changed.
+		 * @param newValue the new value for the points, if available.
 		 */
 		void pointsChanged(Object newValue);
 		/**
-		 * Called each time the "ui.size" attribute changed. If there is no more dynamic size,
-		 * the new value is null.
-		 * @param newValue the new value for the size.
+		 * Called each time the "ui.size" attribute changed.
+		 * @param newValue the new value for the size if available.
 		 */
-		void sizeChanged(Object newValue);
+		void dynamicSizeChanged(Object newValue);
 		/**
 		 * Called each time the "label" or "ui.label" attribute changed. The
 		 * label is stored inside the graphic element.
 		 */
 		void labelChanged();
 		/**
-		 * Called each time the "ui.icon" attribute changed. If there is no more dynamic icon,
-		 * the new value is null.
-		 * @param newValue the new value for the icon. 
+		 * Called each time the "ui.icon" attribute changed.
+		 * @param newValue the new value for the icon. If available.
 		 */
 		void iconChanged(Object newValue);
 		/**
-		 * Called each time the "ui.color" attribute changed. If there is no more dynamic color,
-		 * the new value is null.
-		 * @param newValue The new value for the color. 
+		 * Called each time the "ui.color" attribute changed.
+		 * @param newValue The new value for the color if available.
 		 */
-		void colorChanged(Object newValue);
+		void dynamicColorChanged(Object newValue);
 		/**
 		 * Called each time an "ui.something" attribute change.
 		 * @param attribute The attribute name.
@@ -228,16 +224,20 @@ public abstract class GraphicElement extends AbstractGraphicElement {
 		 */
 		void styleChanged();
 		/**
+		 * The graph bounds and metrics changed and may affect the way sizes are computed.
+		 */
+		void graphBoundsChanged();
+		/**
 		 * True if the style indicates a "size-mode" with value "dyn-size".
 		 * @return True if size is dynamic.
 		 */
-		boolean hasDynSize();
+		boolean hasDynamicSize();
 
 		/**
 		 * True if the style indicates a "fill-mode" with value "dyn-plain".
 		 * @return True if size is dynamic.
 		 */
-		boolean hasDynColor();
+		boolean hasDynamicColor();
 	}
 
 	/**
@@ -489,11 +489,11 @@ public abstract class GraphicElement extends AbstractGraphicElement {
 			} else if (attribute.equals("ui.color")) {
 				style.pushElementAsDynamic(this);
 				mygraph.graphChanged = true;
-				if(skeleton != null) skeleton.colorChanged(newValue);
+				if(skeleton != null) skeleton.dynamicColorChanged(newValue);
 			} else if (attribute.equals("ui.size")) {
 				style.pushElementAsDynamic(this);
 				mygraph.graphChanged = true;
-				if(skeleton != null) skeleton.sizeChanged(newValue);
+				if(skeleton != null) skeleton.dynamicSizeChanged(newValue);
 			} else if (attribute.equals("ui.icon")) {
 				mygraph.graphChanged = true;
 				if(skeleton != null) skeleton.iconChanged(newValue);
@@ -527,12 +527,12 @@ public abstract class GraphicElement extends AbstractGraphicElement {
 				mygraph.graphChanged = true;
 			} else if (attribute.equals("ui.color")) {
 				style.popElementAsDynamic(this);
-				if(skeleton != null) skeleton.colorChanged(null);
+				if(skeleton != null) skeleton.dynamicColorChanged(null);
 				mygraph.graphChanged = true;
 			} else if (attribute.equals("ui.size")) {
 				style.popElementAsDynamic(this);
 				mygraph.graphChanged = true;
-				if(skeleton != null) skeleton.sizeChanged(null);
+				if(skeleton != null) skeleton.dynamicSizeChanged(null);
 			} else if (attribute.equals("ui.icon")) {
 				mygraph.graphChanged = true;
 				if(skeleton != null) skeleton.iconChanged(null);
