@@ -227,6 +227,17 @@ public abstract class GraphicElement extends AbstractGraphicElement {
 		 * or if the contents of the style change.
 		 */
 		void styleChanged();
+		/**
+		 * True if the style indicates a "size-mode" with value "dyn-size".
+		 * @return True if size is dynamic.
+		 */
+		boolean hasDynSize();
+
+		/**
+		 * True if the style indicates a "fill-mode" with value "dyn-plain".
+		 * @return True if size is dynamic.
+		 */
+		boolean hasDynColor();
 	}
 
 	/**

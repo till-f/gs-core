@@ -83,8 +83,16 @@ public class NodeRenderer extends ElementRenderer {
 	protected void pushDynStyle(StyleGroup group, Graphics2D g, Camera camera,
 			GraphicElement element) {
 		BaseSkeleton skel = (BaseSkeleton)element.getSkeleton();
-		Color color = skel.getColor();
-		Point3 size = skel.getSizeGU(camera);
+		Color color = null;
+		Point3 size = null;
+		
+		if(skel.hasDynColor())
+			 color = skel.getColor();
+		else color = group.getFillColor(0);
+		
+		if(skel.hasDynSize())
+			 size = skel.getSizeGU(camera);
+		else size = camera.getMetrics().valuesToPoint3GU(group.getSize());
 
 		g.setColor(color);
 

@@ -209,6 +209,14 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	public void unknownUIAttributeChanged(String attribute, Object newValue) {
 	}
 
+	public boolean hasDynSize() {
+		return (element.style.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE);
+	}
+
+	public boolean hasDynColor() {
+		return (element.style.getFillMode() == StyleConstants.FillMode.DYN_PLAIN);
+	}
+
 	public void styleChanged() {
 		colorDirty = true;
 		sizeDirty = true;
@@ -226,7 +234,7 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 		size.x = camera.getMetrics().lengthToGu(sizes, 0);
 		size.y = sizes.size() > 1 ? camera.getMetrics().lengthToGu(sizes, 1) : size.x;
 		
-		if(style.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE) {
+		if(hasDynSize()) {
 			Object o = element.getAttribute("ui.size");
 			
 			if(o != null) {
@@ -255,7 +263,7 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	 * change, etc.
 	 */
 	protected void computeColor() {
-		if(element.style.getFillMode() == StyleConstants.FillMode.DYN_PLAIN) {
+		if(hasDynColor()) {
 			Object value = element.getAttribute("ui.color");
 			
 			if(value != null) {

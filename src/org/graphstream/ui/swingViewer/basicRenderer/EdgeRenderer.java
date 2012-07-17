@@ -80,9 +80,16 @@ public class EdgeRenderer extends ElementRenderer {
 	@Override
 	protected void pushDynStyle(StyleGroup group, Graphics2D g, Camera camera, GraphicElement element) {
 		EdgeSkeleton skel = (EdgeSkeleton)element.getSkeleton();
+		Color color = null;
+		Point3 size = null;
 		
-		Color color = skel.getColor();
-		Point3 size = skel.getSizeGU(camera);
+		if(skel.hasDynColor())
+			 color = skel.getColor();
+		else color = group.getFillColor(0);
+		
+		if(skel.hasDynSize())
+			 size = skel.getSizeGU(camera);
+		else size = camera.getMetrics().valuesToPoint3GU(group.getSize());
 
 		g.setColor(color);
 

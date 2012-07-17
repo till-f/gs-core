@@ -361,6 +361,34 @@ public class GraphMetrics {
 	public double lengthToPercents(Values values, int index) {
 		return lengthToGu(values.get(index), values.units);
 	}
+	
+	/**
+	 * Convert until three values into a 3D point. If the values contains only
+	 * one or two elements, the y and z components are copied from the x or y
+	 * ones.
+	 * @param values A set of values and their unit.
+	 * @return A 3D point in graph units.
+	 */
+	public Point3 valuesToPoint3GU(Values values) {
+		double x = lengthToGu(values, 0);
+		double y = values.size() > 0 ? lengthToGu(values, 1) : x;
+		double z = values.size() > 1 ? lengthToGu(values, 2) : y;
+		return new Point3(x, y, z);
+	}
+
+	/**
+	 * Convert until three values into a 3D point. If the values contains only
+	 * one or two elements, the y and z components are copied from the x or y
+	 * ones.
+	 * @param values A set of values and their unit.
+	 * @return A 3D point in pixels.
+	 */
+	public Point3 valuesToPoint3PX(Values values) {
+		double x = lengthToPx(values, 0);
+		double y = values.size() > 0 ? lengthToPx(values, 1) : x;
+		double z = values.size() > 1 ? lengthToPx(values, 2) : y;
+		return new Point3(x, y, z);
+	}
 
 	@Override
 	public String toString() {

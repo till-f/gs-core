@@ -446,7 +446,7 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 					
 					// Update the skeleton if needed.
 					Skeleton skel = node.getSkeleton();
-					if(skel != null)
+					if(skel != null && skel.hasDynSize())
 						skel.sizeChanged(null);
 				}
 			}
@@ -474,7 +474,7 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 					if(!sprite.hidden) {
 						// Update the skeleton if needed.
 						Skeleton skel = sprite.getSkeleton();
-						if(skel != null)
+						if(skel != null && skel.hasDynSize())
 							skel.sizeChanged(null);
 					}
 				}
@@ -485,7 +485,7 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 				
 				if(! edge.hidden) {
 					Skeleton skel = edge.getSkeleton();
-					if(skel != null)
+					if(skel != null && skel.hasDynSize())
 						skel.sizeChanged(null);
 				}
 			}
