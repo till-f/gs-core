@@ -32,14 +32,16 @@
 
 package org.graphstream.ui.swingViewer.util;
 
+import java.awt.Component;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.swingViewer.Camera;
 import org.graphstream.ui.swingViewer.View;
 
-public class DefaultShortcutManager implements ShortcutManager {
+public class DefaultShortcutManager implements ShortcutManager, KeyListener {
 	// Attributes
 
 	/**
@@ -58,11 +60,24 @@ public class DefaultShortcutManager implements ShortcutManager {
 	public void init(GraphicGraph graph, View view) {
 		this.view = view;
 		view.addKeyListener(this);
+System.err.printf("*** INIT key manager ***%n");
 	}
 	
 	public void release() {
 		view.removeKeyListener(this);
+System.err.printf("** RELEASE key manager ***%n");
 	}
+	
+	public void installedInAWTComponent(Component parent) {
+		parent.addKeyListener(this);
+System.err.printf("** INSTALLED in frame **%n");
+	}
+	
+	public void removedFromAWTComponent(Component parent) {
+		parent.removeKeyListener(this);
+System.err.printf("** REMOVED from frame **%n");
+	}
+
 
 	// Events
 
@@ -74,12 +89,14 @@ public class DefaultShortcutManager implements ShortcutManager {
 	 */
 	public void keyPressed(KeyEvent event) {
 		Camera camera = view.getCamera();
+		int keyCode = event.getKeyCode();
+System.err.printf("*** GOT key %d ****%n", keyCode);
 		
-		if (event.getKeyCode() == KeyEvent.VK_PAGE_UP) {
+		if (keyCode == KeyEvent.VK_PAGE_UP) {
 			camera.setViewPercent(camera.getViewPercent() - 0.05f);
-		} else if (event.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
+		} else if (keyCode == KeyEvent.VK_PAGE_DOWN) {
 			camera.setViewPercent(camera.getViewPercent() + 0.05f);
-		} else if (event.getKeyCode() == KeyEvent.VK_LEFT) {
+		} else if (keyCode == KeyEvent.VK_LEFT) {
 			if ((event.getModifiers() & KeyEvent.ALT_MASK) != 0) {
 				double r = camera.getViewRotation();
 				camera.setViewRotation(r - 5);
@@ -94,7 +111,7 @@ public class DefaultShortcutManager implements ShortcutManager {
 				Point3 p = camera.getViewCenter();
 				camera.setViewCenter(p.x - delta, p.y, 0);
 			}
-		} else if (event.getKeyCode() == KeyEvent.VK_RIGHT) {
+		} else if (keyCode == KeyEvent.VK_RIGHT) {
 			if ((event.getModifiers() & KeyEvent.ALT_MASK) != 0) {
 				double r = camera.getViewRotation();
 				camera.setViewRotation(r + 5);
@@ -109,7 +126,7 @@ public class DefaultShortcutManager implements ShortcutManager {
 				Point3 p = camera.getViewCenter();
 				camera.setViewCenter(p.x + delta, p.y, 0);
 			}
-		} else if (event.getKeyCode() == KeyEvent.VK_UP) {
+		} else if (keyCode == KeyEvent.VK_UP) {
 			double delta = 0;
 
 			if ((event.getModifiers() & KeyEvent.SHIFT_MASK) != 0)
@@ -119,7 +136,7 @@ public class DefaultShortcutManager implements ShortcutManager {
 
 			Point3 p = camera.getViewCenter();
 			camera.setViewCenter(p.x, p.y + delta, 0);
-		} else if (event.getKeyCode() == KeyEvent.VK_DOWN) {
+		} else if (keyCode == KeyEvent.VK_DOWN) {
 			double delta = 0;
 
 			if ((event.getModifiers() & KeyEvent.SHIFT_MASK) != 0)
@@ -129,6 +146,8 @@ public class DefaultShortcutManager implements ShortcutManager {
 
 			Point3 p = camera.getViewCenter();
 			camera.setViewCenter(p.x, p.y - delta, 0);
+		} else if(keyCode == KeyEvent.VK_ESCAPE || keyCode == KeyEvent.VK_HOME) {
+			camera.resetView();
 		}
 	}
 

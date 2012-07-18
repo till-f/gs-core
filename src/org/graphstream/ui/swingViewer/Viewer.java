@@ -556,6 +556,14 @@ public class Viewer implements ActionListener {
 			views.remove(id);
 		}
 	}
+	
+	/**
+	 * Iterable view on the set of viewer listeners.
+	 * @return An iterable on the set of listeners.
+	 */
+	public Iterable<ViewerListener> getEachListener() {
+		return listeners;
+	}
 
 	/**
 	 * This method is called by the Viewer timer to redraw automatically the views

@@ -29,7 +29,7 @@
  */
 package org.graphstream.ui.swingViewer.util;
 
-import java.awt.event.KeyListener;
+import java.awt.Component;
 
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.swingViewer.View;
@@ -37,7 +37,7 @@ import org.graphstream.ui.swingViewer.View;
 /**
  * Utility to centralize the shortcuts and actions for all view instances.
  */
-public interface ShortcutManager extends KeyListener {
+public interface ShortcutManager {
 	/**
 	 * Make the manager active on the given graph and view.
 	 * @param graph
@@ -46,6 +46,18 @@ public interface ShortcutManager extends KeyListener {
 	 *            The view to control.
 	 */
 	void init(GraphicGraph graph, View view);
+
+	/**
+	 * The view is now child of a given component.
+	 * @param component The new parent for the view.
+	 */
+	void installedInAWTComponent(Component component);
+	
+	/**
+	 * The view is now removed from a given component.
+	 * @param component The old parent of the view.
+	 */
+	void removedFromAWTComponent(Component component);
 	
 	/**
 	 * Release the links between this manager and the view and the graph.

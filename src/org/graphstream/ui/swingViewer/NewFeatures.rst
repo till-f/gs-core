@@ -5,6 +5,8 @@ New Features In the "Gobelin" version of UI
 * ``ui.size`` with units. Merely pass a number and a Unit.PX or Unit.GU to tell in which units the size is given. You can use the Values class as well as a descendant class named Pixels. For example ``node.addAttribute("ui.size", 5, Units.PX)`` or ``node.addAttribute("ui.size", new Pixels(5))``.
 * ``ui.log`` attribute on the graph with as value a file name string. This feature tells the viewer to create a file that will contain statistics on the frames per second the viewer is actually capable of.
 * ``ui.fps`` attribute that changes the refresh frequency of the viewer. For example ``graph.addAtribute("ui.fps", 70)`` will tell the viewer to try to draw 70 frames per second. By default the viewer tries to draw 25 frames per second.
+* ``ui.hide`` To hide a node or edge.
+* ``CameraManager`` to control the camera on a distant Viewer.
 * Lots of speed improvements.
 	* In the visibility test.
 	* In the iteration on elements to draw.

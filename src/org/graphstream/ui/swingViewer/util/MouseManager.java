@@ -29,15 +29,13 @@
  */
 package org.graphstream.ui.swingViewer.util;
 
-import javax.swing.event.MouseInputListener;
-
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 import org.graphstream.ui.swingViewer.View;
 
 /**
  * A global behavior for all mouse events on graphic elements.
  */
-public interface MouseManager extends MouseInputListener {
+public interface MouseManager {
 	/**
 	 * Make the manager active on the given graph and view.
 	 * @param graph

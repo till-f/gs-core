@@ -190,9 +190,13 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 		renderer.close();
 		graph.removeAttributeSink(this);
 		graph.addAttribute("ui.viewClosed", getId());
-		removeKeyListener(shortcuts);
-		shortcuts.release();
-		mouseClicks.release();
+		if(frame != null && shortcuts != null) {
+			shortcuts.removedFromAWTComponent(frame);
+			shortcuts.release();
+		}
+		if(mouseClicks != null) {
+			mouseClicks.release();
+		}
 		
 		openInAFrame(false);
 	}
@@ -214,7 +218,8 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 				frame.setSize(800, 600);
 				frame.setVisible(true);
 				frame.addWindowListener(this);
-				frame.addKeyListener(shortcuts);
+				if(shortcuts != null)
+					shortcuts.installedInAWTComponent(frame);
 				checkInitialAttributes();
 			} else {
 				frame.setVisible(true);
@@ -222,10 +227,12 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 		} else {
 			if (frame != null) {
 				frame.removeWindowListener(this);
-				frame.removeKeyListener(shortcuts);
+				if(shortcuts != null)
+					shortcuts.removedFromAWTComponent(frame);
 				frame.remove(this);
 				frame.setVisible(false);
 				frame.dispose();
+				frame = null;
 			}
 		}
 	}

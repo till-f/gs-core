@@ -384,6 +384,16 @@ public abstract class BaseCamera implements Camera {
 	 * This method updates the {@link #nodeInvisible} field. It uses the
 	 * {@link #isNodeVisibleIn(GraphicNode, double, double, double, double)} test.
 	 * </p>
+	 * 
+	 * <p>
+	 * It is done only when not in auto-fit mode, since in that mode, all the nodes
+	 * are visible.
+	 * </p>
+	 * 
+	 * <p>
+	 * The visibility mode of the CSS style is not considered here, it will be when
+	 * drawing a whole group.
+	 * </p>
 	 */
 	public void checkVisibility(GraphicGraph graph) {
 		if(! autoFit) {

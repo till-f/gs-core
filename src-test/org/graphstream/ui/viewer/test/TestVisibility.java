@@ -42,6 +42,8 @@ import org.graphstream.ui.swingViewer.View;
 import org.graphstream.ui.swingViewer.Viewer;
 
 public class TestVisibility extends JFrame {
+	private static final long serialVersionUID = 1L;
+
 	public static void main(String args[]) {
 		(new TestVisibility()).test();
 	}
