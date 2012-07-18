@@ -47,9 +47,9 @@ public class CameraManager {
 	}
 
 	public void setViewAutoFit(View view) {
-		graph.removeAttribute(String.format("ui.camera.%s.angle", view.getId()));
-		graph.removeAttribute(String.format("ui.camera.%s.zoom", view.getId()));
-		graph.removeAttribute(String.format("ui.camera.%s.center", view.getId()));
+		graph.removeAttribute(String.format("ui.%s.camera.angle", view.getId()));
+		graph.removeAttribute(String.format("ui.%s.camera.zoom", view.getId()));
+		graph.removeAttribute(String.format("ui.%s.camera.center", view.getId()));
 	}
 
 	public void setViewCenter(View view, double x, double y, double z) {
@@ -65,20 +65,20 @@ public class CameraManager {
 	}
 	
 	public void setViewAutoFit(String viewId) {
-		graph.removeAttribute(String.format("ui.camera.%s.angle", viewId));
-		graph.removeAttribute(String.format("ui.camera.%s.zoom", viewId));
-		graph.removeAttribute(String.format("ui.camera.%s.center", viewId));
+		graph.removeAttribute(String.format("ui.%s.camera.angle", viewId));
+		graph.removeAttribute(String.format("ui.%s.camera.zoom", viewId));
+		graph.removeAttribute(String.format("ui.%s.camera.center", viewId));
 	}
 
 	public void setViewCenter(String viewId, double x, double y, double z) {
-		graph.setAttribute(String.format("ui.camera.%s.center", viewId), new Point3(x, y, z));
+		graph.setAttribute(String.format("ui.%s.camera.center", viewId), new Point3(x, y, z));
 	}
 
 	public void setViewPercent(String viewId, double percent) {
-		graph.setAttribute(String.format("ui.camera.%s.zoom", viewId), percent);
+		graph.setAttribute(String.format("ui.%s.camera.zoom", viewId), percent);
 	}
 
 	public void setViewRotation(String viewId, double rotation) {
-		graph.setAttribute(String.format("ui.camera.%s.angle", viewId), rotation);		
+		graph.setAttribute(String.format("ui.%s.camera.angle", viewId), rotation);		
 	}
 }

@@ -48,6 +48,7 @@ public class TestCameraManager {
 		Node A = graph.addNode("A");
 		Node B = graph.addNode("B");
 		Node C = graph.addNode("C");
+
 		graph.addEdge("AB", "A", "B");
 		graph.addEdge("BC", "B", "C");
 		graph.addEdge("CA", "C", "A");

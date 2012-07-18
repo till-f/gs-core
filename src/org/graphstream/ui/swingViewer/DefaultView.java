@@ -329,10 +329,8 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	public void freezeElement(GraphicElement element, boolean frozen) {
 		if(frozen) {
 			element.addAttribute("layout.frozen");
-System.err.printf("FREEZE(%s)%n", element.getId());
 		} else {
 			element.removeAttribute("layout.frozen");
-System.err.printf("UN-FREEZE(%s)%n", element.getId());
 		}
 	}
 
@@ -432,8 +430,11 @@ System.err.printf("UN-FREEZE(%s)%n", element.getId());
 				if(viewId.equals(getId())) {
 					attribute = attribute.substring(pos+1);
 					handleAttributeValue(attribute, value);
+				} else {
+					System.err.printf("cannot handle attribute ui.%s, view %s is unknown%n", attribute, viewId);
 				}
 			} else if(attribute.equals("ui.title")) {
+				// The general ui.title the same for all frames.
 				handleAttributeValue("title", value);
 			}
 		}
