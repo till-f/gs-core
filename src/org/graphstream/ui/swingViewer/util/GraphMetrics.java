@@ -251,7 +251,7 @@ public class GraphMetrics {
 	public double lengthToPx(double value, StyleConstants.Units units) {
 		switch (units) {
 		case GU:
-			return (value - 0.01f) * ratioPx2Gu;
+			return value * ratioPx2Gu;
 		case PERCENTS:
 			return (diagonal * value) * ratioPx2Gu;
 		case PX:
@@ -386,7 +386,7 @@ public class GraphMetrics {
 	public Point3 valuesToPoint3PX(Values values) {
 		double x = lengthToPx(values, 0);
 		double y = values.size() > 0 ? lengthToPx(values, 1) : x;
-		double z = values.size() > 1 ? lengthToPx(values, 2) : y;
+		double z = values.size() > 1 ? lengthToPx(values, 2) : x;
 		return new Point3(x, y, z);
 	}
 

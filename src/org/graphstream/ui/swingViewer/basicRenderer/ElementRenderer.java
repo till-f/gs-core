@@ -387,15 +387,15 @@ public abstract class ElementRenderer {
 			 && group.getTextVisibilityMode() != StyleConstants.TextVisibilityMode.HIDDEN) {
 				BaseSkeleton skel = (BaseSkeleton) element.getSkeleton();
 				Point3 c = null;
-				Point3 s = null;
+				double s = 0;
 				if(skel != null) {
 					c = skel.getPosition(camera, null, Units.PX);
 					if(skel.hasDynamicSize())
-						 s = skel.getDynamicSize(camera, Units.PX);
-					else s = skel.getSizePX(camera); //camera.getMetrics().valuesToPoint3PX(element.style.getSize());
+						 s = skel.getDynamicSize(camera, Units.PX).x;
+					else s = camera.getMetrics().lengthToPx(element.style.getSize(), 0);
 				} else {
 					c = element.getCenter();
-					s = camera.getMetrics().valuesToPoint3PX(element.style.getSize());
+					s = camera.getMetrics().lengthToPx(element.style.getSize(), 0);
 				}
 
 // XXX TODO this feature would require to store the textLength in the skeleton.
@@ -404,7 +404,7 @@ public abstract class ElementRenderer {
 //						break;
 //					case AT_LEFT:
 						// We draw the text always at the right of the element with 4 pixels of offset for readability.
-						g.drawString(element.label, (float) (c.x + s.x/2) + 4, (float) (c.y + textSize / 3)); // approximation to gain time.
+						g.drawString(element.label, (float) (c.x + s/2) + 4, (float) (c.y + textSize / 3)); // approximation to gain time.
 //						break;
 //					case LEFT:
 //						// We draw the text always at the right of the element with 4 pixels of offset for readability.

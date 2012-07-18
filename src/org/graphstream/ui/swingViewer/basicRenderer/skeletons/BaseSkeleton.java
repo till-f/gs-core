@@ -294,9 +294,7 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 					} catch(NumberFormatException e) { System.err.printf("cannot interpret ui.size attribute %s%n", o); }
 				}
 			}
-			
 		}
-		System.err.printf("%s recomputed size%n", element.getId());
 		
 		dynSizeDirty = false;
 	}

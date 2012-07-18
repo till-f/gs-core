@@ -72,7 +72,6 @@ public class NodeRenderer extends ElementRenderer {
 		height = groupSize.y;
 		w2 = width / 2;
 		h2 = height / 2;
-
 		g.setColor(groupFillColor);
 		
 		if(group.getStrokeMode() != StyleConstants.StrokeMode.NONE) {
