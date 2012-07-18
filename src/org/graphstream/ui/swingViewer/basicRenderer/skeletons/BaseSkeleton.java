@@ -274,8 +274,8 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 		StyleGroup style = element.style;
 		Values sizes = style.getSize();
 
-		dynSize.x = camera.getMetrics().lengthToGu(sizes, 0);
-		dynSize.y = sizes.size() > 1 ? camera.getMetrics().lengthToGu(sizes, 1) : dynSize.x;
+		dynSize.x = -1;
+		dynSize.y = -1;
 		
 		if(hasDynSize) {
 			Object o = element.getAttribute("ui.size");
@@ -294,6 +294,11 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 					} catch(NumberFormatException e) { System.err.printf("cannot interpret ui.size attribute %s%n", o); }
 				}
 			}
+		}
+		
+		if(dynSize.x == -1 && dynSize.y == -1) {
+			dynSize.x = camera.getMetrics().lengthToGu(sizes, 0);
+			dynSize.y = sizes.size() > 1 ? camera.getMetrics().lengthToGu(sizes, 1) : dynSize.x;			
 		}
 		
 		dynSizeDirty = false;
