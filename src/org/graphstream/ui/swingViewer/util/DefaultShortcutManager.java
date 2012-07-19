@@ -60,22 +60,18 @@ public class DefaultShortcutManager implements ShortcutManager, KeyListener {
 	public void init(GraphicGraph graph, View view) {
 		this.view = view;
 		view.addKeyListener(this);
-System.err.printf("*** INIT key manager ***%n");
 	}
 	
 	public void release() {
 		view.removeKeyListener(this);
-System.err.printf("** RELEASE key manager ***%n");
 	}
 	
 	public void installedInAWTComponent(Component parent) {
 		parent.addKeyListener(this);
-System.err.printf("** INSTALLED in frame **%n");
 	}
 	
 	public void removedFromAWTComponent(Component parent) {
 		parent.removeKeyListener(this);
-System.err.printf("** REMOVED from frame **%n");
 	}
 
 
@@ -90,7 +86,6 @@ System.err.printf("** REMOVED from frame **%n");
 	public void keyPressed(KeyEvent event) {
 		Camera camera = view.getCamera();
 		int keyCode = event.getKeyCode();
-System.err.printf("*** GOT key %d ****%n", keyCode);
 		
 		if (keyCode == KeyEvent.VK_PAGE_UP) {
 			camera.setViewPercent(camera.getViewPercent() - 0.05f);
