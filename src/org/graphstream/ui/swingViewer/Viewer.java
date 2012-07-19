@@ -364,25 +364,57 @@ public class Viewer implements ActionListener {
 				return (GraphRenderer) object;
 			} else {
 				System.err.printf("class '%s' is not a 'GraphRenderer'%n",
-						object);
+						object.getClass().getName());
 			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 			System.err
-					.printf("Cannot create graph renderer, 'GraphRenderer' class not found : "
-							+ e.getMessage());
+					.printf("Cannot create graph renderer, 'GraphRenderer' %s class not found : %s%n",
+							rendererClassName, e.getMessage());
 		} catch (InstantiationException e) {
 			e.printStackTrace();
-			System.err.printf("Cannot create graph renderer, class '"
-					+ rendererClassName + "' error : " + e.getMessage());
+			System.err.printf("Cannot create graph renderer, class '%s' error : %s%n",
+					rendererClassName, e.getMessage());
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
-			System.err.printf("Cannot create graph renderer, class '"
-					+ rendererClassName + "' illegal access : "
-					+ e.getMessage());
+			System.err.printf("Cannot create graph renderer, class '%s' illegal access : %s%n",
+					rendererClassName, e.getMessage());
 		}
 
 		return new SwingBasicGraphRenderer();
+	}
+	
+	public View newView(String identifier, GraphRenderer renderer) {
+		View view = null;
+		
+		String viewClassName = System.getProperty("gs.ui.view");
+		
+		if(viewClassName != null) {
+			try {
+				Class<?> c = Class.forName(viewClassName);
+				Object object = c.newInstance();
+				
+				if(object instanceof View) {
+					view = (View) object;
+				} else {
+					System.err.printf("class '%s' is not a 'View'%n", object.getClass().getName());
+				}
+			} catch(ClassNotFoundException e) {
+				System.err.printf("Cannot create a view, %s class not found : %s.%n", viewClassName, e.getMessage());
+			} catch(InstantiationException e) {
+				System.err.printf("Cannot create view '%s' error : %s%n", viewClassName, e.getMessage());
+			} catch(IllegalAccessException e) {
+				System.err.printf("Cannot create view '%' illegal access : %s%n", viewClassName, e.getMessage());
+			}
+		}
+		
+		if(view == null) {
+			view = new DefaultView();
+		}
+		
+		view.open(identifier, this, renderer);
+		
+		return view;
 	}
 
 	/**
@@ -474,7 +506,7 @@ public class Viewer implements ActionListener {
 		synchronized(this) {
 			View view = getDefaultView();
 			if(view == null) {
-				view = new DefaultView(this, defaultViewId, newGraphRenderer());
+				view = newView(defaultViewId, newGraphRenderer());
 				addView(view);
 
 				if (openInAFrame)
@@ -535,7 +567,7 @@ public class Viewer implements ActionListener {
 	 */
 	public View addView(String id, GraphRenderer renderer, boolean openInAFrame) {
 		synchronized(this) {
-			View view = new DefaultView(this, id, renderer);
+			View view = newView(id, renderer);
 			addView(view);
 
 			if (openInAFrame)

@@ -145,16 +145,10 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	 * The graph renderer.
 	 */
 	protected GraphRenderer renderer;
-
-	/**
-	 * New view.
-	 * @param viewer The parent viewer.
-	 * @param identifier The view unique identifier.
-	 * @param renderer The view renderer.
-	 */
-	public DefaultView(Viewer viewer, String identifier, GraphRenderer renderer) {
-		super(identifier, viewer);
-
+	
+	@Override
+	public void open(String identifier, Viewer viewer, GraphRenderer renderer) {
+		super.open(identifier, viewer, renderer);
 		this.graph = viewer.getGraphicGraph();
 		this.renderer = renderer;
 

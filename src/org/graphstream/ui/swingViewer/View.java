@@ -99,17 +99,6 @@ public abstract class View extends JPanel {
 	private String id;
 
 	/**
-	 * New view.
-	 * 
-	 * @param identifier
-	 *            The view unique identifier.
-	 */
-	public View(String identifier, Viewer viewer) {
-		this.id = identifier;
-		this.viewer = viewer;
-	}
-
-	/**
 	 * The view unique identifier.
 	 */
 	public String getId() {
@@ -140,6 +129,17 @@ public abstract class View extends JPanel {
 	 *            True if the graph changed since the last call to this method.
 	 */
 	protected abstract void display(GraphicGraph graph, boolean graphChanged);
+
+	/**
+	 * Open this view. This must be the first operation on the view.
+	 * @param identifier The identifier of the view.
+	 * @param viewer The parent viewer, containing the view.
+	 * @param renderer The graph renderer to use in the view.
+	 */
+	public void open(String identifier, Viewer viewer, GraphRenderer renderer) {
+		this.id = identifier;
+		this.viewer = viewer;
+	}
 
 	/**
 	 * Close definitively this view. You should not need to call this method yourself,
