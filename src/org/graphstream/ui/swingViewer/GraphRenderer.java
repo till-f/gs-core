@@ -186,5 +186,5 @@ public interface GraphRenderer {
 	 * 
 	 * @param renderer The renderer (or null to remove it).
 	 */
-	public abstract void setForeLayoutRenderer(LayerRenderer renderer);
+	public abstract void setForeLayerRenderer(LayerRenderer renderer);
 }

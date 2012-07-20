@@ -63,7 +63,7 @@ import org.graphstream.ui.swingViewer.util.GraphMetrics;
 import org.graphstream.ui.swingViewer.util.Graphics2DOutput;
 
 /**
- * A very simple view of the graph that respect only a subset of CSS.
+ * A very simple renderer for the graph that respect only a thin subset of CSS.
  * 
  * <p>
  * This is a minimal implementation of a renderer that only supports a subset of
@@ -443,7 +443,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		backRenderer = renderer;
 	}
 
-	public void setForeLayoutRenderer(LayerRenderer renderer) {
+	public void setForeLayerRenderer(LayerRenderer renderer) {
 		foreRenderer = renderer;
 	}
 

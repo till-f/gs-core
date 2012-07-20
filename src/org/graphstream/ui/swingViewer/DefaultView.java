@@ -349,7 +349,7 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	@Override
 	public void setForeLayoutRenderer(LayerRenderer renderer) {
 		synchronized(viewer) {
-			this.renderer.setForeLayoutRenderer(renderer);
+			this.renderer.setForeLayerRenderer(renderer);
 			repaint();
 		}
 	}
