@@ -37,10 +37,10 @@ import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.StyleGroup;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
-import org.graphstream.ui.graphicGraph.stylesheet.Value;
 import org.graphstream.ui.graphicGraph.stylesheet.Values;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.swingViewer.Camera;
+import org.graphstream.ui.swingViewer.util.GraphMetrics;
 
 /**
  * Base skeleton for nodes, edges and sprites.
@@ -81,7 +81,8 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	/**
 	 * The size of the element.
 	 */
-	protected Point3 dynSize = new Point3();
+//	protected Point3 dynSize = new Point3();
+	protected Values dynSize = new Values(Units.GU, 0, 0, 0);
 	
 	/**
 	 * Should the length of the label in pixels be computed when accessed ?
@@ -130,7 +131,7 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 			computeSize(camera);
 		}
 		
-		return dynSize;
+		return getDynamicSize(camera, Units.GU);
 	}
 
 	/**
@@ -143,16 +144,33 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 			computeSize(camera);
 		}
 		
-		if(units == Units.GU) {
-			return dynSize;
-		} else if(units == Units.PX) {
-			Point3 s = new Point3();
-			s.x = camera.getMetrics().lengthToPx(dynSize.x, Units.GU);
-			s.y = camera.getMetrics().lengthToPx(dynSize.y, Units.GU);
-			return s;
-		} else {
-			throw new RuntimeException("TODO");
+		if(units == dynSize.units) {
+			// We ensure at the creation that the values have 3 items.
+			return new Point3(dynSize.get(0), dynSize.get(1), dynSize.get(2));
 		}
+		
+		GraphMetrics metrics = camera.getMetrics();
+		Point3 s = new Point3();
+		
+		switch(units) {
+			case GU: 
+				s.x = metrics.lengthToGu(dynSize, 0);
+				s.y = metrics.lengthToGu(dynSize, 1);
+				s.z = 0;
+				return s;
+			case PX:
+				s.x = metrics.lengthToPx(dynSize, 0);
+				s.y = metrics.lengthToPx(dynSize, 1);
+				s.z = 0;
+				return s;
+			case PERCENTS:
+				s.x = metrics.lengthToPercents(dynSize, 0);
+				s.y = metrics.lengthToPercents(dynSize, 1);
+				s.z = 0;
+				return s;
+		}
+		
+		throw new RuntimeException("WTF?");
 	}
 	
 	/**
@@ -274,31 +292,32 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 		StyleGroup style = element.style;
 		Values sizes = style.getSize();
 
-		dynSize.x = -1;
-		dynSize.y = -1;
+		dynSize = null;
 		
 		if(hasDynSize) {
 			Object o = element.getAttribute("ui.size");
 			
 			if(o != null) {
 				if(o instanceof Values) {
-					Values val = (Values)o;
-					dynSize.x = camera.getMetrics().lengthToGu(val, 0);
-					dynSize.y = val.size() > 1 ? camera.getMetrics().lengthToGu(val, 1) : dynSize.x;
+					dynSize = (Values)o;
+					while(dynSize.size() < 3)
+						dynSize.addValue(dynSize.get(0));
 				} else {
 					try {
-						double ratio = dynSize.x / dynSize.y;
-						Value val = Value.getNumber(element.getAttribute("ui.size"));
-						dynSize.x = camera.getMetrics().lengthToGu(val);
-						dynSize.y = dynSize.x * ratio;
-					} catch(NumberFormatException e) { System.err.printf("cannot interpret ui.size attribute %s%n", o); }
+						dynSize = Values.getNumbers(element.getAttribute("ui.size"));
+						while(dynSize.size() < 3)
+							dynSize.addValue(dynSize.get(0));
+					} catch(NumberFormatException e) { 
+						System.err.printf("cannot interpret ui.size attribute %s : %s%n", o, e.getMessage());
+					}
 				}
 			}
 		}
 		
-		if(dynSize.x == -1 && dynSize.y == -1) {
-			dynSize.x = camera.getMetrics().lengthToGu(sizes, 0);
-			dynSize.y = sizes.size() > 1 ? camera.getMetrics().lengthToGu(sizes, 1) : dynSize.x;			
+		if(dynSize == null) {
+			dynSize = new Values(Units.GU,
+					camera.getMetrics().lengthToGu(sizes, 0),
+					sizes.size() > 1 ? camera.getMetrics().lengthToGu(sizes, 1) : dynSize.get(0), 0);			
 		}
 		
 		dynSizeDirty = false;

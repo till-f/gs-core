@@ -131,10 +131,12 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		camera = null;
 	}
 
+	@Override
 	public Camera getCamera() {
 		return camera;
 	}
 
+	@Override
 	public void render(Graphics2D g, int x, int y, int width, int height) {
 		if (graph != null) {
 			beginFrame();
@@ -282,6 +284,8 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 			case NODE:   nodeRenderer.render(group, g, camera);   break;
 			case EDGE:   edgeRenderer.render(group, g, camera);   break;
 			case SPRITE: spriteRenderer.render(group, g, camera); break;
+			case GRAPH: break;
+			default: throw new RuntimeException("WTF? "+group.getType());
 		}
 	}
 
@@ -380,6 +384,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		g.fill(ellipse);
 	}
 
+	@Override
 	public void screenshot(String filename, int width, int height) {
 		if (graph != null) {
 			try {
@@ -439,16 +444,19 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 		}
 	}
 
+	@Override
 	public void setBackLayerRenderer(LayerRenderer renderer) {
 		backRenderer = renderer;
 	}
 
+	@Override
 	public void setForeLayerRenderer(LayerRenderer renderer) {
 		foreRenderer = renderer;
 	}
 
 	// Style Group Listener
 
+	@Override
 	public void elementStyleChanged(Element element, StyleGroup oldStyle,
 			StyleGroup style) {
 	}

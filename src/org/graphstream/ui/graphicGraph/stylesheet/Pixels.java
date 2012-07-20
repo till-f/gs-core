@@ -35,12 +35,20 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 /**
  * A shortcut to express a value in pixels.
  */
-public class Pixels extends Value {
+public class Pixels extends Values {
 	/**
 	 * New value in pixels.
 	 * @param value The number of pixels.
 	 */
 	public Pixels(double value) {
 		super(Units.PX, value);
+	}
+	
+	/**
+	 * New values in pixels.
+	 * @param values
+	 */
+	public Pixels(double ... values) {
+		super(Units.PX, values);
 	}
 }

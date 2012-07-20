@@ -83,7 +83,7 @@ public class NodeSkeleton extends BaseSkeleton {
 		if(units == Units.PX)
 			p = camera.transformPxToGu(p);
 		
-		Point3 sz = hasDynSize ? dynSize : getSizeGU(camera);
+		Point3 sz = hasDynSize ? getDynamicSizeGU(camera) : getSizeGU(camera);
 		
 		double sx = sz.x/2;
 		double sy = sz.y/2;

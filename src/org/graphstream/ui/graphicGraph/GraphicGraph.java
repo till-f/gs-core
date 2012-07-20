@@ -56,8 +56,6 @@ import org.graphstream.stream.file.FileSource;
 import org.graphstream.stream.sync.SinkTime;
 import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicElement.Skeleton;
-import org.graphstream.ui.graphicGraph.StyleGroupSet.EdgeSet;
-import org.graphstream.ui.graphicGraph.stylesheet.Selector;
 import org.graphstream.ui.graphicGraph.stylesheet.Style;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleSheet;
@@ -468,24 +466,7 @@ public class GraphicGraph extends AbstractGraphicElement implements Graph,
 					}
 				}
 			}
-			
-			// The dynamic size of each element having such a property must be
-			// recomputed since the ratio pixels/GU probably changed. It is
-			// faster to use the group, this way we iterate only on the elements
-			// that really need it (and edges need the update also).
-			
-			for(StyleGroup group: styleGroups.groups.values()) {
-				if(group.getType() != Selector.Type.GRAPH && group.getSizeMode() == StyleConstants.SizeMode.DYN_SIZE) {
-					for(AbstractGraphicElement e: group) {
-						// The cast will always work thanks to the type test above.
-						Skeleton skel = ((GraphicElement)e).getSkeleton();
-						if(skel != null) {
-							skel.graphBoundsChanged();
-						}
-					}
-				}
-			}
-			
+						
 			if((hi.x - lo.x < 0.000001)) { hi.x = 1; lo.x = -1; }   
 			if((hi.y - lo.y < 0.000001)) { hi.y = 1; lo.y = -1; }   
 			if((hi.z - lo.z < 0.000001)) { hi.z = 1; lo.z = -1; }   

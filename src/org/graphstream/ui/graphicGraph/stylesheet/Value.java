@@ -158,7 +158,7 @@ public class Value extends Number {
 	 *     A.addAttribute("a", 1); Value v = getNumber(A.getAttribute("a"));  
 	 *     B.addAttribute("b", Value(Units.PX, 1); Value v = getNumber(B.getAttribute("b"));
 	 *     C.addAttribute("c", "1px"; Value v = getNumber(C.getAttribute("c"));
-	 *     D.addAttribute("d", 1, Units.PX); Value v = getNumber(D.getAttribute("d"));
+	 *     D.addAttribute("d", Units.PX, 1); Value v = getNumber(D.getAttribute("d"));
 	 *     E.addAttribute("e", new Pixels(1)); Value v = getNumber(E.getNumber("e"));
 	 * </pre>
 	 * </p>
@@ -171,6 +171,9 @@ public class Value extends Number {
 		// Value is a Number so we must test it first.
 		if(value instanceof Value) {
 			return (Value)value;
+		} else if(value instanceof Values) {
+			Values v = (Values) value;
+			return new Value(v.units, v.get(0));
 		} else if(value instanceof Number) {
 			return new Value(Units.GU, ((Number)value).doubleValue());
 		} else if(value instanceof String) {
@@ -193,11 +196,19 @@ public class Value extends Number {
 			return new Value(u, n);
 		} else if(value instanceof Object[]) {
 			Object[] t = (Object[])value;
-			if(t.length > 0) {
-				Value v = getNumber(t[0]);
-				if(t.length > 1 && t[1] instanceof Units) {
-					v.units = (Units)t[1];
+			if(t.length > 1) {
+				if(t[0] instanceof Units) {
+					Value v = new Value(Units.GU, 0);
+					Value vv = getNumber(t[1]);
+					v.units = (Units)t[0];
+					v.value = vv.value;
+					return v;
+				} else {
+					Value v = getNumber(t[0]);
+					return v;
 				}
+			} else if(t.length > 0) {
+				Value v = getNumber(t[0]);
 				return v;
 			}
 		}

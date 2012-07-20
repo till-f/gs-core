@@ -32,6 +32,8 @@ package org.graphstream.ui.graphicGraph.stylesheet;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+
 /**
  * Several values and the units of these values.
  * 
@@ -209,6 +211,16 @@ public class Values implements Iterable<Double> {
 		this.values.clear();
 		this.values.addAll(values.values);
 	}
+	
+	/**
+	 * Append the given value at the end of this set.
+	 * 
+	 * @param value
+	 * 			The value to add.
+	 */
+	public void addValue(double value) {
+		this.values.add(value);
+	}
 
 	/**
 	 * Append the given set of values at the end of this set.
@@ -263,5 +275,90 @@ public class Values implements Iterable<Double> {
 	 */
 	public void setUnits(Style.Units units) {
 		this.units = units;
+	}
+	
+	/**
+	 * Try to convert the given object into one or more numerical value with units.
+	 * 
+	 * <p>
+	 * It accepts string containing
+	 * a value, {@link Number} instances and {@link Value} or {@link Values} instances.
+	 * If the value is a string,
+	 * it can be suffixed by "px", "gu" or "%" and the units will be used. This method can also
+	 * understand values that are an array of objects. In this case it tries to interpret the first
+	 * cell of the array as a unit if provided, then all the remaining cells as individual values.
+	 * </p>
+	 * 
+	 * <p>
+	 * Therefore, here are examples of understood attributes values, thanks to this method:
+	 * <pre>
+	 *     A.addAttribute("a", 1); Values v = getNumbers(A.getAttribute("a"));  
+	 *     B.addAttribute("b", Value(Units.PX, 1); Values v = getNumbers(B.getAttribute("b"));
+	 *     C.addAttribute("c", Values(Units.PX, 1, 2)); Values v = getNumbers(C.getAttribute("c"));
+	 *     D.addAttribute("d", "1px"; Values v = getNumbers(D.getAttribute("d"));
+	 *     E.addAttribute("e", Units.PX, 1); Values v = getNumbers(D.getAttribute("d"));
+	 *     F.addAttribute("f", Units.PX, 1, 2); Values v = getNumbers(F.getAttribute("f"));
+	 *     G.addAttribute("g", new Pixels(1)); Values v = getNumbers(G.getNumber("g"));
+	 *     H.addAttribute("h", new Pixels(1, 2)); Values v = getNumbers(H.getNumber("h"));
+	 * </pre>
+	 * </p>
+	 * 
+	 * @param value The data to convert, maybe an array.
+	 * @return values with its units.
+	 * @throw NumberFormatException if the value is a string that does not contain a number.
+	 */
+	public static Values getNumbers(Object value) throws NumberFormatException {
+		// Value is a Number so we must test it first.
+		if(value instanceof Value) {
+			return new Values((Value)value);
+		} else if(value instanceof Values) {
+			return (Values)value;
+		} else if(value instanceof Number) {
+			return new Values(Units.GU, ((Number)value).doubleValue());
+		} else if(value instanceof String) {
+			double n = 0;
+			String s = (String) value; s = s.toLowerCase().trim();
+			Units  u = Units.GU;
+				
+			if(s.endsWith("px")) {
+				u = Units.PX;
+				s = s.substring(0, s.length()-2).trim();
+			} else if(s.endsWith("%")) {
+				u = Units.PERCENTS;
+				s = s.substring(0, s.length()-2).trim();
+			} else if(s.endsWith("gu")) {
+				s = s.substring(0, s.length()-2).trim();
+			}
+				
+			n = Double.parseDouble(s);
+			
+			return new Values(u, n);
+		} else if(value instanceof Object[]) {
+			Object[] t = (Object[])value;
+			int i = 0;
+			int n = t.length;
+			Units units = Units.GU;
+		
+			if(i < n && t[i] instanceof Units) {
+				units = (Units)t[i];
+				i++;
+			}
+			
+			Values result = new Values(units);
+			
+			while(i < n) {
+				if(t[i] instanceof Number) {
+					result.addValue(((Number)t[i]).doubleValue());
+				} else {
+					Value v = Value.getNumber(t[i]);
+					result.addValue(v.value);
+				}
+				i++;
+			}
+			
+			return result;
+		}
+		
+		throw new NumberFormatException("object "+value.getClass().getName()+" cannot be converted to a number");
 	}
 }

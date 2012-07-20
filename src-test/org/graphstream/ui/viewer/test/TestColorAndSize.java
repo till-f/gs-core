@@ -51,7 +51,7 @@ public class TestColorAndSize {
 			if(size > 20) { size = 20; sdir = -sdir; }
 			else if(size < 10) { size = 10; sdir = -sdir; }
 			C.addAttribute("ui.color", color);
-			C.addAttribute("ui.size", size, Units.PX);
+			C.addAttribute("ui.size", Units.PX, size);
 			if(color==1) B.setAttribute("ui.color", Color.BLUE);
 			else if(color ==0) B.setAttribute("ui.color", Color.GRAY);
 			sleep(40);
