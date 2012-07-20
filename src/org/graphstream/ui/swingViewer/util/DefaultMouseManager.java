@@ -144,12 +144,14 @@ public class DefaultMouseManager implements MouseManager, MouseInputListener, Mo
 
 	protected void mouseButtonReleaseOfElement(GraphicElement element, MouseEvent event) {
 		if(event.isShiftDown()) {
+			// ??
+		} else {
 			view.freezeElement(element, false);
 			element.removeAttribute("ui.clicked");
 			for(ViewerListener listener: view.getViewer().getEachListener()) {
 				listener.elementReleased(view, element, event.getButton());
 			}
-		} 
+		}
 	}
 
 	protected void elementMoving(GraphicElement element, MouseEvent event) {

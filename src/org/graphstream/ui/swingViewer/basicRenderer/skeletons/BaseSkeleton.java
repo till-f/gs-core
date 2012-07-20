@@ -81,7 +81,6 @@ public abstract class BaseSkeleton implements GraphicElement.Skeleton {
 	/**
 	 * The size of the element.
 	 */
-//	protected Point3 dynSize = new Point3();
 	protected Values dynSize = new Values(Units.GU, 0, 0, 0);
 	
 	/**
