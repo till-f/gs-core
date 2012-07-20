@@ -29,6 +29,7 @@
  */
 package org.graphstream.ui.swingViewer;
 
+import java.awt.Component;
 import java.awt.Graphics2D;
 
 import javax.swing.JPanel;
@@ -44,7 +45,10 @@ import org.graphstream.ui.swingViewer.util.ShortcutManager;
  * <p>
  * A view is rendering surface where a {@link GraphRenderer} draws the graphic
  * graph of the {@link Viewer}. Basically it is a an AWT container (indeed a
- * {@link JPanel}). 
+ * {@link JPanel}). So you can put a view in your own interfaces. However note
+ * that the rendering will not necessarily occur directly in this JPanel, but
+ * can occur in a sub-component. To obtain the real rendering surface, use
+ * {@link #getComponent()}.
  * </p>
  * 
  * <h2>Threads</h2>
@@ -58,7 +62,7 @@ import org.graphstream.ui.swingViewer.util.ShortcutManager;
  * <p>
  * You will probably have few occasions to use views in another thread than the Swing
  * one, excepted when creating them. The view provides control on the way the graph is
- * seen using a {@link Camera} object. This object must be used only in the Swing thread,
+ * seen using a {@link Camera} object. This object must be used ONLY in the Swing thread,
  * If you are in another thread, use the {@link CameraManager} class to control the view.
  * </p>
  * 
@@ -96,7 +100,7 @@ public abstract class View extends JPanel {
 	/**
 	 * The view identifier.
 	 */
-	private String id;
+	protected String id;
 
 	/**
 	 * The view unique identifier.
@@ -266,4 +270,12 @@ public abstract class View extends JPanel {
 	 * @param shortcutManager The new shortcut manager.
 	 */
 	public abstract void setShortcutManager(ShortcutManager shortcutManager);
+	
+	/**
+	 * The component where the rendering really occurs. This must be used instead
+	 * of the view itself when you need the surface where the rendering really occurs,
+	 * since the view may contain sub-components.
+	 * @return The rendering surface component.
+	 */
+	public abstract Component getComponent();
 }

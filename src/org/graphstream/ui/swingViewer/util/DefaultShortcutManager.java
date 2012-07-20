@@ -59,11 +59,11 @@ public class DefaultShortcutManager implements ShortcutManager, KeyListener {
 
 	public void init(GraphicGraph graph, View view) {
 		this.view = view;
-		view.addKeyListener(this);
+		view.getComponent().addKeyListener(this);
 	}
 	
 	public void release() {
-		view.removeKeyListener(this);
+		view.getComponent().removeKeyListener(this);
 	}
 	
 	public void installedInAWTComponent(Component parent) {

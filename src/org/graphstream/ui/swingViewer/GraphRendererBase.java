@@ -30,7 +30,7 @@
 package org.graphstream.ui.swingViewer;
 
 import java.awt.Color;
-import java.awt.Container;
+import java.awt.Component;
 import java.awt.Graphics2D;
 
 import org.graphstream.ui.graphicGraph.GraphicGraph;
@@ -68,13 +68,13 @@ public abstract class GraphRendererBase implements GraphRenderer,
 	/**
 	 * The surface we are rendering on (used only
 	 */
-	protected Container renderingSurface;
+	protected Component renderingSurface;
 
 	/**
 	 * Open the renderer, keep a reference on the graphic graph and
 	 * rendering surface, and registers as a listener on the style groups.
 	 */
-	public void open(GraphicGraph graph, Container renderingSurface) {
+	public void open(GraphicGraph graph, Component renderingSurface) {
 		if (this.graph != null)
 			throw new RuntimeException(
 					"renderer already open, use close() first");
@@ -98,7 +98,7 @@ public abstract class GraphRendererBase implements GraphRenderer,
 		}
 	}
 
-	public Container getRenderingSurface() {
+	public Component getRenderingSurface() {
 		return renderingSurface;
 	}
 

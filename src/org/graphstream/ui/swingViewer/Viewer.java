@@ -348,7 +348,7 @@ public class Viewer implements ActionListener {
 	 * renderer class is given by the "gs.ui.renderer" system property. If the
 	 * class indicated by this property is not usable (not in the class path,
 	 * not of the correct type, etc.) or if the property is not present a
-	 * SwingBasicGraphRenderer is returned.
+	 * {@link SwingBasicGraphRenderer} is returned.
 	 */
 	public static GraphRenderer newGraphRenderer() {
 		String rendererClassName = System.getProperty("gs.ui.renderer");
@@ -384,6 +384,15 @@ public class Viewer implements ActionListener {
 		return new SwingBasicGraphRenderer();
 	}
 	
+	/**
+	 * Create a new instance of the default view. The default view is given by
+	 * the "gs.ui.view" system property. If the class indicated by this property
+	 * is not usable (not in the class path, not of the correct type, etc.) or
+	 * if the property is not present a {@link DefaultView} is returned. 
+	 * @param identifier The identifier of the new view.
+	 * @param renderer The renderer to use in the view.
+	 * @return The new view.
+	 */
 	public View newView(String identifier, GraphRenderer renderer) {
 		View view = null;
 		

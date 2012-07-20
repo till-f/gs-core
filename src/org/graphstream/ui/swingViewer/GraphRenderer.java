@@ -29,7 +29,7 @@
  */
 package org.graphstream.ui.swingViewer;
 
-import java.awt.Container;
+import java.awt.Component;
 import java.awt.Graphics2D;
 
 import org.graphstream.ui.graphicGraph.GraphicElement;
@@ -78,7 +78,7 @@ public interface GraphRenderer {
 	 * @param graph The graphic graph to draw.
 	 * @param drawingSurface The container that will receive the painting.
 	 */
-	void open(GraphicGraph graph, Container drawingSurface);
+	void open(GraphicGraph graph, Component drawingSurface);
 
 	/**
 	 * Called when the renderer is about to be released, no rendering can occurs after that.

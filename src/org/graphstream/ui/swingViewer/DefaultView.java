@@ -30,6 +30,7 @@
 package org.graphstream.ui.swingViewer;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.WindowEvent;
@@ -156,7 +157,7 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 		setDoubleBuffered(true);
 		setMouseManager(null);
 		setShortcutManager(null);
-		renderer.open(graph, this);
+		renderer.open(graph, getComponent());
 		checkInitialAttributes();
 		graph.addAttributeSink(this);
 	}
@@ -184,10 +185,12 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 		renderer.close();
 		graph.removeAttributeSink(this);
 		graph.addAttribute("ui.viewClosed", getId());
+		
 		if(frame != null && shortcuts != null) {
 			shortcuts.removedFromAWTComponent(frame);
 			shortcuts.release();
 		}
+		
 		if(mouseClicks != null) {
 			mouseClicks.release();
 		}
@@ -375,6 +378,11 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 		manager.init(graph, this);
 		
 		shortcuts = manager;
+	}
+
+	@Override
+	public Component getComponent() {
+		return this;
 	}
 	
 // AttributeSink

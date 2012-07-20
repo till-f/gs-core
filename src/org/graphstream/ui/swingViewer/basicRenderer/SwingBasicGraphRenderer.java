@@ -31,7 +31,7 @@ package org.graphstream.ui.swingViewer.basicRenderer;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Container;
+import java.awt.Component;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
@@ -113,7 +113,7 @@ public class SwingBasicGraphRenderer extends GraphRendererBase {
 	protected FPSLogger fpsLog = null;
 	
 	@Override
-	public void open(GraphicGraph graph, Container renderingSurface) {
+	public void open(GraphicGraph graph, Component renderingSurface) {
 		camera = new BasicCamera(graph);
 		super.open(graph, renderingSurface);
 		graph.setSkeletonFactory(new SwingBasicSkeletonFactory());
