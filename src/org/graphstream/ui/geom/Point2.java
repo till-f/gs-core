@@ -254,4 +254,14 @@ public class Point2 implements java.io.Serializable {
 
 		return buf.toString();
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if(other instanceof Point2) {
+			Point2 o = (Point2) other;
+			return (x == o.x && y == o.y);
+		}
+		
+		return false;
+	}
 }

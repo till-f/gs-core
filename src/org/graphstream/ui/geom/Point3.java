@@ -191,10 +191,11 @@ public class Point3 extends Point2 implements java.io.Serializable {
 	/**
 	 * Like #moveTo().
 	 */
-	public void set(double x, double y, double z) {
+	public Point3 set(double x, double y, double z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+		return this;
 	}
 
 	// Commands -- moving
@@ -325,5 +326,15 @@ public class Point3 extends Point2 implements java.io.Serializable {
 		buf.append("]");
 
 		return buf.toString();
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if(other instanceof Point3) {
+			Point3 o = (Point3) other;
+			return (x == o.x && y == o.y && z == o.z);
+		}
+		
+		return false;
 	}
 }
