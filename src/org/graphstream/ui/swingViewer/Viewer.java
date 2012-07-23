@@ -115,11 +115,11 @@ import org.graphstream.ui.swingViewer.basicRenderer.SwingBasicGraphRenderer;
  * 
  * <p>
  * Be very careful: due to the nature of graph events in GraphStream, the viewer
- * is not aware of events that occured on the graph <u>before</u> its creation.
+ * is not aware of events that occurred on the graph <u>before</u> its creation.
  * There is a special mechanism that replay the graph if you use a proxy pipe or
  * if you pass the graph directly. However, when you create the viewer by yourself
  * and only pass a {@link Source}, the viewer <u>will not</u> display the events
- * that occured on the source before it is connected to it.
+ * that occurred on the source before it is connected to it.
  * </p>
  */
 public class Viewer implements ActionListener {
@@ -136,7 +136,7 @@ public class Viewer implements ActionListener {
 	};
 
 	/**
-	 * How does the viewer synchronise its internal graphic graph with the graph
+	 * How does the viewer synchronize its internal graphic graph with the graph
 	 * displayed. The graph we display can be in the Swing thread (as will be
 	 * the viewer, therefore in the same thread as the viewer), in another
 	 * thread, or on a distant machine.
@@ -148,7 +148,7 @@ public class Viewer implements ActionListener {
 	// Attribute
 
 	/**
-	 * If true the graph we display is in another thread, the synchronisation
+	 * If true the graph we display is in another thread, the synchronization
 	 * between the graph and the graphic graph must therefore use thread
 	 * proxies.
 	 */
@@ -314,7 +314,11 @@ public class Viewer implements ActionListener {
 
 		timer.setCoalesce(true);
 		timer.setRepeats(true);
-		timer.start();
+		
+		// The addView methods will trigger a timer.start() if not done,
+		// As the timer is used only to repaint the views, this allows to avoid
+		// using the timer when there are no views.
+//		timer.start();
 	}
 
 	/**
@@ -512,18 +516,18 @@ public class Viewer implements ActionListener {
 	 *            created and you must embed it yourself in your application.
 	 */
 	public View addDefaultView(boolean openInAFrame) {
-		synchronized(this) {
-			View view = getDefaultView();
-			if(view == null) {
-				view = newView(defaultViewId, newGraphRenderer());
-				addView(view);
+		View view = getDefaultView();
+		
+		if(view == null) {
+			view = newView(defaultViewId, newGraphRenderer());
+			addView(view);
 
-				if (openInAFrame)
-					view.openInAFrame(true);
+			if (openInAFrame) {
+				view.openInAFrame(true);
 			}
-			
-			return view;
 		}
+	
+		return view;
 	}
 
 	/**
@@ -536,14 +540,17 @@ public class Viewer implements ActionListener {
 	 * @return The old view that was at the given identifier, if any, else null.
 	 */
 	public View addView(View view) {
+		timer.stop();
+		View old = null;
 		synchronized(this) {
-			View old = views.put(view.getId(), view);
+			old = views.put(view.getId(), view);
 
 			if (old != null && old != view)
 				old.close(graph);
 
-			return old;
 		}
+		timer.start();
+		return old;
 	}
 
 	/**
@@ -575,15 +582,20 @@ public class Viewer implements ActionListener {
 	 * @return The created view.
 	 */
 	public View addView(String id, GraphRenderer renderer, boolean openInAFrame) {
+		// Avoid receiving actionPerfomed events since they would
+		// cause a deadlock (it is also synchronized).
+		timer.stop();
+		View view = null;
 		synchronized(this) {
-			View view = newView(id, renderer);
+			view = newView(id, renderer);
 			addView(view);
 
 			if (openInAFrame)
 				view.openInAFrame(true);
 
-			return view;
 		}
+		timer.start();
+		return view;
 	}
 
 	/**
