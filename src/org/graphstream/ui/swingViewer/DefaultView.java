@@ -147,6 +147,11 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	 */
 	protected GraphRenderer renderer;
 	
+	/**
+	 * True if the window is iconified, we can stop rendering.
+	 */
+	protected boolean isIconified = false;
+	
 	@Override
 	public void open(String identifier, Viewer viewer, GraphRenderer renderer) {
 		super.open(identifier, viewer, renderer);
@@ -235,8 +240,10 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	}
 
 	protected void render(Graphics2D g) {
-		setBackground(graph.getStyle().getFillColor(0));
-		renderer.render(g, getX(), getY(), getWidth(), getHeight());
+		if(! isIconified) {
+			setBackground(graph.getStyle().getFillColor(0));
+			renderer.render(g, getX(), getY(), getWidth(), getHeight());
+		}
 
 		String screenshot = (String) graph.getLabel("ui.screenshot");
 
@@ -306,9 +313,11 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	}
 
 	public void windowDeiconified(WindowEvent e) {
+		isIconified = false;
 	}
 
 	public void windowIconified(WindowEvent e) {
+		isIconified = true;
 	}
 
 	public void windowOpened(WindowEvent e) {

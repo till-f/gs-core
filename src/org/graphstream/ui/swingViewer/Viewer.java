@@ -355,8 +355,11 @@ public class Viewer implements ActionListener {
 	 * {@link SwingBasicGraphRenderer} is returned.
 	 */
 	public static GraphRenderer newGraphRenderer() {
-		String rendererClassName = System.getProperty("gs.ui.renderer");
+		String rendererClassName = System.getProperty("org.graphstream.ui.renderer");
 
+		if(rendererClassName == null)
+			rendererClassName = System.getProperty("gs.ui.renderer");
+		
 		if (rendererClassName == null)
 			return new SwingBasicGraphRenderer();
 
@@ -400,7 +403,10 @@ public class Viewer implements ActionListener {
 	public View newView(String identifier, GraphRenderer renderer) {
 		View view = null;
 		
-		String viewClassName = System.getProperty("gs.ui.view");
+		String viewClassName = System.getProperty("org.graphstream.ui.view");
+		
+		if(viewClassName == null)
+			viewClassName = System.getProperty("gs.ui.view");
 		
 		if(viewClassName != null) {
 			try {
@@ -607,6 +613,8 @@ public class Viewer implements ActionListener {
 	public void removeView(String id) {
 		synchronized(this) {
 			views.remove(id);
+			if(views.isEmpty())
+				timer.stop();
 		}
 	}
 	
