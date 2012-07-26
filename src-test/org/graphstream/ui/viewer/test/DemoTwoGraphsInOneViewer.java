@@ -80,8 +80,8 @@ public class DemoTwoGraphsInOneViewer extends JFrame {
 		readGraph(graph2, in);
 
 		setLayout(new GridLayout(1, 2));
-		add(viewer1.getDefaultView());
-		add(viewer2.getDefaultView());
+		add(viewer1.getDefaultView().getAWTComponent());
+		add(viewer2.getDefaultView().getAWTComponent());
 		setSize(800, 600);
 		setVisible(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

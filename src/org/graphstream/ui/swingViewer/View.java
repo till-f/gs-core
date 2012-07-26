@@ -44,11 +44,14 @@ import org.graphstream.ui.swingViewer.util.ShortcutManager;
  * 
  * <p>
  * A view is rendering surface where a {@link GraphRenderer} draws the graphic
- * graph of the {@link Viewer}. Basically it is a an AWT container (indeed a
- * {@link JPanel}). So you can put a view in your own interfaces. However note
- * that the rendering will not necessarily occur directly in this JPanel, but
- * can occur in a sub-component. To obtain the real rendering surface, use
- * {@link #getComponent()}.
+ * graph of the {@link Viewer}. The view is no (no more in this version) an
+ * AWT component. However you can integrate it in your own GUI using either
+ * {@link #getGUIComponent()} (which returns an object, and is agnostic of the
+ * GUI toolkit used) or the two methods {@link #isAWT()} and {@link #getAWTComponent()}
+ * that works for Swing and AWT views (the default ones). Do not assume that the views
+ * use Swing or AWT however, the viewer has a factory for views and can create any
+ * kind of views. The default views are AWT/Swing compliant, but there also exist
+ * SWT or OpenGL views. 
  * </p>
  * 
  * <h2>Threads</h2>
@@ -90,38 +93,23 @@ import org.graphstream.ui.swingViewer.util.ShortcutManager;
  * to put another viewer in it to render two graphs one above the other.
  * </p>
  */
-public abstract class View extends JPanel {
-	private static final long serialVersionUID = 4372240131578395549L;
-	/**
-	 * Parent viewer.
-	 */
-	protected Viewer viewer;
-
-	/**
-	 * The view identifier.
-	 */
-	protected String id;
-
+public interface View {
 	/**
 	 * The view unique identifier.
 	 */
-	public String getId() {
-		return id;
-	}
+	String getId();
 	
 	/**
 	 * The parent viewer.
 	 */
-	public Viewer getViewer() {
-		return viewer;
-	}
+	Viewer getViewer();
 
 	/**
 	 * Get a camera object to provide control on which part of the graph appears in the view. Be
 	 * careful, this camera object can be used only in the Swing thread. If you want to control
 	 * the camera from another thread use the {@link CameraManager} class.
 	 */
-	public abstract Camera getCamera();
+	Camera getCamera();
 
 	/**
 	 * Redisplay or update the view contents. You should not need to call this
@@ -132,7 +120,7 @@ public abstract class View extends JPanel {
 	 * @param graphChanged
 	 *            True if the graph changed since the last call to this method.
 	 */
-	protected abstract void display(GraphicGraph graph, boolean graphChanged);
+	void display(GraphicGraph graph, boolean graphChanged);
 
 	/**
 	 * Open this view. This must be the first operation on the view.
@@ -140,10 +128,7 @@ public abstract class View extends JPanel {
 	 * @param viewer The parent viewer, containing the view.
 	 * @param renderer The graph renderer to use in the view.
 	 */
-	public void open(String identifier, Viewer viewer, GraphRenderer renderer) {
-		this.id = identifier;
-		this.viewer = viewer;
-	}
+	void open(String identifier, Viewer viewer, GraphRenderer renderer);
 
 	/**
 	 * Close definitively this view. You should not need to call this method yourself,
@@ -152,7 +137,7 @@ public abstract class View extends JPanel {
 	 * @param graph
 	 *            The graphic graph.
 	 */
-	protected abstract void close(GraphicGraph graph);
+	void close(GraphicGraph graph);
 
 	/**
 	 * Flag to tell to open this view JPanel in a frame. The argument allows to put the panel in
@@ -163,7 +148,7 @@ public abstract class View extends JPanel {
 	 *            Add the panel in its own frame or remove it if it already was
 	 *            in its own frame.
 	 */
-	protected abstract void openInAFrame(boolean on);
+	void openInAFrame(boolean on);
 
 	/**
 	 * Set the size of the view frame, if any. If this view has been open in a frame, this changes
@@ -172,7 +157,7 @@ public abstract class View extends JPanel {
 	 * @param width The new width.
 	 * @param height The new height.
 	 */
-	protected abstract void resizeFrame(int width, int height);
+	void resizeFrame(int width, int height);
 
 	/**
 	 * Called by the mouse manager to specify where a node and sprite selection
@@ -183,7 +168,7 @@ public abstract class View extends JPanel {
 	 * @param y1
 	 *            The selection start ordinate.
 	 */
-	public abstract void beginSelectionAt(double x1, double y1);
+	void beginSelectionAt(double x1, double y1);
 
 	/**
 	 * The selection already started grows toward position (x, y). This method works only in
@@ -194,7 +179,7 @@ public abstract class View extends JPanel {
 	 * @param y
 	 *            The new end selection ordinate.
 	 */
-	public abstract void selectionGrowsAt(double x, double y);
+	void selectionGrowsAt(double x, double y);
 
 	/**
 	 * Called by the mouse manager to specify where a node and spite selection
@@ -205,14 +190,14 @@ public abstract class View extends JPanel {
 	 * @param y2
 	 *            The selection stop ordinate.
 	 */
-	public abstract void endSelectionAt(double x2, double y2);
+	void endSelectionAt(double x2, double y2);
 
 	/**
 	 * True if a selection was begun and not yet ended.
 	 *
 	 * @return True if a selection is actually drawn.
 	 */
-	public abstract boolean hasSelection();
+	boolean hasSelection();
 	
 	/**
 	 * Freeze an element so that the optional layout cannot move it.
@@ -222,7 +207,7 @@ public abstract class View extends JPanel {
 	 * @param frozen
 	 * 			If true the element cannot be moved automatically.
 	 */
-	public abstract void freezeElement(GraphicElement element, boolean frozen);
+	void freezeElement(GraphicElement element, boolean frozen);
 	
 	/**
 	 * Force an element to move at the given location in pixels. This method works only in the
@@ -235,8 +220,7 @@ public abstract class View extends JPanel {
 	 * @param y
 	 *            The requested position ordinate in pixels.
 	 */
-	public abstract void moveElementAtPx(GraphicElement element, double x,
-			double y);
+	void moveElementAtPx(GraphicElement element, double x, double y);
 
 	/**
 	 * Set a layer renderer that will be called each time the graph needs to be
@@ -246,7 +230,7 @@ public abstract class View extends JPanel {
 	 * @param renderer
 	 *            The renderer (or null to remove it).
 	 */
-	public abstract void setBackLayerRenderer(LayerRenderer renderer);
+	void setBackLayerRenderer(LayerRenderer renderer);
 
 	/**
 	 * Set a layer renderer that will be called each time the graph needs to be
@@ -256,20 +240,37 @@ public abstract class View extends JPanel {
 	 * @param renderer
 	 *            The renderer (or null to remove it).
 	 */
-	public abstract void setForeLayoutRenderer(LayerRenderer renderer);
+	void setForeLayoutRenderer(LayerRenderer renderer);
 	
 	/**
 	 * Change the mouse manager. This method works from any thread.
 	 * 
 	 * @param mouseManager The new mouse manager.
 	 */
-	public abstract void setMouseManager(MouseManager mouseManager);
+	void setMouseManager(MouseManager mouseManager);
 	
 	/**
 	 * Change the shortcut and keyboard manager. This method works from any thread.
 	 * @param shortcutManager The new shortcut manager.
 	 */
-	public abstract void setShortcutManager(ShortcutManager shortcutManager);
+	void setShortcutManager(ShortcutManager shortcutManager);
+	
+	/**
+	 * Change the frame title (if a frame exists).
+	 * @param title The new title.
+	 */
+	void setFrameTitle(String title);
+
+	/**
+	 * True if this view {@link #getAWTComponent()} will work and allow to integrate
+	 * the view in an AWT or Swing GUI. Some views do not support AWT and use another
+	 * toolkit (SWT, Jogl Newt, etc.). In this case use the {@link #getGUIComponent()}
+	 * method to retrieve the underlying component and integrate it with its corresponding
+	 * toolkit.
+	 * @return True if the view uses AWT or Swing and the {@link #getAWTComponent()} returns
+	 * something.
+	 */
+	boolean isAWT();
 	
 	/**
 	 * The component where the rendering really occurs. This must be used instead
@@ -277,5 +278,13 @@ public abstract class View extends JPanel {
 	 * since the view may contain sub-components.
 	 * @return The rendering surface component.
 	 */
-	public abstract Component getComponent();
+	Component getAWTComponent();
+	
+	/**
+	 * The GUI component where the view renders the graph. It can be any kind of component
+	 * of any kind of GUI Toolkit. As most of the time the toolkit is Swing or AWT, you may
+	 * use {@link #isAWT()} and {@link #getAWTComponent()} instead.
+	 * @return The GUI rendering surface used by the view.
+	 */
+	Object getGUIComponent();
 }

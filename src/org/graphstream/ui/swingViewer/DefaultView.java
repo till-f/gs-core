@@ -39,14 +39,8 @@ import java.awt.event.WindowListener;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import org.graphstream.stream.AttributeSink;
 import org.graphstream.ui.geom.Point3;
-import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
-import org.graphstream.ui.swingViewer.util.DefaultMouseManager;
-import org.graphstream.ui.swingViewer.util.DefaultShortcutManager;
-import org.graphstream.ui.swingViewer.util.MouseManager;
-import org.graphstream.ui.swingViewer.util.ShortcutManager;
 
 /**
  * Base for constructing views.
@@ -118,105 +112,61 @@ import org.graphstream.ui.swingViewer.util.ShortcutManager;
  * for its own synchronized methods.
  * </p>
  */
-public class DefaultView extends View implements WindowListener, AttributeSink {
-
-	private static final long serialVersionUID = - 4489484861592064398L;
+public class DefaultView extends BaseView implements WindowListener {
 
 	/**
-	 * The graph to render, shortcut to the viewers reference.
+	 * The rendering surface.
 	 */
-	protected GraphicGraph graph;
+	protected class Surface extends JPanel {
+		private static final long serialVersionUID = 589113660791686872L;
 
+		@Override
+		public void paintComponent(Graphics g) {
+			// super.paintComponent(g);	// We do not want any background. We handle it.
+			Graphics2D g2 = (Graphics2D) g;
+			render(g2);
+			((BaseCamera)renderer.getCamera()).resetCameraChangedFlag();
+		}		
+	}
+	
+	/**
+	 * The rendering surface.
+	 */
+	protected Surface surface;
+	
 	/**
 	 * The (optional) frame.
 	 */
 	protected JFrame frame;
 
-	/**
-	 * Manager for events with the keyboard.
-	 */
-	protected ShortcutManager shortcuts;
-
-	/**
-	 * Manager for events with the mouse.
-	 */
-	protected MouseManager mouseClicks;
-
-	/**
-	 * The graph renderer.
-	 */
-	protected GraphRenderer renderer;
-	
-	/**
-	 * True if the window is iconified, we can stop rendering.
-	 */
-	protected boolean isIconified = false;
-	
 	@Override
 	public void open(String identifier, Viewer viewer, GraphRenderer renderer) {
+		surface = new Surface();
+
 		super.open(identifier, viewer, renderer);
-		this.graph = viewer.getGraphicGraph();
-		this.renderer = renderer;
-
-		setOpaque(true);
-		setDoubleBuffered(true);
-		setMouseManager(null);
-		setShortcutManager(null);
-		renderer.open(graph, getComponent());
-		checkInitialAttributes();
-		graph.addAttributeSink(this);
-	}
-
-	@Override
-	public Camera getCamera() {
-		return renderer.getCamera();
+		surface.setOpaque(true);
+		surface.setDoubleBuffered(true);
 	}
 
 	@Override
 	public void display(GraphicGraph graph, boolean graphChanged) {
-		repaint();
+		surface.repaint();
 	}
 	
 	@Override
-	public void paintComponent(Graphics g) {
-		// super.paintComponent(g);	// We do not want any background. We handle it.
-		Graphics2D g2 = (Graphics2D) g;
-		render(g2);
-		((BaseCamera)renderer.getCamera()).resetCameraChangedFlag();
-	}
-
-	@Override
-	protected void close(GraphicGraph graph) {
-		renderer.close();
-		graph.removeAttributeSink(this);
-		graph.addAttribute("ui.viewClosed", getId());
-		
-		if(frame != null && shortcuts != null) {
-			shortcuts.removedFromAWTComponent(frame);
-			shortcuts.release();
-		}
-		
-		if(mouseClicks != null) {
-			mouseClicks.release();
-		}
-		
-		openInAFrame(false);
-	}
-
-	@Override
-	protected void resizeFrame(int width, int height) {
+	public void resizeFrame(int width, int height) {
 		if(frame != null) {
 			frame.setSize(width, height);
 		}
 	}
 
 	@Override
-	protected void openInAFrame(boolean on) {
+	public void openInAFrame(boolean on) {
 		if (on) {
 			if (frame == null) {
 				frame = new JFrame("GraphStream");
 				frame.setLayout(new BorderLayout());
-				frame.add(this, BorderLayout.CENTER);
+				frame.add(surface, BorderLayout.CENTER);
 				frame.setSize(800, 600);
 				frame.setVisible(true);
 				frame.addWindowListener(this);
@@ -231,7 +181,7 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 				frame.removeWindowListener(this);
 				if(shortcuts != null)
 					shortcuts.removedFromAWTComponent(frame);
-				frame.remove(this);
+				frame.remove(surface);
 				frame.setVisible(false);
 				frame.dispose();
 				frame = null;
@@ -241,15 +191,17 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 
 	protected void render(Graphics2D g) {
 		if(! isIconified) {
-			setBackground(graph.getStyle().getFillColor(0));
-			renderer.render(g, getX(), getY(), getWidth(), getHeight());
+			surface.setBackground(graph.getStyle().getFillColor(0));
+			renderer.render(g, surface.getX(), surface.getY(),
+								surface.getWidth(), surface.getHeight());
 		}
 
 		String screenshot = (String) graph.getLabel("ui.screenshot");
 
 		if (screenshot != null) {
 			graph.removeAttribute("ui.screenshot");
-			renderer.screenshot(screenshot, getWidth(), getHeight());
+			renderer.screenshot(screenshot, surface.getWidth(),
+					surface.getHeight());
 		}
 	}
 
@@ -257,27 +209,22 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 
 	@Override
 	public void beginSelectionAt(double x1, double y1) {
-		renderer.beginSelectionAt(x1, y1);
-		repaint();
+		super.beginSelectionAt(x1, y1);
+		surface.repaint();
 	}
 
 	@Override
 	public void selectionGrowsAt(double x, double y) {
-		renderer.selectionGrowsAt(x, y);
-		repaint();
+		super.selectionGrowsAt(x, y);
+		surface.repaint();
 	}
 
 	@Override
 	public void endSelectionAt(double x2, double y2) {
-		renderer.endSelectionAt(x2, y2);
-		repaint();
+		super.endSelectionAt(x2, y2);
+		surface.repaint();
 	}
 	
-	@Override
-	public boolean hasSelection() {
-		return renderer.hasSelection();
-	}
-
 	// Window Listener
 
 	public void windowActivated(WindowEvent e) {
@@ -327,137 +274,40 @@ public class DefaultView extends View implements WindowListener, AttributeSink {
 	// Methods deferred to the renderer
 
 	@Override
-	public void moveElementAtPx(GraphicElement element, double x, double y) {
-		// The feedback on the node positions is often off since not needed
-		// and generating lots of events. We activate it here since the
-		// movement of the node is decided by the viewer. This is one of the
-		// only moment when the viewer really moves a node.
-		boolean on = graph.feedbackXYZ();
-		graph.feedbackXYZ(true);
-		renderer.moveElementAtPx(element, x, y);
-		graph.feedbackXYZ(on);
-	}
-	
-	@Override
-	public void freezeElement(GraphicElement element, boolean frozen) {
-		if(frozen) {
-			element.addAttribute("layout.frozen");
-		} else {
-			element.removeAttribute("layout.frozen");
-		}
-	}
-
-	@Override
 	public void setBackLayerRenderer(LayerRenderer renderer) {
-		synchronized(viewer) {
-			this.renderer.setBackLayerRenderer(renderer);
-			repaint();
-		}
+		super.setBackLayerRenderer(renderer);
+		surface.repaint();
 	}
 
 	@Override
 	public void setForeLayoutRenderer(LayerRenderer renderer) {
-		synchronized(viewer) {
-			this.renderer.setForeLayerRenderer(renderer);
-			repaint();
-		}
+		super.setForeLayoutRenderer(renderer);
+		surface.repaint();
 	}
 	
 	@Override
-	public void setMouseManager(MouseManager manager) {
-		if(mouseClicks != null)
-			mouseClicks.release();
-		
-		if(manager == null)
-			manager = new DefaultMouseManager();
-
-		manager.init(graph, this);
-		
-		mouseClicks = manager;
+	public boolean isAWT() {
+		return true;
 	}
 
 	@Override
-	public void setShortcutManager(ShortcutManager manager) {
-		if(shortcuts != null)
-			shortcuts.release();
-		
-		if(manager == null)
-			manager = new DefaultShortcutManager();
-		
-		manager.init(graph, this);
-		
-		shortcuts = manager;
+	public Component getAWTComponent() {
+		return surface;
 	}
-
+	
 	@Override
-	public Component getComponent() {
-		return this;
+	public Object getGUIComponent() {
+		return surface;
+	}
+	
+	@Override
+	public void setFrameTitle(String title) {
+		if(frame != null)
+			frame.setTitle(title);
 	}
 	
 // AttributeSink
 
-	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
-		handleAttributes(attribute, value);
-	}
-
-	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue, Object newValue) {
-		handleAttributes(attribute, newValue);
-	}
-
-	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
-		handleAttributes(attribute, null);
-	}
-
-	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) { } 
-	public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue, Object newValue) { } 
-	public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) { } 
-	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) { } 
-	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue, Object newValue) { } 
-	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) { }
-	
-	/**
-	 * Decode the "ui.camera." and "ui.title." attributes and modify the view and camera 
-	 * settings accordingly.
-	 * 
-	 * <p>
-	 * This method understands the attributes:
-	 * <ul>
-	 * 		<li>"ui.VIEWID.camera.center", with VIEWID the identifier of this view,
-	 *          whose value must be either a Point3 or an array of three {@link Number}s.</li>
-	 *      <li>The "ui.VIEWID.camera.zoom" attribute which tells the view percent,
-	 *          and whose value must be a {@link Number}.</li>
-	 *      <li>The "ui.VIEWID.camera.angle" attribute which must be an angle in degreen
-	 *          with a {@link Number} value.</li>
-	 *      <li>The "ui.VIEWID.title", or "ui.title" attributes whose value must be a
-	 *          string and that change the eventual view frame title.</li>
-	 * </p>
-	 * 
-	 * <p>
-	 * It also understands the attributes
-	 * </p>
-	 *
-	 * @param attribute The attribute to decode.
-	 * @param value The eventual value of the attribute, pass null to mean "attribute removed".
-	 */
-	protected void handleAttributes(String attribute, Object value) {
-		if(attribute.startsWith("ui.")) {
-			attribute = attribute.substring(3);
-			int pos = attribute.indexOf('.');
-			if(pos >= 0) {
-				String viewId = attribute.substring(0, pos);
-				if(viewId.equals(getId())) {
-					attribute = attribute.substring(pos+1);
-					handleAttributeValue(attribute, value);
-				} else {
-					System.err.printf("cannot handle attribute ui.%s, view %s is unknown%n", attribute, viewId);
-				}
-			} else if(attribute.equals("ui.title")) {
-				// The general ui.title the same for all frames.
-				handleAttributeValue("title", value);
-			}
-		}
-	}
-	
 	/**
 	 * Apply the attribute action on the view or camera. The actions can be "camera.center",
 	 * "camera.zoom" and "camera.angle" and "title".

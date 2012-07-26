@@ -88,7 +88,7 @@ public class TestVisibility extends JFrame {
 		
 		D.addAttribute("ui.hide");
 		
-		add(view, BorderLayout.CENTER);
+		add(view.getAWTComponent(), BorderLayout.CENTER);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(800, 600);
 		setVisible(true);

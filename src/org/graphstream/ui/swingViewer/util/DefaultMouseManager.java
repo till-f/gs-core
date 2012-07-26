@@ -72,15 +72,15 @@ public class DefaultMouseManager implements MouseManager, MouseInputListener, Mo
 	public void init(GraphicGraph graph, View view) {
 		this.view = view;
 		this.graph = graph;
-		view.getComponent().addMouseListener(this);
-		view.getComponent().addMouseMotionListener(this);
-		view.getComponent().addMouseWheelListener(this);
+		view.getAWTComponent().addMouseListener(this);
+		view.getAWTComponent().addMouseMotionListener(this);
+		view.getAWTComponent().addMouseWheelListener(this);
 	}
 	
 	public void release() {
-		view.getComponent().removeMouseListener(this);
-		view.getComponent().removeMouseMotionListener(this);
-		view.getComponent().removeMouseWheelListener(this);
+		view.getAWTComponent().removeMouseListener(this);
+		view.getAWTComponent().removeMouseMotionListener(this);
+		view.getAWTComponent().removeMouseWheelListener(this);
 	}
 
 	// Command
@@ -196,7 +196,8 @@ public class DefaultMouseManager implements MouseManager, MouseInputListener, Mo
 	}
 
 	public void mousePressed(MouseEvent event) {
-		view.requestFocus();
+		if(view.isAWT())
+			view.getAWTComponent().requestFocus();
 		
 		curElement = view.getCamera().findNodeOrSpriteAt(event.getX(), event.getY());
 

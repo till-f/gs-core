@@ -82,7 +82,7 @@ class InitializeApplication extends JFrame implements Runnable {
    
   		// We can insert the main view inside a JPanel or JFrame for example.
   		
-		add(viewer.addDefaultView( false ), BorderLayout.CENTER);
+		add(viewer.addDefaultView( false ).getAWTComponent(), BorderLayout.CENTER);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setSize(800, 600);
 		setVisible(true);
