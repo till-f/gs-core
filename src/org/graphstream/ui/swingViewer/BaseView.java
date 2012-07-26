@@ -74,11 +74,6 @@ public abstract class BaseView implements View, AttributeSink {
 	 */
 	protected GraphRenderer renderer;
 	
-	/**
-	 * True if the window is iconified, we can stop rendering.
-	 */
-	protected boolean isIconified = false;
-	
 	@Override
 	public void open(String identifier, Viewer viewer, GraphRenderer renderer) {
 		this.id = identifier;

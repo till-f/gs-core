@@ -39,7 +39,6 @@ import java.awt.event.WindowListener;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import org.graphstream.ui.geom.Point3;
 import org.graphstream.ui.graphicGraph.GraphicGraph;
 
 /**
@@ -139,6 +138,11 @@ public class DefaultView extends BaseView implements WindowListener {
 	 */
 	protected JFrame frame;
 
+	/**
+	 * True if the window is iconified, we can stop rendering.
+	 */
+	protected boolean isIconified = false;
+	
 	@Override
 	public void open(String identifier, Viewer viewer, GraphRenderer renderer) {
 		surface = new Surface();
@@ -304,79 +308,5 @@ public class DefaultView extends BaseView implements WindowListener {
 	public void setFrameTitle(String title) {
 		if(frame != null)
 			frame.setTitle(title);
-	}
-	
-// AttributeSink
-
-	/**
-	 * Apply the attribute action on the view or camera. The actions can be "camera.center",
-	 * "camera.zoom" and "camera.angle" and "title".
-	 * @param attribute The attribute action.
-	 * @param value The value associated with the action.
-	 * @see #handleAttributes(String, Object)
-	 */
-	protected void handleAttributeValue(String attribute, Object value) {
-		if(value != null) {
-			if(attribute.equals("camera.center")) {
-				Point3 center = new Point3();
-				if(value instanceof Point3) {
-					center.copy((Point3)value);
-				} else if(value instanceof Object[]) {
-					Object[] tab = (Object[]) value;
-					if(tab.length > 2 && tab[0] instanceof Number && tab[1] instanceof Number && tab[2] instanceof Number)
-						center.set(((Number)tab[0]).doubleValue(), ((Number)tab[1]).doubleValue(), ((Number)tab[2]).doubleValue());
-					else if(tab.length > 2 && tab[0] instanceof Number && tab[1] instanceof Number)
-						center.set(((Number)tab[0]).doubleValue(), ((Number)tab[1]).doubleValue(), 0);
-					else center.copy(getCamera().getViewCenter());
-				} else {
-					center.copy(getCamera().getViewCenter());
-				}
-				getCamera().setViewCenter(center.x, center.y, center.z);
-			} else if(attribute.equals("camera.zoom")) {
-				if(value instanceof Number) {
-					double zoom = ((Number)value).doubleValue();
-					getCamera().setViewPercent(zoom);
-				}
-			} else if(attribute.equals("camera.angle")) {
-				if(value instanceof Number) {
-					double angle = ((Number)value).doubleValue();
-					getCamera().setViewRotation(angle);
-				}				
-			} else if(attribute.equals("title")) {
-				if(frame != null)
-					frame.setTitle((String)value);
-			}
-		} else {
-			if(attribute.equals("camera.center")) {
-				getCamera().setAutoFitView(true);
-			} else if(attribute.equals("camera.zoom")) {
-				getCamera().setViewPercent(1);
-			} else if(attribute.equals("camera.angle")) {
-				getCamera().setViewRotation(0);
-			}			
-		}
-	}
-	
-	/**
-	 * Check some known graph attributes to configure the view and camera. 
-	 */
-	protected void checkInitialAttributes() {
-		String basis  = String.format("ui.%s.", getId());
-		String title  = String.format("%s.title", basis);
-		String zoom   = String.format("%s.camera.zoom", basis);
-		String angle  = String.format("%s.camera.angle", basis);
-		String center = String.format("%s.camera.center", basis);
-		
-		if(graph.hasLabel("ui.title")) {
-			handleAttributeValue("title", graph.getLabel("ui.title"));
-		} else if(graph.hasLabel(title)) {
-			handleAttributeValue("title", graph.getLabel("title"));
-		} else if(graph.hasAttribute(zoom)) {
-			handleAttributeValue("camera.zoom", graph.getAttribute(zoom));
-		} else if(graph.hasAttribute(angle)) {
-			handleAttributeValue("camera.angle", graph.getAttribute(angle));
-		} else if(graph.hasAttribute(center)) {
-			handleAttributeValue("camera.center", graph.getAttribute(center));
-		}
 	}
 }
