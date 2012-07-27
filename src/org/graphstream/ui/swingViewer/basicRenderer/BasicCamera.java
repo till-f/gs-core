@@ -119,7 +119,7 @@ public class BasicCamera extends BaseCamera {
 		return p;
 	}
 
-	@Override
+	//@Override
 	public void pushView(Graphics2D g2, double x, double y, double width, double height) {
 		if (oldTx == null) {
 			oldTx = g2.getTransform();	// Save the Swing transform to reset it later.
@@ -140,7 +140,7 @@ public class BasicCamera extends BaseCamera {
 		checkVisibility(graph);
 	}
 
-	@Override
+	//@Override
 	public void popView(Graphics2D g2) {
 		if (oldTx != null) {
 			g2.setTransform(oldTx);	// Restore the old Swing settings.

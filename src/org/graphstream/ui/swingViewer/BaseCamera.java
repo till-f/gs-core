@@ -264,14 +264,14 @@ public abstract class BaseCamera implements Camera {
 	 * @param y The ordinate of the view-port in pixels.
 	 * @param width The width in pixels of the view port.
 	 * @param height The height in pixels of the view port.
-	 */
 	public abstract void pushView(Graphics2D g, double x, double y, double width, double height);
+	 */
 
 	/**
 	 * Finish the rendering phase and cleanup the Java2D graphics.
 	 * @param g The Java2D graphics.
-	 */
 	public abstract void popView(Graphics2D g);
+	 */
 	
 	/**
 	 * Retrieve the graph padding from the graph style.
