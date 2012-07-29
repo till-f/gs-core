@@ -74,7 +74,6 @@ public abstract class BaseView implements View, AttributeSink {
 	 */
 	protected GraphRenderer renderer;
 	
-	@Override
 	public void open(String identifier, Viewer viewer, GraphRenderer renderer) {
 		this.id = identifier;
 		this.viewer = viewer;
@@ -88,24 +87,20 @@ public abstract class BaseView implements View, AttributeSink {
 		graph.addAttributeSink(this);
 	}
 
-	@Override
 	public String getId() {
 		return id;
 	}
 	
-	@Override
 	public Viewer getViewer() {
 		return viewer;
 	}
 
-	@Override
 	public Camera getCamera() {
 		return renderer.getCamera();
 	}
 
 	public abstract void display(GraphicGraph graph, boolean graphChanged);
 	
-	@Override
 	public void close(GraphicGraph graph) {
 		renderer.close();
 		graph.removeAttributeSink(this);
@@ -126,34 +121,28 @@ public abstract class BaseView implements View, AttributeSink {
 
 	public abstract void resizeFrame(int width, int height);
 
-	@Override
 	public abstract void openInAFrame(boolean on);
 
 	// Selection
 
-	@Override
 	public void beginSelectionAt(double x1, double y1) {
 		renderer.beginSelectionAt(x1, y1);
 	}
 
-	@Override
 	public void selectionGrowsAt(double x, double y) {
 		renderer.selectionGrowsAt(x, y);
 	}
 
-	@Override
 	public void endSelectionAt(double x2, double y2) {
 		renderer.endSelectionAt(x2, y2);
 	}
 	
-	@Override
 	public boolean hasSelection() {
 		return renderer.hasSelection();
 	}
 
 	// Methods deferred to the renderer
 
-	@Override
 	public void moveElementAtPx(GraphicElement element, double x, double y) {
 		// The feedback on the node positions is often off since not needed
 		// and generating lots of events. We activate it here since the
@@ -165,7 +154,6 @@ public abstract class BaseView implements View, AttributeSink {
 		graph.feedbackXYZ(on);
 	}
 	
-	@Override
 	public void freezeElement(GraphicElement element, boolean frozen) {
 		if(frozen) {
 			element.addAttribute("layout.frozen");
@@ -174,21 +162,18 @@ public abstract class BaseView implements View, AttributeSink {
 		}
 	}
 
-	@Override
 	public void setBackLayerRenderer(LayerRenderer renderer) {
 		synchronized(viewer) {
 			this.renderer.setBackLayerRenderer(renderer);
 		}
 	}
 
-	@Override
 	public void setForeLayoutRenderer(LayerRenderer renderer) {
 		synchronized(viewer) {
 			this.renderer.setForeLayerRenderer(renderer);
 		}
 	}
 	
-	@Override
 	public void setMouseManager(MouseManager manager) {
 		if(mouseClicks != null)
 			mouseClicks.release();
@@ -201,7 +186,6 @@ public abstract class BaseView implements View, AttributeSink {
 		mouseClicks = manager;
 	}
 
-	@Override
 	public void setShortcutManager(ShortcutManager manager) {
 		if(shortcuts != null)
 			shortcuts.release();
@@ -214,16 +198,12 @@ public abstract class BaseView implements View, AttributeSink {
 		shortcuts = manager;
 	}
 	
-	@Override
 	public abstract boolean isAWT();
 
-	@Override
 	public abstract Component getAWTComponent();
 	
-	@Override
 	public abstract Object getGUIComponent();
 	
-	@Override
 	public abstract void setFrameTitle(String title);
 	
 // AttributeSink
