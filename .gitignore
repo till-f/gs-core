@@ -6,4 +6,3 @@ target/
 *.jar
 *.jardesc
 .idea
-gs-core.iml
