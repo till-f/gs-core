@@ -175,6 +175,7 @@ TOKEN: { < JCOMPONENT        : "jcomponent" > }
 TOKEN: { < ARROWIMGURL       : "arrow-image" > }
 TOKEN: { < ARROWSIZE         : "arrow-size" > }
 TOKEN: { < ARROWSHAPE        : "arrow-shape" > }
+TOKEN: { < ARROWORIENT       : "arrow-orientation" > }
 //
 // Properties for sprites only.
 //
@@ -266,6 +267,9 @@ TOKEN: { < FLOW              : "flow" > }
 TOKEN: { < PIECHART          : "pie-chart" > }
 TOKEN: { < IMAGE             : "image" > }
 TOKEN: { < IMAGES            : "images" > }
+
+TOKEN: { < ASEDGE            : "as-edge" > }
+TOKEN: { < OPPOSITE          : "opposite" > }
 
 TOKEN: { < FROM              : "from" > }
 TOKEN: { < NODE0             : "node0" > }
@@ -379,6 +383,7 @@ void style( Style style ):
 	Style.Shape              shape;
 	Style.SpriteOrientation  spriteOrient;
 	Style.ArrowShape         arrowShape;
+	Style.ArrowOrientation   arrowOrient;
 	Style.JComponents        component;
 }
 {
@@ -418,6 +423,7 @@ void style( Style style ):
 	| ( <SHAPE>              <COLON> shape         = shape()             <SEMICOLON> { style.setValue( "shape",                shape          ); } )
 	| ( <SPRITEORIENT>       <COLON> spriteOrient  = spriteOrient()      <SEMICOLON> { style.setValue( "sprite-orientation",   spriteOrient   ); } )
 	| ( <ARROWSHAPE>         <COLON> arrowShape    = arrowShape()        <SEMICOLON> { style.setValue( "arrow-shape",          arrowShape     ); } )
+	| ( <ARROWORIENT>        <COLON> arrowOrient   = arrowOrient()       <SEMICOLON> { style.setValue( "arrow-orientation",    arrowOrient    ); } )
 	| ( <ARROWIMGURL>        <COLON> url           = url()               <SEMICOLON> { style.setValue( "arrow-image",          url            ); } )
 	| ( <ARROWSIZE>          <COLON> values        = values()            <SEMICOLON> { style.setValue( "arrow-size",           values         ); } )	
 	| ( <CANVASCOLOR>        <COLON> colors        = colors()            <SEMICOLON> { style.setValue( "canvas-color",         colors         ); } )
@@ -744,6 +750,17 @@ Style.ArrowShape arrowShape():
 	| ( <IMAGE>   { s = Style.ArrowShape.IMAGE;   } )
 	)
 	{ return s; }
+}
+
+Style.ArrowOrientation arrowOrient():
+{
+	Style.ArrowOrientation o;
+}
+{
+	( ( <ASEDGE>   { o = Style.ArrowOrientation.ASEDGE;    } )
+	| ( <OPPOSITE> { o = Style.ArrowOrientation.OPPOSITE;  } )
+	)
+	{ return o; }
 }
 
 Style.JComponents jcomponent():

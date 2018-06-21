@@ -35,6 +35,7 @@ import org.graphstream.graph.Edge;
 import org.graphstream.graph.Node;
 import org.graphstream.stream.SourceBase.ElementType;
 import org.graphstream.ui.graphicGraph.stylesheet.Selector;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -315,6 +316,18 @@ public class GraphicEdge extends GraphicElement implements Edge {
 		tmp = from;
 		from = to;
 		to = tmp;
+	}
+
+	boolean _directionIsPatched = false;
+	public void switchDirectionAccordingToStyle()
+	{
+		StyleConstants.ArrowOrientation orientation = getStyle().getArrowOrientation();
+		if ((orientation == StyleConstants.ArrowOrientation.OPPOSITE && !_directionIsPatched) ||
+			(orientation == StyleConstants.ArrowOrientation.ASEDGE && _directionIsPatched))
+		{
+			switchDirection();
+			_directionIsPatched = !_directionIsPatched;
+		}
 	}
 
 	// Nested classes

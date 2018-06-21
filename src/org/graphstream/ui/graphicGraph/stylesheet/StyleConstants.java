@@ -177,6 +177,13 @@ public class StyleConstants {
 	}
 
 	/**
+	 * Possible orientation for arrows on edges.
+	 */
+	public static enum ArrowOrientation {
+		ASEDGE, OPPOSITE
+	}
+
+	/**
 	 * Possible JComponents.
 	 */
 	public static enum JComponents {

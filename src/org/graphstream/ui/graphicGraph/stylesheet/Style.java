@@ -514,6 +514,13 @@ public class Style extends StyleConstants {
 	}
 
 	/**
+	 * Edge arrow orientation.
+	 */
+	public ArrowOrientation getArrowOrientation() {
+		return (ArrowOrientation) getValue("arrow-orientation");
+	}
+
+	/**
 	 * Colour of all non-graph, non-edge, non-node, non-sprite things.
 	 */
 	public Colors getCanvasColor() {
@@ -610,6 +617,7 @@ public class Style extends StyleConstants {
 		values.put("arrow-shape", ArrowShape.ARROW);
 		values.put("arrow-size", new Values(Units.PX, 8, 4));
 		values.put("arrow-image", null);
+		values.put("arrow-orientation", ArrowOrientation.ASEDGE);
 
 		values.put("canvas-color", canvasColor);
 
@@ -672,6 +680,7 @@ public class Style extends StyleConstants {
 			augmentField("arrow-shape", other);
 			augmentField("arrow-size", other);
 			augmentField("arrow-image", other);
+			augmentField("arrow-orientation", other);
 
 			augmentField("canvas-color", other);
 		}
